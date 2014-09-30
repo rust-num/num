@@ -811,8 +811,8 @@ impl BigUint {
     }
 
     /// Returns a reference to the underlying data for the `BigUint`
-    pub fn data(&self) -> &Vec<BigDigit> {
-        &self.data
+    pub fn data(&self) -> &[BigDigit] {
+        self.data.as_slice()
     }
 }
 
@@ -1424,7 +1424,7 @@ impl BigInt {
     }
 
     /// Returns a reference to the underlying data for the `BigUint`
-    pub fn data(&self) -> &Vec<BigDigit> {
+    pub fn data(&self) -> &[BigDigit] {
         self.data.data()
     }
 }
