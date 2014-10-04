@@ -339,8 +339,8 @@ impl Mul<BigUint, BigUint> for BigUint {
         #[inline]
         fn cut_at(a: &BigUint, n: uint) -> (BigUint, BigUint) {
             let mid = cmp::min(a.data.len(), n);
-            return (BigUint::from_slice(a.data.slice(mid, a.data.len())),
-                    BigUint::from_slice(a.data.slice(0, mid)));
+            return (BigUint::from_slice(a.data[mid .. ]),
+                    BigUint::from_slice(a.data[ .. mid]));
         }
 
         #[inline]
@@ -733,7 +733,7 @@ impl BigUint {
         let mut power: BigUint  = One::one();
         loop {
             let start = cmp::max(end, unit_len) - unit_len;
-            match uint::parse_bytes(buf.slice(start, end), radix) {
+            match uint::parse_bytes(buf[start .. end], radix) {
                 Some(d) => {
                     let d: Option<BigUint> = FromPrimitive::from_uint(d);
                     match d {
@@ -1404,7 +1404,7 @@ impl BigInt {
             sign  = Minus;
             start = 1;
         }
-        return BigUint::parse_bytes(buf.slice(start, buf.len()), radix)
+        return BigUint::parse_bytes(buf[start .. ], radix)
             .map(|bu| BigInt::from_biguint(sign, bu));
     }
 
