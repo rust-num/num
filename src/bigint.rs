@@ -339,8 +339,8 @@ impl Mul<BigUint, BigUint> for BigUint {
         #[inline]
         fn cut_at(a: &BigUint, n: uint) -> (BigUint, BigUint) {
             let mid = cmp::min(a.data.len(), n);
-            return (BigUint::from_slice(a.data[mid .. a.data.len()]),
-                    BigUint::from_slice(a.data[0 .. mid]));
+            return (BigUint::from_slice(a.data[mid .. ]),
+                    BigUint::from_slice(a.data[ .. mid]));
         }
 
         #[inline]
@@ -1404,7 +1404,7 @@ impl BigInt {
             sign  = Minus;
             start = 1;
         }
-        return BigUint::parse_bytes(buf[start .. buf.len()], radix)
+        return BigUint::parse_bytes(buf[start .. ], radix)
             .map(|bu| BigInt::from_biguint(sign, bu));
     }
 
