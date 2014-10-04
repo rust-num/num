@@ -44,6 +44,7 @@
 
 #![feature(macro_rules)]
 #![feature(default_type_params)]
+#![feature(slicing_syntax)]
 
 #![crate_name = "num"]
 #![experimental]
