@@ -401,16 +401,16 @@ mod test {
     use std::num;
     use std::i32;
 
-    pub static _0 : Rational = Ratio { numer: 0, denom: 1};
-    pub static _1 : Rational = Ratio { numer: 1, denom: 1};
-    pub static _2: Rational = Ratio { numer: 2, denom: 1};
-    pub static _1_2: Rational = Ratio { numer: 1, denom: 2};
-    pub static _3_2: Rational = Ratio { numer: 3, denom: 2};
-    pub static _neg1_2: Rational = Ratio { numer: -1, denom: 2};
-    pub static _1_3: Rational = Ratio { numer: 1, denom: 3};
-    pub static _neg1_3: Rational = Ratio { numer: -1, denom: 3};
-    pub static _2_3: Rational = Ratio { numer: 2, denom: 3};
-    pub static _neg2_3: Rational = Ratio { numer: -2, denom: 3};
+    pub const _0 : Rational = Ratio { numer: 0, denom: 1};
+    pub const _1 : Rational = Ratio { numer: 1, denom: 1};
+    pub const _2: Rational = Ratio { numer: 2, denom: 1};
+    pub const _1_2: Rational = Ratio { numer: 1, denom: 2};
+    pub const _3_2: Rational = Ratio { numer: 3, denom: 2};
+    pub const _neg1_2: Rational = Ratio { numer: -1, denom: 2};
+    pub const _1_3: Rational = Ratio { numer: 1, denom: 3};
+    pub const _neg1_3: Rational = Ratio { numer: -1, denom: 3};
+    pub const _2_3: Rational = Ratio { numer: 2, denom: 3};
+    pub const _neg2_3: Rational = Ratio { numer: -2, denom: 3};
 
     pub fn to_big(n: Rational) -> BigRational {
         Ratio::new(
