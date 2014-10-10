@@ -75,19 +75,19 @@ pub type BigDigit = u32;
 /// size is the double of the size of `BigDigit`.
 pub type DoubleBigDigit = u64;
 
-pub static ZERO_BIG_DIGIT: BigDigit = 0;
+pub const ZERO_BIG_DIGIT: BigDigit = 0;
 static ZERO_VEC: [BigDigit, ..1] = [ZERO_BIG_DIGIT];
 
-#[allow(non_snake_case)]
+#[allow(non_snake_case,non_uppercase_statics)]
 pub mod BigDigit {
     use super::BigDigit;
     use super::DoubleBigDigit;
 
     // `DoubleBigDigit` size dependent
-    pub static bits: uint = 32;
+    pub const bits: uint = 32;
 
-    pub static base: DoubleBigDigit = 1 << bits;
-    static lo_mask: DoubleBigDigit = (-1 as DoubleBigDigit) >> bits;
+    pub const base: DoubleBigDigit = 1 << bits;
+    const lo_mask: DoubleBigDigit = (-1 as DoubleBigDigit) >> bits;
 
     #[inline]
     fn get_hi(n: DoubleBigDigit) -> BigDigit { (n >> bits) as BigDigit }
@@ -1839,7 +1839,7 @@ mod biguint_tests {
               BigInt::from_biguint(Plus, BigUint::new(vec!(1,2,3))));
     }
 
-    static sum_triples: &'static [(&'static [BigDigit],
+    const sum_triples: &'static [(&'static [BigDigit],
                                    &'static [BigDigit],
                                    &'static [BigDigit])] = &[
         (&[],          &[],       &[]),
@@ -1886,7 +1886,7 @@ mod biguint_tests {
         a - b;
     }
 
-    static mul_triples: &'static [(&'static [BigDigit],
+    const mul_triples: &'static [(&'static [BigDigit],
                                    &'static [BigDigit],
                                    &'static [BigDigit])] = &[
         (&[],               &[],               &[]),
@@ -1912,7 +1912,7 @@ mod biguint_tests {
         (&[ 0,  0,  1],     &[ 0,  0,  0,  1], &[0, 0,  0,  0,  0,  1])
     ];
 
-    static div_rem_quadruples: &'static [(&'static [BigDigit],
+    const div_rem_quadruples: &'static [(&'static [BigDigit],
                                            &'static [BigDigit],
                                            &'static [BigDigit],
                                            &'static [BigDigit])]
@@ -2438,7 +2438,7 @@ mod bigint_tests {
         assert_eq!(negative.to_biguint(), None);
     }
 
-    static sum_triples: &'static [(&'static [BigDigit],
+    const sum_triples: &'static [(&'static [BigDigit],
                                    &'static [BigDigit],
                                    &'static [BigDigit])] = &[
         (&[],          &[],       &[]),
@@ -2490,7 +2490,7 @@ mod bigint_tests {
         }
     }
 
-    static mul_triples: &'static [(&'static [BigDigit],
+    const mul_triples: &'static [(&'static [BigDigit],
                                    &'static [BigDigit],
                                    &'static [BigDigit])] = &[
         (&[],               &[],               &[]),
@@ -2516,7 +2516,7 @@ mod bigint_tests {
         (&[ 0,  0,  1],     &[ 0,  0,  0,  1], &[0, 0,  0,  0,  0,  1])
     ];
 
-    static div_rem_quadruples: &'static [(&'static [BigDigit],
+    const div_rem_quadruples: &'static [(&'static [BigDigit],
                                           &'static [BigDigit],
                                           &'static [BigDigit],
                                           &'static [BigDigit])]

@@ -120,7 +120,7 @@ fn pidigits(n: int) {
     }
 }
 
-static DEFAULT_DIGITS: int = 512;
+const DEFAULT_DIGITS: int = 512;
 
 #[bench]
 fn use_bencher(b: &mut Bencher) {
