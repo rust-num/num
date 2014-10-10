@@ -401,16 +401,16 @@ mod test {
     use std::num;
     use std::i32;
 
-    pub static _0 : Rational = Ratio { numer: 0, denom: 1};
-    pub static _1 : Rational = Ratio { numer: 1, denom: 1};
-    pub static _2: Rational = Ratio { numer: 2, denom: 1};
-    pub static _1_2: Rational = Ratio { numer: 1, denom: 2};
-    pub static _3_2: Rational = Ratio { numer: 3, denom: 2};
-    pub static _neg1_2: Rational = Ratio { numer: -1, denom: 2};
-    pub static _1_3: Rational = Ratio { numer: 1, denom: 3};
-    pub static _neg1_3: Rational = Ratio { numer: -1, denom: 3};
-    pub static _2_3: Rational = Ratio { numer: 2, denom: 3};
-    pub static _neg2_3: Rational = Ratio { numer: -2, denom: 3};
+    pub const _0 : Rational = Ratio { numer: 0, denom: 1};
+    pub const _1 : Rational = Ratio { numer: 1, denom: 1};
+    pub const _2: Rational = Ratio { numer: 2, denom: 1};
+    pub const _1_2: Rational = Ratio { numer: 1, denom: 2};
+    pub const _3_2: Rational = Ratio { numer: 3, denom: 2};
+    pub const _NEG1_2: Rational = Ratio { numer: -1, denom: 2};
+    pub const _1_3: Rational = Ratio { numer: 1, denom: 3};
+    pub const _NEG1_3: Rational = Ratio { numer: -1, denom: 3};
+    pub const _2_3: Rational = Ratio { numer: 2, denom: 3};
+    pub const _NEG2_3: Rational = Ratio { numer: -2, denom: 3};
 
     pub fn to_big(n: Rational) -> BigRational {
         Ratio::new(
@@ -427,7 +427,7 @@ mod test {
         assert_eq!(_2, Ratio::from_integer(2i));
         assert_eq!(_1_2, Ratio::new(1i,2i));
         assert_eq!(_3_2, Ratio::new(3i,2i));
-        assert_eq!(_neg1_2, Ratio::new(-1i,2i));
+        assert_eq!(_NEG1_2, Ratio::new(-1i,2i));
     }
 
     #[test]
@@ -465,7 +465,7 @@ mod test {
         assert_eq!(_2.to_integer(), 2);
         assert_eq!(_1_2.to_integer(), 0);
         assert_eq!(_3_2.to_integer(), 1);
-        assert_eq!(_neg1_2.to_integer(), 0);
+        assert_eq!(_NEG1_2.to_integer(), 0);
     }
 
 
@@ -476,7 +476,7 @@ mod test {
         assert_eq!(_2.numer(), &2);
         assert_eq!(_1_2.numer(), &1);
         assert_eq!(_3_2.numer(), &3);
-        assert_eq!(_neg1_2.numer(), &(-1));
+        assert_eq!(_NEG1_2.numer(), &(-1));
     }
     #[test]
     fn test_denom() {
@@ -485,7 +485,7 @@ mod test {
         assert_eq!(_2.denom(), &1);
         assert_eq!(_1_2.denom(), &2);
         assert_eq!(_3_2.denom(), &2);
-        assert_eq!(_neg1_2.denom(), &2);
+        assert_eq!(_NEG1_2.denom(), &2);
     }
 
 
@@ -496,7 +496,7 @@ mod test {
         assert!(_2.is_integer());
         assert!(!_1_2.is_integer());
         assert!(!_3_2.is_integer());
-        assert!(!_neg1_2.is_integer());
+        assert!(!_NEG1_2.is_integer());
     }
 
     #[test]
@@ -508,7 +508,7 @@ mod test {
     }
 
     mod arith {
-        use super::{_0, _1, _2, _1_2, _3_2, _neg1_2, to_big};
+        use super::{_0, _1, _2, _1_2, _3_2, _NEG1_2, to_big};
         use super::super::{Ratio, Rational};
 
         #[test]
@@ -521,7 +521,7 @@ mod test {
             test(_1, _1_2, _3_2);
             test(_1, _1, _2);
             test(_1_2, _3_2, _2);
-            test(_1_2, _neg1_2, _0);
+            test(_1_2, _NEG1_2, _0);
         }
 
         #[test]
@@ -533,7 +533,7 @@ mod test {
 
             test(_1, _1_2, _1_2);
             test(_3_2, _1_2, _1);
-            test(_1, _neg1_2, _3_2);
+            test(_1, _NEG1_2, _3_2);
         }
 
         #[test]
@@ -545,7 +545,7 @@ mod test {
 
             test(_1, _1_2, _1_2);
             test(_1_2, _3_2, Ratio::new(3i,4i));
-            test(_1_2, _neg1_2, Ratio::new(-1i, 4i));
+            test(_1_2, _NEG1_2, Ratio::new(-1i, 4i));
         }
 
         #[test]
@@ -557,7 +557,7 @@ mod test {
 
             test(_1, _1_2, _2);
             test(_3_2, _1_2, _1 + _2);
-            test(_1, _neg1_2, _neg1_2 + _neg1_2 + _neg1_2 + _neg1_2);
+            test(_1, _NEG1_2, _NEG1_2 + _NEG1_2 + _NEG1_2 + _NEG1_2);
         }
 
         #[test]
@@ -568,7 +568,7 @@ mod test {
             }
 
             test(_3_2, _1, _1_2);
-            test(_2, _neg1_2, _0);
+            test(_2, _NEG1_2, _0);
             test(_1_2, _2,  _1_2);
         }
 
@@ -580,7 +580,7 @@ mod test {
             }
 
             test(_0, _0);
-            test(_1_2, _neg1_2);
+            test(_1_2, _NEG1_2);
             test(-_1, _1);
         }
         #[test]
@@ -588,7 +588,7 @@ mod test {
             assert_eq!(_0 + _0, _0);
             assert_eq!(_0 * _0, _0);
             assert_eq!(_0 * _1, _0);
-            assert_eq!(_0 / _neg1_2, _0);
+            assert_eq!(_0 / _NEG1_2, _0);
             assert_eq!(_0 - _0, _0);
         }
         #[test]
@@ -605,30 +605,30 @@ mod test {
         assert_eq!(_1_3.round(), _0);
         assert_eq!(_1_3.trunc(), _0);
 
-        assert_eq!(_neg1_3.ceil(), _0);
-        assert_eq!(_neg1_3.floor(), -_1);
-        assert_eq!(_neg1_3.round(), _0);
-        assert_eq!(_neg1_3.trunc(), _0);
+        assert_eq!(_NEG1_3.ceil(), _0);
+        assert_eq!(_NEG1_3.floor(), -_1);
+        assert_eq!(_NEG1_3.round(), _0);
+        assert_eq!(_NEG1_3.trunc(), _0);
 
         assert_eq!(_2_3.ceil(), _1);
         assert_eq!(_2_3.floor(), _0);
         assert_eq!(_2_3.round(), _1);
         assert_eq!(_2_3.trunc(), _0);
 
-        assert_eq!(_neg2_3.ceil(), _0);
-        assert_eq!(_neg2_3.floor(), -_1);
-        assert_eq!(_neg2_3.round(), -_1);
-        assert_eq!(_neg2_3.trunc(), _0);
+        assert_eq!(_NEG2_3.ceil(), _0);
+        assert_eq!(_NEG2_3.floor(), -_1);
+        assert_eq!(_NEG2_3.round(), -_1);
+        assert_eq!(_NEG2_3.trunc(), _0);
 
         assert_eq!(_1_2.ceil(), _1);
         assert_eq!(_1_2.floor(), _0);
         assert_eq!(_1_2.round(), _1);
         assert_eq!(_1_2.trunc(), _0);
 
-        assert_eq!(_neg1_2.ceil(), _0);
-        assert_eq!(_neg1_2.floor(), -_1);
-        assert_eq!(_neg1_2.round(), -_1);
-        assert_eq!(_neg1_2.trunc(), _0);
+        assert_eq!(_NEG1_2.ceil(), _0);
+        assert_eq!(_NEG1_2.floor(), -_1);
+        assert_eq!(_NEG1_2.round(), -_1);
+        assert_eq!(_NEG1_2.trunc(), _0);
 
         assert_eq!(_1.ceil(), _1);
         assert_eq!(_1.floor(), _1);
@@ -660,7 +660,7 @@ mod test {
     #[test]
     fn test_fract() {
         assert_eq!(_1.fract(), _0);
-        assert_eq!(_neg1_2.fract(), _neg1_2);
+        assert_eq!(_NEG1_2.fract(), _NEG1_2);
         assert_eq!(_1_2.fract(), _1_2);
         assert_eq!(_3_2.fract(), _1_2);
     }
@@ -671,7 +671,7 @@ mod test {
         assert_eq!(_2 * _2.recip(), _1);
         assert_eq!(_1_2 * _1_2.recip(), _1);
         assert_eq!(_3_2 * _3_2.recip(), _1);
-        assert_eq!(_neg1_2 * _neg1_2.recip(), _1);
+        assert_eq!(_NEG1_2 * _NEG1_2.recip(), _1);
     }
 
     #[test]
@@ -685,7 +685,7 @@ mod test {
         test(_1_2, "1/2".to_string());
         test(_3_2, "3/2".to_string());
         test(_2, "2".to_string());
-        test(_neg1_2, "-1/2".to_string());
+        test(_NEG1_2, "-1/2".to_string());
     }
     #[test]
     fn test_from_str_fail() {
@@ -715,16 +715,16 @@ mod test {
         test3(_1_2, "1/2".to_string());
         test3(_3_2, "10/2".to_string());
         test3(_2, "2/1".to_string());
-        test3(_neg1_2, "-1/2".to_string());
-        test3(_neg1_2 / _2, "-1/11".to_string());
+        test3(_NEG1_2, "-1/2".to_string());
+        test3(_NEG1_2 / _2, "-1/11".to_string());
 
         test16(_1, "1/1".to_string());
         test16(_0, "0/1".to_string());
         test16(_1_2, "1/2".to_string());
         test16(_3_2, "3/2".to_string());
         test16(_2, "2/1".to_string());
-        test16(_neg1_2, "-1/2".to_string());
-        test16(_neg1_2 / _2, "-1/4".to_string());
+        test16(_NEG1_2, "-1/2".to_string());
+        test16(_NEG1_2 / _2, "-1/4".to_string());
         test16(Ratio::new(13i,15i), "d/f".to_string());
         test16(_1_2*_1_2*_1_2*_1_2, "1/10".to_string());
     }
@@ -782,13 +782,13 @@ mod test {
 
     #[test]
     fn test_signed() {
-        assert_eq!(_neg1_2.abs(), _1_2);
+        assert_eq!(_NEG1_2.abs(), _1_2);
         assert_eq!(_3_2.abs_sub(&_1_2), _1);
         assert_eq!(_1_2.abs_sub(&_3_2), Zero::zero());
         assert_eq!(_1_2.signum(), One::one());
-        assert_eq!(_neg1_2.signum(), - num::one::<Ratio<int>>());
-        assert!(_neg1_2.is_negative());
-        assert!(! _neg1_2.is_positive());
+        assert_eq!(_NEG1_2.signum(), - num::one::<Ratio<int>>());
+        assert!(_NEG1_2.is_negative());
+        assert!(! _NEG1_2.is_positive());
         assert!(! _1_2.is_negative());
     }
 
