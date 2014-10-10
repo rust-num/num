@@ -75,7 +75,7 @@ pub type BigDigit = u32;
 /// size is the double of the size of `BigDigit`.
 pub type DoubleBigDigit = u64;
 
-pub static ZERO_BIG_DIGIT: BigDigit = 0;
+pub const ZERO_BIG_DIGIT: BigDigit = 0;
 static ZERO_VEC: [BigDigit, ..1] = [ZERO_BIG_DIGIT];
 
 #[allow(non_snake_case)]
@@ -84,10 +84,10 @@ pub mod BigDigit {
     use super::DoubleBigDigit;
 
     // `DoubleBigDigit` size dependent
-    pub static bits: uint = 32;
+    pub const bits: uint = 32;
 
-    pub static base: DoubleBigDigit = 1 << bits;
-    static lo_mask: DoubleBigDigit = (-1 as DoubleBigDigit) >> bits;
+    pub const base: DoubleBigDigit = 1 << bits;
+    const lo_mask: DoubleBigDigit = (-1 as DoubleBigDigit) >> bits;
 
     #[inline]
     fn get_hi(n: DoubleBigDigit) -> BigDigit { (n >> bits) as BigDigit }
