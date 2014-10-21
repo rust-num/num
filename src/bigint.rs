@@ -64,7 +64,7 @@ use std::default::Default;
 use std::from_str::FromStr;
 use std::num::CheckedDiv;
 use std::num::{ToPrimitive, FromPrimitive};
-use std::num::{Zero, One, ToStrRadix, FromStrRadix};
+use std::num::{Zero, One, FromStrRadix};
 use std::string::String;
 use std::{uint, i64, u64};
 
@@ -169,7 +169,7 @@ impl<S: hash::Writer> hash::Hash<S> for BigUint {
 
 impl fmt::Show for BigUint {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.to_str_radix(10))
+        write!(f, "{}", to_str_radix(self, 10))
     }
 }
 
@@ -487,7 +487,7 @@ impl Integer for BigUint {
                 return (Zero::zero(), Zero::zero(), (*a).clone());
             }
 
-            let an = a.data.tailn(a.data.len() - n);
+            let an = a.data.slice_from(a.data.len() - n);
             let bn = *b.data.last().unwrap();
             let mut d = Vec::with_capacity(an.len());
             let mut carry = 0;
@@ -653,42 +653,48 @@ impl_to_biguint!(u16,  FromPrimitive::from_u16)
 impl_to_biguint!(u32,  FromPrimitive::from_u32)
 impl_to_biguint!(u64,  FromPrimitive::from_u64)
 
-impl ToStrRadix for BigUint {
-    fn to_str_radix(&self, radix: uint) -> String {
-        assert!(1 < radix && radix <= 16, "The radix must be within (1, 16]");
-        let (base, max_len) = get_radix_base(radix);
-        if base == BigDigit::base {
-            return fill_concat(self.data.as_slice(), radix, max_len)
-        }
-        return fill_concat(convert_base(self, base).as_slice(), radix, max_len);
+fn to_str_radix(me: &BigUint, radix: uint) -> String {
+    assert!(1 < radix && radix <= 16, "The radix must be within (1, 16]");
+    let (base, max_len) = get_radix_base(radix);
+    if base == BigDigit::base {
+        return fill_concat(me.data.as_slice(), radix, max_len)
+    }
+    return fill_concat(convert_base(me, base).as_slice(), radix, max_len);
 
-        fn convert_base(n: &BigUint, base: DoubleBigDigit) -> Vec<BigDigit> {
-            let divider    = base.to_biguint().unwrap();
-            let mut result = Vec::new();
-            let mut m      = n.clone();
-            while m >= divider {
-                let (d, m0) = m.div_mod_floor(&divider);
-                result.push(m0.to_uint().unwrap() as BigDigit);
-                m = d;
-            }
-            if !m.is_zero() {
-                result.push(m.to_uint().unwrap() as BigDigit);
-            }
-            return result;
+    fn convert_base(n: &BigUint, base: DoubleBigDigit) -> Vec<BigDigit> {
+        let divider    = base.to_biguint().unwrap();
+        let mut result = Vec::new();
+        let mut m      = n.clone();
+        while m >= divider {
+            let (d, m0) = m.div_mod_floor(&divider);
+            result.push(m0.to_uint().unwrap() as BigDigit);
+            m = d;
         }
+        if !m.is_zero() {
+            result.push(m.to_uint().unwrap() as BigDigit);
+        }
+        return result;
+    }
 
-        fn fill_concat(v: &[BigDigit], radix: uint, l: uint) -> String {
-            if v.is_empty() {
-                return "0".to_string()
-            }
-            let mut s = String::with_capacity(v.len() * l);
-            for n in v.iter().rev() {
-                let ss = (*n as uint).to_str_radix(radix);
-                s.push_str("0".repeat(l - ss.len()).as_slice());
-                s.push_str(ss.as_slice());
-            }
-            s.as_slice().trim_left_chars('0').to_string()
+    fn fill_concat(v: &[BigDigit], radix: uint, l: uint) -> String {
+        if v.is_empty() {
+            return "0".to_string()
         }
+        let mut s = String::with_capacity(v.len() * l);
+        for n in v.iter().rev() {
+            let ss = fmt::radix(*n as uint, radix as u8).to_string();
+            s.push_str("0".repeat(l - ss.len()).as_slice());
+            s.push_str(ss.as_slice());
+        }
+        s.as_slice().trim_left_chars('0').to_string()
+    }
+}
+
+fn to_str_radix_signed(me: &BigInt, radix: uint) -> String {
+    match me.sign {
+        Plus => to_str_radix(&me.data, radix),
+        NoSign => "0".to_string(),
+        Minus => format!("-{}", to_str_radix(&me.data, radix)),
     }
 }
 
@@ -717,7 +723,7 @@ impl BigUint {
     /// The digits are be in base 2^32.
     #[inline]
     pub fn from_slice(slice: &[BigDigit]) -> BigUint {
-        BigUint::new(Vec::from_slice(slice))
+        BigUint::new(slice.to_vec())
     }
 
     /// Creates and initializes a `BigUint`.
@@ -761,7 +767,9 @@ impl BigUint {
     fn shl_unit(&self, n_unit: uint) -> BigUint {
         if n_unit == 0 || self.is_zero() { return (*self).clone(); }
 
-        BigUint::new(Vec::from_elem(n_unit, ZERO_BIG_DIGIT).append(self.data.as_slice()))
+        let mut v = Vec::from_elem(n_unit, ZERO_BIG_DIGIT);
+        v.push_all(self.data.as_slice());
+        BigUint::new(v)
     }
 
     #[inline]
@@ -894,7 +902,7 @@ impl Default for BigInt {
 
 impl fmt::Show for BigInt {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.to_str_radix(10))
+        write!(f, "{}", to_str_radix_signed(self, 10))
     }
 }
 
@@ -1265,17 +1273,6 @@ impl_to_bigint!(u16,  FromPrimitive::from_u16)
 impl_to_bigint!(u32,  FromPrimitive::from_u32)
 impl_to_bigint!(u64,  FromPrimitive::from_u64)
 
-impl ToStrRadix for BigInt {
-    #[inline]
-    fn to_str_radix(&self, radix: uint) -> String {
-        match self.sign {
-            Plus  => self.data.to_str_radix(radix),
-            NoSign  => "0".to_string(),
-            Minus => format!("-{}", self.data.to_str_radix(radix)),
-        }
-    }
-}
-
 impl FromStrRadix for BigInt {
     /// Creates and initializes a BigInt.
     #[inline]
@@ -1422,13 +1419,13 @@ impl BigInt {
 #[cfg(test)]
 mod biguint_tests {
     use Integer;
-    use super::{BigDigit, BigUint, ToBigUint};
+    use super::{BigDigit, BigUint, ToBigUint, to_str_radix, to_str_radix_signed};
     use super::{Plus, BigInt, RandBigInt, ToBigInt};
 
     use std::cmp::{Less, Equal, Greater};
     use std::from_str::FromStr;
     use std::i64;
-    use std::num::{Zero, One, FromStrRadix, ToStrRadix};
+    use std::num::{Zero, One, FromStrRadix};
     use std::num::{ToPrimitive, FromPrimitive};
     use std::num::CheckedDiv;
     use std::rand::task_rng;
@@ -1544,7 +1541,7 @@ mod biguint_tests {
     fn test_shl() {
         fn check(s: &str, shift: uint, ans: &str) {
             let opt_biguint: Option<BigUint> = FromStrRadix::from_str_radix(s, 16);
-            let bu = (opt_biguint.unwrap() << shift).to_str_radix(16);
+            let bu = to_str_radix(&(opt_biguint.unwrap() << shift), 16);
             assert_eq!(bu.as_slice(), ans);
         }
 
@@ -1666,7 +1663,7 @@ mod biguint_tests {
         fn check(s: &str, shift: uint, ans: &str) {
             let opt_biguint: Option<BigUint> =
                 FromStrRadix::from_str_radix(s, 16);
-            let bu = (opt_biguint.unwrap() >> shift).to_str_radix(16);
+            let bu = to_str_radix(&(opt_biguint.unwrap() >> shift), 16);
             assert_eq!(bu.as_slice(), ans);
         }
 
@@ -2166,7 +2163,7 @@ mod biguint_tests {
             let &(ref n, ref rs) = num_pair;
             for str_pair in rs.iter() {
                 let &(ref radix, ref str) = str_pair;
-                assert_eq!(n.to_str_radix(*radix).as_slice(),
+                assert_eq!(to_str_radix(n, *radix).as_slice(),
                            str.as_slice());
             }
         }
@@ -2291,7 +2288,7 @@ mod bigint_tests {
     use std::cmp::{Less, Equal, Greater};
     use std::i64;
     use std::num::CheckedDiv;
-    use std::num::{Zero, One, FromStrRadix, ToStrRadix};
+    use std::num::{Zero, One, FromStrRadix};
     use std::num::{ToPrimitive, FromPrimitive};
     use std::rand::task_rng;
     use std::u64;
@@ -2791,20 +2788,6 @@ mod bigint_tests {
         let two: BigInt = FromPrimitive::from_int(2).unwrap();
         assert_eq!(one.abs_sub(&-one), two);
     }
-
-    #[test]
-    fn test_to_str_radix() {
-        fn check(n: int, ans: &str) {
-            let n: BigInt = FromPrimitive::from_int(n).unwrap();
-            assert!(ans == n.to_str_radix(10).as_slice());
-        }
-        check(10, "10");
-        check(1, "1");
-        check(0, "0");
-        check(-1, "-1");
-        check(-10, "-10");
-    }
-
 
     #[test]
     fn test_from_str_radix() {

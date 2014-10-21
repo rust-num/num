@@ -16,7 +16,7 @@ use std::cmp;
 use std::fmt;
 use std::from_str::FromStr;
 use std::num;
-use std::num::{Zero, One, ToStrRadix, FromStrRadix};
+use std::num::{Zero, One, FromStrRadix};
 
 use bigint::{BigInt, BigUint, Sign, Plus, Minus};
 
@@ -344,15 +344,6 @@ impl<T: fmt::Show + Eq + One> fmt::Show for Ratio<T> {
     }
 }
 
-impl<T: ToStrRadix> ToStrRadix for Ratio<T> {
-    /// Renders as `numer/denom` where the numbers are in base `radix`.
-    fn to_str_radix(&self, radix: uint) -> String {
-        format!("{}/{}",
-                self.numer.to_str_radix(radix),
-                self.denom.to_str_radix(radix))
-    }
-}
-
 impl<T: FromStr + Clone + Integer + PartialOrd>
     FromStr for Ratio<T> {
     /// Parses `numer/denom` or just `numer`.
@@ -378,11 +369,11 @@ impl<T: FromStrRadix + Clone + Integer + PartialOrd>
             None
         } else {
             let a_option: Option<T> = FromStrRadix::from_str_radix(
-                *split.get(0),
+                split[0],
                 radix);
             a_option.and_then(|a| {
                 let b_option: Option<T> =
-                    FromStrRadix::from_str_radix(*split.get(1), radix);
+                    FromStrRadix::from_str_radix(split[1], radix);
                 b_option.and_then(|b| {
                     Some(Ratio::new(a.clone(), b.clone()))
                 })
@@ -395,7 +386,7 @@ impl<T: FromStrRadix + Clone + Integer + PartialOrd>
 mod test {
 
     use super::{Ratio, Rational, BigRational};
-    use std::num::{Zero, One, FromStrRadix, FromPrimitive, ToStrRadix};
+    use std::num::{Zero, One, FromStrRadix, FromPrimitive};
     use std::from_str::FromStr;
     use std::hash::hash;
     use std::num;
@@ -695,48 +686,6 @@ mod test {
         }
 
         let xs = ["0 /1", "abc", "", "1/", "--1/2","3/2/1"];
-        for &s in xs.iter() {
-            test(s);
-        }
-    }
-
-    #[test]
-    fn test_to_from_str_radix() {
-        fn test(r: Rational, s: String, n: uint) {
-            assert_eq!(FromStrRadix::from_str_radix(s.as_slice(), n),
-                       Some(r));
-            assert_eq!(r.to_str_radix(n).to_string(), s);
-        }
-        fn test3(r: Rational, s: String) { test(r, s, 3) }
-        fn test16(r: Rational, s: String) { test(r, s, 16) }
-
-        test3(_1, "1/1".to_string());
-        test3(_0, "0/1".to_string());
-        test3(_1_2, "1/2".to_string());
-        test3(_3_2, "10/2".to_string());
-        test3(_2, "2/1".to_string());
-        test3(_NEG1_2, "-1/2".to_string());
-        test3(_NEG1_2 / _2, "-1/11".to_string());
-
-        test16(_1, "1/1".to_string());
-        test16(_0, "0/1".to_string());
-        test16(_1_2, "1/2".to_string());
-        test16(_3_2, "3/2".to_string());
-        test16(_2, "2/1".to_string());
-        test16(_NEG1_2, "-1/2".to_string());
-        test16(_NEG1_2 / _2, "-1/4".to_string());
-        test16(Ratio::new(13i,15i), "d/f".to_string());
-        test16(_1_2*_1_2*_1_2*_1_2, "1/10".to_string());
-    }
-
-    #[test]
-    fn test_from_str_radix_fail() {
-        fn test(s: &str) {
-            let radix: Option<Rational> = FromStrRadix::from_str_radix(s, 3);
-            assert_eq!(radix, None);
-        }
-
-        let xs = ["0 /1", "abc", "", "1/", "--1/2","3/2/1", "3/2"];
         for &s in xs.iter() {
             test(s);
         }
