@@ -54,7 +54,7 @@ impl<T: Clone + Integer + PartialOrd>
     #[inline]
     pub fn new(numer: T, denom: T) -> Ratio<T> {
         if denom == Zero::zero() {
-            fail!("denominator == 0");
+            panic!("denominator == 0");
         }
         let mut ret = Ratio::new_raw(numer, denom);
         ret.reduce();
