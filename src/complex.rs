@@ -174,7 +174,7 @@ impl<T: fmt::Show + Num + PartialOrd> fmt::Show for Complex<T> {
 
 #[cfg(test)]
 mod test {
-    #![allow(non_uppercase_statics)]
+    #![allow(non_upper_case_globals)]
 
     use super::{Complex64, Complex};
     use std::num::{Zero, One, Float};
