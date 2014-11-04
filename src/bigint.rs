@@ -65,6 +65,7 @@ use std::from_str::FromStr;
 use std::num::CheckedDiv;
 use std::num::{ToPrimitive, FromPrimitive};
 use std::num::{Zero, One, FromStrRadix};
+use std::str;
 use std::string::String;
 use std::{uint, i64, u64};
 
@@ -739,7 +740,9 @@ impl BigUint {
         let mut power: BigUint  = One::one();
         loop {
             let start = cmp::max(end, unit_len) - unit_len;
-            match uint::parse_bytes(buf.slice(start, end), radix) {
+            match str::from_utf8(buf.slice(start, end)).and_then(|s| {
+                FromStrRadix::from_str_radix(s, radix)
+            }) {
                 Some(d) => {
                     let d: Option<BigUint> = FromPrimitive::from_uint(d);
                     match d {
