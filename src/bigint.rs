@@ -67,7 +67,7 @@ use std::num::{ToPrimitive, FromPrimitive};
 use std::num::{Zero, One, FromStrRadix};
 use std::str;
 use std::string::String;
-use std::{uint, i64, u64};
+use std::{i64, u64};
 
 /// A `BigDigit` is a `BigUint`'s composing element.
 pub type BigDigit = u32;
@@ -703,7 +703,39 @@ impl FromStrRadix for BigUint {
     /// Creates and initializes a `BigUint`.
     #[inline]
     fn from_str_radix(s: &str, radix: uint) -> Option<BigUint> {
-        BigUint::parse_bytes(s.as_bytes(), radix)
+        let (base, unit_len) = get_radix_base(radix);
+        let base_num = match base.to_biguint() {
+            Some(base_num) => base_num,
+            None => { return None; }
+        };
+
+        let mut end            = s.len();
+        let mut n: BigUint     = Zero::zero();
+        let mut power: BigUint = One::one();
+        loop {
+            let start = cmp::max(end, unit_len) - unit_len;
+            match FromStrRadix::from_str_radix(s.slice(start, end), radix) {
+                Some(d) => {
+                    let d: Option<BigUint> = FromPrimitive::from_uint(d);
+                    match d {
+                        Some(d) => {
+                            // FIXME(#5992): assignment operator overloads
+                            // n += d * power;
+                            n = n + d * power;
+                        }
+                        None => { return None; }
+                    }
+                }
+                None => { return None; }
+            }
+            if end <= unit_len {
+                return Some(n);
+            }
+            end -= unit_len;
+            // FIXME(#5992): assignment operator overloads
+            // power *= base_num;
+            power = power * base_num;
+        }
     }
 }
 
@@ -728,42 +760,9 @@ impl BigUint {
     }
 
     /// Creates and initializes a `BigUint`.
+    #[inline]
     pub fn parse_bytes(buf: &[u8], radix: uint) -> Option<BigUint> {
-        let (base, unit_len) = get_radix_base(radix);
-        let base_num = match base.to_biguint() {
-            Some(base_num) => base_num,
-            None => { return None; }
-        };
-
-        let mut end             = buf.len();
-        let mut n: BigUint      = Zero::zero();
-        let mut power: BigUint  = One::one();
-        loop {
-            let start = cmp::max(end, unit_len) - unit_len;
-            match str::from_utf8(buf.slice(start, end)).and_then(|s| {
-                FromStrRadix::from_str_radix(s, radix)
-            }) {
-                Some(d) => {
-                    let d: Option<BigUint> = FromPrimitive::from_uint(d);
-                    match d {
-                        Some(d) => {
-                            // FIXME(#5992): assignment operator overloads
-                            // n += d * power;
-                            n = n + d * power;
-                        }
-                        None => { return None; }
-                    }
-                }
-                None => { return None; }
-            }
-            if end <= unit_len {
-                return Some(n);
-            }
-            end -= unit_len;
-            // FIXME(#5992): assignment operator overloads
-            // power *= base_num;
-            power = power * base_num;
-        }
+        str::from_utf8(buf).and_then(|s| FromStrRadix::from_str_radix(s, radix))
     }
 
     #[inline]
@@ -1280,7 +1279,15 @@ impl FromStrRadix for BigInt {
     /// Creates and initializes a BigInt.
     #[inline]
     fn from_str_radix(s: &str, radix: uint) -> Option<BigInt> {
-        BigInt::parse_bytes(s.as_bytes(), radix)
+        if s.is_empty() { return None; }
+        let mut sign  = Plus;
+        let mut start = 0;
+        if s.starts_with("-") {
+            sign  = Minus;
+            start = 1;
+        }
+        FromStrRadix::from_str_radix(s.slice_from(start), radix)
+            .map(|bu| BigInt::from_biguint(sign, bu))
     }
 }
 
@@ -1396,17 +1403,11 @@ impl BigInt {
     }
 
     /// Creates and initializes a `BigInt`.
+    #[inline]
     pub fn parse_bytes(buf: &[u8], radix: uint) -> Option<BigInt> {
-        if buf.is_empty() { return None; }
-        let mut sign  = Plus;
-        let mut start = 0;
-        if buf[0] == b'-' {
-            sign  = Minus;
-            start = 1;
-        }
-        return BigUint::parse_bytes(buf.slice(start, buf.len()), radix)
-            .map(|bu| BigInt::from_biguint(sign, bu));
+        str::from_utf8(buf).and_then(|s| FromStrRadix::from_str_radix(s, radix))
     }
+
 
     /// Converts this `BigInt` into a `BigUint`, if it's not negative.
     #[inline]
