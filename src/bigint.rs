@@ -294,8 +294,8 @@ impl Mul<BigUint, BigUint> for BigUint {
         if self.is_zero() || other.is_zero() { return Zero::zero(); }
 
         let (s_len, o_len) = (self.data.len(), other.data.len());
-        if s_len == 1 { return mul_digit(other, self.data.as_slice()[0]);  }
-        if o_len == 1 { return mul_digit(self,  other.data.as_slice()[0]); }
+        if s_len == 1 { return mul_digit(other, self.data[0]);  }
+        if o_len == 1 { return mul_digit(self,  other.data[0]); }
 
         // Using Karatsuba multiplication
         // (a1 * base + a0) * (b1 * base + b0)
@@ -340,8 +340,8 @@ impl Mul<BigUint, BigUint> for BigUint {
         #[inline]
         fn cut_at(a: &BigUint, n: uint) -> (BigUint, BigUint) {
             let mid = cmp::min(a.data.len(), n);
-            return (BigUint::from_slice(a.data.slice(mid, a.data.len())),
-                    BigUint::from_slice(a.data.slice(0, mid)));
+            (BigUint::from_slice(a.data[mid ..]),
+             BigUint::from_slice(a.data[.. mid]))
         }
 
         #[inline]
@@ -488,7 +488,7 @@ impl Integer for BigUint {
                 return (Zero::zero(), Zero::zero(), (*a).clone());
             }
 
-            let an = a.data.slice_from(a.data.len() - n);
+            let an = a.data[a.data.len() - n ..];
             let bn = *b.data.last().unwrap();
             let mut d = Vec::with_capacity(an.len());
             let mut carry = 0;
@@ -545,7 +545,7 @@ impl Integer for BigUint {
     #[inline]
     fn is_even(&self) -> bool {
         // Considering only the last digit.
-        match self.data.as_slice().head() {
+        match self.data.head() {
             Some(x) => x.is_even(),
             None => true
         }
@@ -574,8 +574,8 @@ impl ToPrimitive for BigUint {
     fn to_u64(&self) -> Option<u64> {
         match self.data.len() {
             0 => Some(0),
-            1 => Some(self.data.as_slice()[0] as u64),
-            2 => Some(BigDigit::to_doublebigdigit(self.data.as_slice()[1], self.data.as_slice()[0])
+            1 => Some(self.data[0] as u64),
+            2 => Some(BigDigit::to_doublebigdigit(self.data[1], self.data[0])
                       as u64),
             _ => None
         }
@@ -658,9 +658,9 @@ fn to_str_radix(me: &BigUint, radix: uint) -> String {
     assert!(1 < radix && radix <= 16, "The radix must be within (1, 16]");
     let (base, max_len) = get_radix_base(radix);
     if base == BigDigit::base {
-        return fill_concat(me.data.as_slice(), radix, max_len)
+        return fill_concat(me.data[], radix, max_len)
     }
-    return fill_concat(convert_base(me, base).as_slice(), radix, max_len);
+    return fill_concat(convert_base(me, base)[], radix, max_len);
 
     fn convert_base(n: &BigUint, base: DoubleBigDigit) -> Vec<BigDigit> {
         let divider    = base.to_biguint().unwrap();
@@ -684,10 +684,10 @@ fn to_str_radix(me: &BigUint, radix: uint) -> String {
         let mut s = String::with_capacity(v.len() * l);
         for n in v.iter().rev() {
             let ss = fmt::radix(*n as uint, radix as u8).to_string();
-            s.push_str("0".repeat(l - ss.len()).as_slice());
-            s.push_str(ss.as_slice());
+            s.push_str("0".repeat(l - ss.len())[]);
+            s.push_str(ss[]);
         }
-        s.as_slice().trim_left_chars('0').to_string()
+        s.trim_left_chars('0').to_string()
     }
 }
 
@@ -714,7 +714,7 @@ impl FromStrRadix for BigUint {
         let mut power: BigUint = One::one();
         loop {
             let start = cmp::max(end, unit_len) - unit_len;
-            match FromStrRadix::from_str_radix(s.slice(start, end), radix) {
+            match FromStrRadix::from_str_radix(s[start .. end], radix) {
                 Some(d) => {
                     let d: Option<BigUint> = FromPrimitive::from_uint(d);
                     match d {
@@ -770,7 +770,7 @@ impl BigUint {
         if n_unit == 0 || self.is_zero() { return (*self).clone(); }
 
         let mut v = Vec::from_elem(n_unit, ZERO_BIG_DIGIT);
-        v.push_all(self.data.as_slice());
+        v.push_all(self.data[]);
         BigUint::new(v)
     }
 
@@ -794,9 +794,7 @@ impl BigUint {
     fn shr_unit(&self, n_unit: uint) -> BigUint {
         if n_unit == 0 { return (*self).clone(); }
         if self.data.len() < n_unit { return Zero::zero(); }
-        return BigUint::from_slice(
-            self.data.slice(n_unit, self.data.len())
-        );
+        BigUint::from_slice(self.data[n_unit ..])
     }
 
     #[inline]
@@ -1286,7 +1284,7 @@ impl FromStrRadix for BigInt {
             sign  = Minus;
             start = 1;
         }
-        FromStrRadix::from_str_radix(s.slice_from(start), radix)
+        FromStrRadix::from_str_radix(s[start ..], radix)
             .map(|bu| BigInt::from_biguint(sign, bu))
     }
 }

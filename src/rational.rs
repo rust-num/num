@@ -668,7 +668,7 @@ mod test {
     #[test]
     fn test_to_from_str() {
         fn test(r: Rational, s: String) {
-            assert_eq!(FromStr::from_str(s.as_slice()), Some(r));
+            assert_eq!(FromStr::from_str(s[]), Some(r));
             assert_eq!(r.to_string(), s);
         }
         test(_1, "1".to_string());
