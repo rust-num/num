@@ -246,7 +246,7 @@ macro_rules! impl_integer_for_int {
 
             /// Returns `true` if the number is divisible by `2`
             #[inline]
-            fn is_even(&self) -> bool { self & 1 == 0 }
+            fn is_even(&self) -> bool { (*self) & 1 == 0 }
 
             /// Returns `true` if the number is not divisible by `2`
             #[inline]
@@ -418,11 +418,11 @@ macro_rules! impl_integer_for_uint {
 
             /// Returns `true` if the number is divisible by `2`.
             #[inline]
-            fn is_even(&self) -> bool { self & 1 == 0 }
+            fn is_even(&self) -> bool { (*self) & 1 == 0 }
 
             /// Returns `true` if the number is not divisible by `2`.
             #[inline]
-            fn is_odd(&self) -> bool { !self.is_even() }
+            fn is_odd(&self) -> bool { !(*self).is_even() }
         }
 
         #[cfg(test)]
