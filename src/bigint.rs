@@ -446,7 +446,7 @@ impl Integer for BigUint {
             shift += 1;
         }
         assert!(shift < BigDigit::bits);
-        let (d, m) = div_mod_floor_inner(self << shift, other << shift);
+        let (d, m) = div_mod_floor_inner(*self << shift, *other << shift);
         return (d, m >> shift);
 
 
@@ -990,9 +990,9 @@ impl Add<BigInt, BigInt> for BigInt {
             (NoSign, _)      => other.clone(),
             (_,    NoSign)   => self.clone(),
             (Plus, Plus)   => BigInt::from_biguint(Plus, self.data + other.data),
-            (Plus, Minus)  => self - (-*other),
-            (Minus, Plus)  => other - (-*self),
-            (Minus, Minus) => -((-self) + (-*other))
+            (Plus, Minus)  => *self - (-*other),
+            (Minus, Plus)  => *other - (-*self),
+            (Minus, Minus) => -((-*self) + (-*other))
         }
     }
 }
@@ -1001,16 +1001,16 @@ impl Sub<BigInt, BigInt> for BigInt {
     #[inline]
     fn sub(&self, other: &BigInt) -> BigInt {
         match (self.sign, other.sign) {
-            (NoSign, _)    => -other,
+            (NoSign, _)    => -*other,
             (_,    NoSign) => self.clone(),
             (Plus, Plus) => match self.data.cmp(&other.data) {
                 Less    => BigInt::from_biguint(Minus, other.data - self.data),
                 Greater => BigInt::from_biguint(Plus, self.data - other.data),
                 Equal   => Zero::zero()
             },
-            (Plus, Minus) => self + (-*other),
-            (Minus, Plus) => -((-self) + *other),
-            (Minus, Minus) => (-other) - (-*self)
+            (Plus, Minus) => *self + (-*other),
+            (Minus, Plus) => -((-*self) + *other),
+            (Minus, Minus) => (-*other) - (-*self)
         }
     }
 }
@@ -1129,7 +1129,7 @@ impl Integer for BigInt {
             (Minus, Plus) => if m.is_zero() {
                 (-d, Zero::zero())
             } else {
-                (-d - One::one(), other - m)
+                (-d - One::one(), *other - m)
             },
             (Minus, Minus) => (d, -m)
         }
@@ -2562,7 +2562,7 @@ mod bigint_tests {
                 assert_eq!(m.sign, b.sign);
             }
             assert!(m.abs() <= b.abs());
-            assert!(*a == b * d + m);
+            assert!(*a == (*b) * d + m);
             assert!(d == *ans_d);
             assert!(m == *ans_m);
         }
@@ -2575,8 +2575,8 @@ mod bigint_tests {
                 check_sub(&a.neg(), &b.neg(), d, m);
             } else {
                 check_sub(a, b, d, m);
-                check_sub(a, &b.neg(), &(d.neg() - One::one()), &(m - *b));
-                check_sub(&a.neg(), b, &(d.neg() - One::one()), &(b - *m));
+                check_sub(a, &b.neg(), &(d.neg() - One::one()), &(*m - *b));
+                check_sub(&a.neg(), b, &(d.neg() - One::one()), &(*b - *m));
                 check_sub(&a.neg(), &b.neg(), d, &m.neg());
             }
         }
@@ -2613,7 +2613,7 @@ mod bigint_tests {
                 assert_eq!(r.sign, a.sign);
             }
             assert!(r.abs() <= b.abs());
-            assert!(*a == b * q + r);
+            assert!(*a == (*b) * q + r);
             assert!(q == *ans_q);
             assert!(r == *ans_r);
         }
