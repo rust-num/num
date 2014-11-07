@@ -85,13 +85,13 @@ pub mod BigDigit {
     use super::DoubleBigDigit;
 
     // `DoubleBigDigit` size dependent
-    pub const bits: uint = 32;
+    pub const BITS: uint = 32;
 
-    pub const base: DoubleBigDigit = 1 << bits;
-    const LO_MASK: DoubleBigDigit = (-1 as DoubleBigDigit) >> bits;
+    pub const BASE: DoubleBigDigit = 1 << BITS;
+    const LO_MASK: DoubleBigDigit = (-1 as DoubleBigDigit) >> BITS;
 
     #[inline]
-    fn get_hi(n: DoubleBigDigit) -> BigDigit { (n >> bits) as BigDigit }
+    fn get_hi(n: DoubleBigDigit) -> BigDigit { (n >> BITS) as BigDigit }
     #[inline]
     fn get_lo(n: DoubleBigDigit) -> BigDigit { (n & LO_MASK) as BigDigit }
 
@@ -104,14 +104,14 @@ pub mod BigDigit {
     /// Join two `BigDigit`s into one `DoubleBigDigit`
     #[inline]
     pub fn to_doublebigdigit(hi: BigDigit, lo: BigDigit) -> DoubleBigDigit {
-        (lo as DoubleBigDigit) | ((hi as DoubleBigDigit) << bits)
+        (lo as DoubleBigDigit) | ((hi as DoubleBigDigit) << BITS)
     }
 }
 
 /// A big unsigned integer type.
 ///
 /// A `BigUint`-typed value `BigUint { data: vec!(a, b, c) }` represents a number
-/// `(a + b * BigDigit::base + c * BigDigit::base^2)`.
+/// `(a + b * BigDigit::BASE + c * BigDigit::BASE^2)`.
 #[deriving(Clone)]
 pub struct BigUint {
     data: Vec<BigDigit>
@@ -214,8 +214,8 @@ impl BitXor<BigUint, BigUint> for BigUint {
 impl Shl<uint, BigUint> for BigUint {
     #[inline]
     fn shl(&self, rhs: &uint) -> BigUint {
-        let n_unit = *rhs / BigDigit::bits;
-        let n_bits = *rhs % BigDigit::bits;
+        let n_unit = *rhs / BigDigit::BITS;
+        let n_bits = *rhs % BigDigit::BITS;
         return self.shl_unit(n_unit).shl_bits(n_bits);
     }
 }
@@ -223,8 +223,8 @@ impl Shl<uint, BigUint> for BigUint {
 impl Shr<uint, BigUint> for BigUint {
     #[inline]
     fn shr(&self, rhs: &uint) -> BigUint {
-        let n_unit = *rhs / BigDigit::bits;
-        let n_bits = *rhs % BigDigit::bits;
+        let n_unit = *rhs / BigDigit::BITS;
+        let n_bits = *rhs % BigDigit::BITS;
         return self.shr_unit(n_unit).shr_bits(n_bits);
     }
 }
@@ -270,7 +270,7 @@ impl Sub<BigUint, BigUint> for BigUint {
         let mut borrow = 0i;
         let diff: Vec<BigDigit> =  a.take(new_len).zip(b).map(|(ai, bi)| {
             let (hi, lo) = BigDigit::from_doublebigdigit(
-                BigDigit::base
+                BigDigit::BASE
                     + (*ai as DoubleBigDigit)
                     - (*bi as DoubleBigDigit)
                     - (borrow as DoubleBigDigit)
@@ -441,11 +441,11 @@ impl Integer for BigUint {
 
         let mut shift = 0;
         let mut n = *other.data.last().unwrap();
-        while n < (1 << BigDigit::bits - 2) {
+        while n < (1 << BigDigit::BITS - 2) {
             n <<= 1;
             shift += 1;
         }
-        assert!(shift < BigDigit::bits);
+        assert!(shift < BigDigit::BITS);
         let (d, m) = div_mod_floor_inner(*self << shift, *other << shift);
         return (d, m >> shift);
 
@@ -495,7 +495,7 @@ impl Integer for BigUint {
             for elt in an.iter().rev() {
                 let ai = BigDigit::to_doublebigdigit(carry, *elt);
                 let di = ai / (bn as DoubleBigDigit);
-                assert!(di < BigDigit::base);
+                assert!(di < BigDigit::BASE);
                 carry = (ai % (bn as DoubleBigDigit)) as BigDigit;
                 d.push(di as BigDigit)
             }
@@ -657,7 +657,7 @@ impl_to_biguint!(u64,  FromPrimitive::from_u64)
 fn to_str_radix(me: &BigUint, radix: uint) -> String {
     assert!(1 < radix && radix <= 16, "The radix must be within (1, 16]");
     let (base, max_len) = get_radix_base(radix);
-    if base == BigDigit::base {
+    if base == BigDigit::BASE {
         return fill_concat(me.data[], radix, max_len)
     }
     return fill_concat(convert_base(me, base)[], radix, max_len);
@@ -805,7 +805,7 @@ impl BigUint {
         let mut shifted_rev = Vec::with_capacity(self.data.len());
         for elem in self.data.iter().rev() {
             shifted_rev.push((*elem >> n_bits) | borrow);
-            borrow = *elem << (BigDigit::bits - n_bits);
+            borrow = *elem << (BigDigit::BITS - n_bits);
         }
         let shifted = { shifted_rev.reverse(); shifted_rev };
         return BigUint::new(shifted);
@@ -815,7 +815,7 @@ impl BigUint {
     pub fn bits(&self) -> uint {
         if self.is_zero() { return 0; }
         let zeros = self.data.last().unwrap().leading_zeros();
-        return self.data.len()*BigDigit::bits - zeros;
+        return self.data.len()*BigDigit::BITS - zeros;
     }
 }
 
@@ -1313,14 +1313,14 @@ pub trait RandBigInt {
 
 impl<R: Rng> RandBigInt for R {
     fn gen_biguint(&mut self, bit_size: uint) -> BigUint {
-        let (digits, rem) = bit_size.div_rem(&BigDigit::bits);
+        let (digits, rem) = bit_size.div_rem(&BigDigit::BITS);
         let mut data = Vec::with_capacity(digits+1);
         for _ in range(0, digits) {
             data.push(self.gen());
         }
         if rem > 0 {
             let final_digit: BigDigit = self.gen();
-            data.push(final_digit >> (BigDigit::bits - rem));
+            data.push(final_digit >> (BigDigit::BITS - rem));
         }
         BigUint::new(data)
     }
@@ -1792,9 +1792,9 @@ mod biguint_tests {
         check(i64::MAX.to_biguint().unwrap(), i64::MAX);
 
         check(BigUint::new(vec!(           )), 0);
-        check(BigUint::new(vec!( 1         )), (1 << (0*BigDigit::bits)));
-        check(BigUint::new(vec!(-1         )), (1 << (1*BigDigit::bits)) - 1);
-        check(BigUint::new(vec!( 0,  1     )), (1 << (1*BigDigit::bits)));
+        check(BigUint::new(vec!( 1         )), (1 << (0*BigDigit::BITS)));
+        check(BigUint::new(vec!(-1         )), (1 << (1*BigDigit::BITS)) - 1);
+        check(BigUint::new(vec!( 0,  1     )), (1 << (1*BigDigit::BITS)));
         check(BigUint::new(vec!(-1, -1 >> 1)), i64::MAX);
 
         assert_eq!(i64::MIN.to_biguint(), None);
@@ -1818,9 +1818,9 @@ mod biguint_tests {
         check(u64::MAX.to_biguint().unwrap(), u64::MAX);
 
         check(BigUint::new(vec!(      )), 0);
-        check(BigUint::new(vec!( 1    )), (1 << (0*BigDigit::bits)));
-        check(BigUint::new(vec!(-1    )), (1 << (1*BigDigit::bits)) - 1);
-        check(BigUint::new(vec!( 0,  1)), (1 << (1*BigDigit::bits)));
+        check(BigUint::new(vec!( 1    )), (1 << (0*BigDigit::BITS)));
+        check(BigUint::new(vec!(-1    )), (1 << (1*BigDigit::BITS)) - 1);
+        check(BigUint::new(vec!( 0,  1)), (1 << (1*BigDigit::BITS)));
         check(BigUint::new(vec!(-1, -1)), u64::MAX);
 
         assert_eq!(BigUint::new(vec!( 0,  0,  1)).to_u64(), None);
@@ -2102,7 +2102,7 @@ mod biguint_tests {
     }
 
     fn to_str_pairs() -> Vec<(BigUint, Vec<(uint, String)>)> {
-        let bits = BigDigit::bits;
+        let bits = BigDigit::BITS;
         vec!(( Zero::zero(), vec!(
             (2, "0".to_string()), (3, "0".to_string())
         )), ( BigUint::from_slice([ 0xff ]), vec!(
@@ -2389,7 +2389,7 @@ mod bigint_tests {
             None);
 
         assert_eq!(
-            BigInt::from_biguint(Minus, BigUint::new(vec!(1,0,0,1<<(BigDigit::bits-1)))).to_i64(),
+            BigInt::from_biguint(Minus, BigUint::new(vec!(1,0,0,1<<(BigDigit::BITS-1)))).to_i64(),
             None);
 
         assert_eq!(
