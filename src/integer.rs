@@ -458,7 +458,7 @@ macro_rules! impl_integer_for_uint {
                 assert_eq!((1 as $T).lcm(&1), 1 as $T);
                 assert_eq!((8 as $T).lcm(&9), 72 as $T);
                 assert_eq!((11 as $T).lcm(&5), 55 as $T);
-                assert_eq!((99 as $T).lcm(&17), 1683 as $T);
+                assert_eq!((15 as $T).lcm(&17), 255 as $T);
             }
 
             #[test]
