@@ -1421,7 +1421,7 @@ impl BigInt {
 #[cfg(test)]
 mod biguint_tests {
     use Integer;
-    use super::{BigDigit, BigUint, ToBigUint, to_str_radix, to_str_radix_signed};
+    use super::{BigDigit, BigUint, ToBigUint, to_str_radix};
     use super::{Plus, BigInt, RandBigInt, ToBigInt};
 
     use std::cmp::{Less, Equal, Greater};
