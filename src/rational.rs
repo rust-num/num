@@ -386,7 +386,7 @@ impl<T: FromStrRadix + Clone + Integer + PartialOrd>
 mod test {
 
     use super::{Ratio, Rational, BigRational};
-    use std::num::{Zero, One, FromStrRadix, FromPrimitive};
+    use std::num::{Zero, One, FromPrimitive};
     use std::from_str::FromStr;
     use std::hash::hash;
     use std::num;
