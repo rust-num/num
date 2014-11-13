@@ -112,7 +112,7 @@ pub mod BigDigit {
 ///
 /// A `BigUint`-typed value `BigUint { data: vec!(a, b, c) }` represents a number
 /// `(a + b * BigDigit::BASE + c * BigDigit::BASE^2)`.
-#[deriving(Clone)]
+#[deriving(Clone, Encodable, Decodable)]
 pub struct BigUint {
     data: Vec<BigDigit>
 }
@@ -843,7 +843,7 @@ fn get_radix_base(radix: uint) -> (DoubleBigDigit, uint) {
 }
 
 /// A Sign is a `BigInt`'s composing element.
-#[deriving(PartialEq, PartialOrd, Eq, Ord, Clone, Show)]
+#[deriving(PartialEq, PartialOrd, Eq, Ord, Clone, Show, Encodable, Decodable)]
 pub enum Sign { Minus, NoSign, Plus }
 
 impl Neg<Sign> for Sign {
@@ -859,7 +859,7 @@ impl Neg<Sign> for Sign {
 }
 
 /// A big signed integer type.
-#[deriving(Clone)]
+#[deriving(Clone, Encodable, Decodable)]
 pub struct BigInt {
     sign: Sign,
     data: BigUint

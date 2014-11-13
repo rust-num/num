@@ -21,7 +21,7 @@ use std::num::{Zero, One, FromStrRadix};
 use bigint::{BigInt, BigUint, Sign, Plus, Minus};
 
 /// Represents the ratio between 2 numbers.
-#[deriving(Clone, Hash)]
+#[deriving(Clone, Hash, Encodable, Decodable)]
 #[allow(missing_docs)]
 pub struct Ratio<T> {
     numer: T,

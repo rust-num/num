@@ -18,7 +18,7 @@ use std::num::{Zero, One};
 // probably doesn't map to C's _Complex correctly.
 
 /// A complex number in Cartesian form.
-#[deriving(PartialEq, Clone, Hash)]
+#[deriving(PartialEq, Clone, Hash, Encodable, Decodable)]
 pub struct Complex<T> {
     /// Real portion of the complex number
     pub re: T,

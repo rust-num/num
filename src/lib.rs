@@ -58,6 +58,7 @@
 #![allow(deprecated)] // from_str_radix
 
 extern crate rand;
+extern crate serialize;
 
 pub use bigint::{BigInt, BigUint};
 pub use rational::{Rational, BigRational};
