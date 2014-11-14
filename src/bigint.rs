@@ -817,6 +817,11 @@ impl BigUint {
         let zeros = self.data.last().unwrap().leading_zeros();
         return self.data.len()*BigDigit::BITS - zeros;
     }
+
+    /// Returns a reference to the underlying data for the `BigUint`
+    pub fn data(&self) -> &[BigDigit] {
+        self.data.as_slice()
+    }
 }
 
 // `DoubleBigDigit` size dependent
@@ -1415,6 +1420,11 @@ impl BigInt {
             NoSign => Some(Zero::zero()),
             Minus => None
         }
+    }
+
+    /// Returns a reference to the underlying data for the `BigUint`
+    pub fn data(&self) -> &[BigDigit] {
+        self.data.data()
     }
 }
 
