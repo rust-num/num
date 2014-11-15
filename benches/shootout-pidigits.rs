@@ -42,14 +42,11 @@ extern crate num;
 extern crate test;
 
 use std::from_str::FromStr;
-use std::num::One;
-use std::num::Zero;
 use std::num::FromPrimitive;
 
 use test::Bencher;
 
-use num::Integer;
-use num::bigint::BigInt;
+use num::{BigInt, Integer, One, Zero};
 
 struct Context {
     numer: BigInt,

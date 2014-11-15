@@ -64,8 +64,76 @@ pub use bigint::{BigInt, BigUint};
 pub use rational::{Rational, BigRational};
 pub use complex::Complex;
 pub use integer::Integer;
+pub use traits::{Num, Zero, One, Signed, Unsigned, Bounded,
+                 Saturating, CheckedAdd, CheckedSub, CheckedMul, CheckedDiv};
 
 pub mod bigint;
 pub mod complex;
 pub mod integer;
+pub mod traits;
 pub mod rational;
+
+/// Returns the additive identity, `0`.
+#[inline(always)] pub fn zero<T: Zero>() -> T { Zero::zero() }
+
+/// Returns the multiplicative identity, `1`.
+#[inline(always)] pub fn one<T: One>() -> T { One::one() }
+
+/// Computes the absolute value.
+///
+/// For `f32` and `f64`, `NaN` will be returned if the number is `NaN`
+///
+/// For signed integers, `::MIN` will be returned if the number is `::MIN`.
+#[inline(always)]
+pub fn abs<T: Signed>(value: T) -> T {
+    value.abs()
+}
+
+/// The positive difference of two numbers.
+///
+/// Returns zero if `x` is less than or equal to `y`, otherwise the difference
+/// between `x` and `y` is returned.
+#[inline(always)]
+pub fn abs_sub<T: Signed>(x: T, y: T) -> T {
+    x.abs_sub(&y)
+}
+
+/// Returns the sign of the number.
+///
+/// For `f32` and `f64`:
+///
+/// * `1.0` if the number is positive, `+0.0` or `INFINITY`
+/// * `-1.0` if the number is negative, `-0.0` or `NEG_INFINITY`
+/// * `NaN` if the number is `NaN`
+///
+/// For signed integers:
+///
+/// * `0` if the number is zero
+/// * `1` if the number is positive
+/// * `-1` if the number is negative
+#[inline(always)] pub fn signum<T: Signed>(value: T) -> T { value.signum() }
+
+/// Raises a value to the power of exp, using exponentiation by squaring.
+///
+/// # Example
+///
+/// ```rust
+/// use num;
+///
+/// assert_eq!(num::pow(2i, 4), 16);
+/// ```
+#[inline]
+pub fn pow<T: One + Mul<T, T>>(mut base: T, mut exp: uint) -> T {
+    if exp == 1 { base }
+    else {
+        let mut acc = one::<T>();
+        while exp > 0 {
+            if (exp & 1) == 1 {
+                acc = acc * base;
+            }
+            base = base * base;
+            exp = exp >> 1;
+        }
+        acc
+    }
+}

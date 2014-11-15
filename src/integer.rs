@@ -10,6 +10,8 @@
 
 //! Integer trait and functions.
 
+use {Num, Signed};
+
 pub trait Integer: Num + PartialOrd
                  + Div<Self, Self>
                  + Rem<Self, Self> {
