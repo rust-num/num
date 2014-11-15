@@ -64,12 +64,14 @@ pub use bigint::{BigInt, BigUint};
 pub use rational::{Rational, BigRational};
 pub use complex::Complex;
 pub use integer::Integer;
+pub use iter::{range, range_inclusive, range_step, range_step_inclusive};
 pub use traits::{Num, Zero, One, Signed, Unsigned, Bounded,
                  Saturating, CheckedAdd, CheckedSub, CheckedMul, CheckedDiv};
 
 pub mod bigint;
 pub mod complex;
 pub mod integer;
+pub mod iter;
 pub mod traits;
 pub mod rational;
 
