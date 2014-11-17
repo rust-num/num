@@ -60,12 +60,10 @@ use rand::Rng;
 
 use std::{cmp, fmt, hash};
 use std::default::Default;
-use std::from_str::FromStr;
 use std::iter::{AdditiveIterator, MultiplicativeIterator};
 use std::num::{Int, ToPrimitive, FromPrimitive};
 use std::num::FromStrRadix;
-use std::str;
-use std::string::String;
+use std::str::{mod, FromStr};
 use std::{i64, u64};
 
 use {Num, Unsigned, CheckedAdd, CheckedSub, CheckedMul, CheckedDiv, Signed, Zero, One};
@@ -1476,7 +1474,7 @@ mod biguint_tests {
     use super::{Plus, BigInt, RandBigInt, ToBigInt};
 
     use std::cmp::{Less, Equal, Greater};
-    use std::from_str::FromStr;
+    use std::str::FromStr;
     use std::i64;
     use std::num::FromStrRadix;
     use std::num::{ToPrimitive, FromPrimitive};

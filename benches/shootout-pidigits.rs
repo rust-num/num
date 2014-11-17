@@ -41,7 +41,7 @@
 extern crate num;
 extern crate test;
 
-use std::from_str::FromStr;
+use std::str::FromStr;
 use std::num::FromPrimitive;
 
 use test::Bencher;

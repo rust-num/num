@@ -14,7 +14,7 @@ use Integer;
 
 use std::cmp;
 use std::fmt;
-use std::from_str::FromStr;
+use std::str::FromStr;
 use std::num::{FromStrRadix, Float};
 use std::iter::{AdditiveIterator, MultiplicativeIterator};
 
@@ -403,7 +403,7 @@ mod test {
 
     use super::{Ratio, Rational, BigRational};
     use std::num::{FromPrimitive, Float};
-    use std::from_str::FromStr;
+    use std::str::FromStr;
     use std::hash::hash;
     use std::i32;
     use {Zero, One, Signed};
