@@ -12,7 +12,10 @@
 //! Complex numbers.
 
 use std::fmt;
-use std::num::{Zero, One};
+use std::num::FloatMath;
+use std::iter::{AdditiveIterator, MultiplicativeIterator};
+
+use {Zero, One, Num};
 
 // FIXME #1284: handle complex NaN & infinity etc. This
 // probably doesn't map to C's _Complex correctly.
@@ -80,7 +83,7 @@ impl<T: Clone + FloatMath> Complex<T> {
     }
 }
 
-impl<T: Clone + FloatMath> Complex<T> {
+impl<T: Clone + FloatMath + Num> Complex<T> {
     /// Calculate the principal Arg of self.
     #[inline]
     pub fn arg(&self) -> T {
@@ -172,13 +175,29 @@ impl<T: fmt::Show + Num + PartialOrd> fmt::Show for Complex<T> {
     }
 }
 
+impl<A: Clone + Num, T: Iterator<Complex<A>>> AdditiveIterator<Complex<A>> for T {
+    fn sum(&mut self) -> Complex<A> {
+        let init: Complex<A> = Zero::zero();
+        self.fold(init, |acc, x| acc + x)
+    }
+}
+
+impl<A: Clone + Num, T: Iterator<Complex<A>>> MultiplicativeIterator<Complex<A>> for T {
+    fn product(&mut self) -> Complex<A> {
+        let init: Complex<A> = One::one();
+        self.fold(init, |acc, x| acc * x)
+    }
+}
+
 #[cfg(test)]
 mod test {
     #![allow(non_upper_case_globals)]
 
     use super::{Complex64, Complex};
-    use std::num::{Zero, One, Float};
+    use std::num::Float;
     use std::hash::hash;
+
+    use {Zero, One};
 
     pub const _0_0i : Complex64 = Complex { re: 0.0, im: 0.0 };
     pub const _1_0i : Complex64 = Complex { re: 1.0, im: 0.0 };
@@ -280,7 +299,7 @@ mod test {
 
     mod arith {
         use super::{_0_0i, _1_0i, _1_1i, _0_1i, _neg1_1i, _05_05i, all_consts};
-        use std::num::Zero;
+        use Zero;
 
         #[test]
         fn test_add() {

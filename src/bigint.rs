@@ -19,8 +19,7 @@
 //! ## Example
 //!
 //! ```rust
-//! use num::bigint::BigUint;
-//! use std::num::{Zero, One};
+//! use num::{BigUint, Zero, One};
 //! use std::mem::replace;
 //!
 //! // Calculate large fibonacci numbers.
@@ -61,13 +60,13 @@ use rand::Rng;
 
 use std::{cmp, fmt, hash};
 use std::default::Default;
-use std::from_str::FromStr;
-use std::num::CheckedDiv;
-use std::num::{ToPrimitive, FromPrimitive};
-use std::num::{Zero, One, FromStrRadix};
-use std::str;
-use std::string::String;
+use std::iter::{AdditiveIterator, MultiplicativeIterator};
+use std::num::{Int, ToPrimitive, FromPrimitive};
+use std::num::FromStrRadix;
+use std::str::{mod, FromStr};
 use std::{i64, u64};
+
+use {Num, Unsigned, CheckedAdd, CheckedSub, CheckedMul, CheckedDiv, Signed, Zero, One};
 
 /// A `BigDigit` is a `BigUint`'s composing element.
 pub type BigDigit = u32;
@@ -739,6 +738,20 @@ impl FromStrRadix for BigUint {
     }
 }
 
+impl<T: Iterator<BigUint>> AdditiveIterator<BigUint> for T {
+    fn sum(&mut self) -> BigUint {
+        let init: BigUint = Zero::zero();
+        self.fold(init, |acc, x| acc + x)
+    }
+}
+
+impl<T: Iterator<BigUint>> MultiplicativeIterator<BigUint> for T {
+    fn product(&mut self) -> BigUint {
+        let init: BigUint = One::one();
+        self.fold(init, |acc, x| acc * x)
+    }
+}
+
 impl BigUint {
     /// Creates and initializes a `BigUint`.
     ///
@@ -1084,7 +1097,6 @@ impl CheckedDiv for BigInt {
     }
 }
 
-
 impl Integer for BigInt {
     #[inline]
     fn div_rem(&self, other: &BigInt) -> (BigInt, BigInt) {
@@ -1374,6 +1386,20 @@ impl<R: Rng> RandBigInt for R {
     }
 }
 
+impl<T: Iterator<BigInt>> AdditiveIterator<BigInt> for T {
+    fn sum(&mut self) -> BigInt {
+        let init: BigInt = Zero::zero();
+        self.fold(init, |acc, x| acc + x)
+    }
+}
+
+impl<T: Iterator<BigInt>> MultiplicativeIterator<BigInt> for T {
+    fn product(&mut self) -> BigInt {
+        let init: BigInt = One::one();
+        self.fold(init, |acc, x| acc * x)
+    }
+}
+
 impl BigInt {
     /// Creates and initializes a BigInt.
     ///
@@ -1416,6 +1442,29 @@ impl BigInt {
             Minus => None
         }
     }
+
+    #[inline]
+    pub fn checked_add(&self, v: &BigInt) -> Option<BigInt> {
+        return Some(self.add(v));
+    }
+
+    #[inline]
+    pub fn checked_sub(&self, v: &BigInt) -> Option<BigInt> {
+        return Some(self.sub(v));
+    }
+
+    #[inline]
+    pub fn checked_mul(&self, v: &BigInt) -> Option<BigInt> {
+        return Some(self.mul(v));
+    }
+
+    #[inline]
+    pub fn checked_div(&self, v: &BigInt) -> Option<BigInt> {
+        if v.is_zero() {
+            return None;
+        }
+        return Some(self.div(v));
+    }
 }
 
 #[cfg(test)]
@@ -1425,14 +1474,15 @@ mod biguint_tests {
     use super::{Plus, BigInt, RandBigInt, ToBigInt};
 
     use std::cmp::{Less, Equal, Greater};
-    use std::from_str::FromStr;
+    use std::str::FromStr;
     use std::i64;
-    use std::num::{Zero, One, FromStrRadix};
+    use std::num::FromStrRadix;
     use std::num::{ToPrimitive, FromPrimitive};
-    use std::num::CheckedDiv;
     use std::rand::task_rng;
     use std::u64;
     use std::hash::hash;
+
+    use {Zero, One, CheckedAdd, CheckedSub, CheckedMul, CheckedDiv};
 
     #[test]
     fn test_from_slice() {
@@ -2289,12 +2339,13 @@ mod bigint_tests {
 
     use std::cmp::{Less, Equal, Greater};
     use std::i64;
-    use std::num::CheckedDiv;
-    use std::num::{Zero, One, FromStrRadix};
+    use std::num::FromStrRadix;
     use std::num::{ToPrimitive, FromPrimitive};
     use std::rand::task_rng;
     use std::u64;
     use std::hash::hash;
+
+    use {Zero, One, Signed};
 
     #[test]
     fn test_from_biguint() {
@@ -2882,7 +2933,9 @@ mod bench {
     use super::BigUint;
     use std::iter;
     use std::mem::replace;
-    use std::num::{FromPrimitive, Zero, One};
+    use std::num::FromPrimitive;
+
+    use {Zero, One};
 
     fn factorial(n: uint) -> BigUint {
         let mut f: BigUint = One::one();

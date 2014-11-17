@@ -14,11 +14,12 @@ use Integer;
 
 use std::cmp;
 use std::fmt;
-use std::from_str::FromStr;
-use std::num;
-use std::num::{Zero, One, FromStrRadix};
+use std::str::FromStr;
+use std::num::{FromStrRadix, Float};
+use std::iter::{AdditiveIterator, MultiplicativeIterator};
 
 use bigint::{BigInt, BigUint, Sign, Plus, Minus};
+use {Num, Signed, Zero, One};
 
 /// Represents the ratio between 2 numbers.
 #[deriving(Clone, Hash, Encodable, Decodable)]
@@ -303,7 +304,7 @@ impl<T: Clone + Integer + PartialOrd>
     Num for Ratio<T> {}
 
 impl<T: Clone + Integer + PartialOrd>
-    num::Signed for Ratio<T> {
+    Signed for Ratio<T> {
     #[inline]
     fn abs(&self) -> Ratio<T> {
         if self.is_negative() { -self.clone() } else { self.clone() }
@@ -317,11 +318,11 @@ impl<T: Clone + Integer + PartialOrd>
     #[inline]
     fn signum(&self) -> Ratio<T> {
         if *self > Zero::zero() {
-            num::one()
+            One::one()
         } else if self.is_zero() {
-            num::zero()
+            Zero::zero()
         } else {
-            - num::one::<Ratio<T>>()
+            - ::one::<Ratio<T>>()
         }
     }
 
@@ -382,15 +383,30 @@ impl<T: FromStrRadix + Clone + Integer + PartialOrd>
     }
 }
 
+impl<A: Clone + Integer + PartialOrd, T: Iterator<Ratio<A>>> AdditiveIterator<Ratio<A>> for T {
+    fn sum(&mut self) -> Ratio<A> {
+        let init: Ratio<A> = Zero::zero();
+        self.fold(init, |acc, x| acc + x)
+    }
+}
+
+impl<A: Clone + Integer + PartialOrd, T: Iterator<Ratio<A>>> MultiplicativeIterator<Ratio<A>> for T {
+    fn product(&mut self) -> Ratio<A> {
+        let init: Ratio<A> = One::one();
+        self.fold(init, |acc, x| acc * x)
+    }
+}
+
+
 #[cfg(test)]
 mod test {
 
     use super::{Ratio, Rational, BigRational};
-    use std::num::{Zero, One, FromPrimitive};
-    use std::from_str::FromStr;
+    use std::num::{FromPrimitive, Float};
+    use std::str::FromStr;
     use std::hash::hash;
-    use std::num;
     use std::i32;
+    use {Zero, One, Signed};
 
     pub const _0 : Rational = Ratio { numer: 0, denom: 1};
     pub const _1 : Rational = Ratio { numer: 1, denom: 1};
@@ -735,7 +751,7 @@ mod test {
         assert_eq!(_3_2.abs_sub(&_1_2), _1);
         assert_eq!(_1_2.abs_sub(&_3_2), Zero::zero());
         assert_eq!(_1_2.signum(), One::one());
-        assert_eq!(_NEG1_2.signum(), - num::one::<Ratio<int>>());
+        assert_eq!(_NEG1_2.signum(), - ::one::<Ratio<int>>());
         assert!(_NEG1_2.is_negative());
         assert!(! _NEG1_2.is_positive());
         assert!(! _1_2.is_negative());
