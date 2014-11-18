@@ -18,7 +18,7 @@ use std::str::FromStr;
 use std::num::{FromStrRadix, Float};
 use std::iter::{AdditiveIterator, MultiplicativeIterator};
 
-use bigint::{BigInt, BigUint, Sign, Plus, Minus};
+use bigint::{BigInt, BigUint, Sign};
 use {Num, Signed, Zero, One};
 
 /// Represents the ratio between 2 numbers.
@@ -186,7 +186,7 @@ impl Ratio<BigInt> {
             return None;
         }
         let (mantissa, exponent, sign) = f.integer_decode();
-        let bigint_sign: Sign = if sign == 1 { Plus } else { Minus };
+        let bigint_sign = if sign == 1 { Sign::Plus } else { Sign::Minus };
         if exponent < 0 {
             let one: BigInt = One::one();
             let denom: BigInt = one << ((-exponent) as uint);

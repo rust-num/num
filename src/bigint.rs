@@ -67,6 +67,7 @@ use std::str::{mod, FromStr};
 use std::{i64, u64};
 
 use {Num, Unsigned, CheckedAdd, CheckedSub, CheckedMul, CheckedDiv, Signed, Zero, One};
+use self::Sign::{Minus, NoSign, Plus};
 
 /// A `BigDigit` is a `BigUint`'s composing element.
 pub type BigDigit = u32;
@@ -1471,7 +1472,8 @@ impl BigInt {
 mod biguint_tests {
     use Integer;
     use super::{BigDigit, BigUint, ToBigUint, to_str_radix};
-    use super::{Plus, BigInt, RandBigInt, ToBigInt};
+    use super::{BigInt, RandBigInt, ToBigInt};
+    use super::Sign::Plus;
 
     use std::cmp::{Less, Equal, Greater};
     use std::str::FromStr;
@@ -2335,7 +2337,8 @@ mod biguint_tests {
 mod bigint_tests {
     use Integer;
     use super::{BigDigit, BigUint, ToBigUint};
-    use super::{Sign, Minus, NoSign, Plus, BigInt, RandBigInt, ToBigInt};
+    use super::{Sign, BigInt, RandBigInt, ToBigInt};
+    use super::Sign::{Minus, NoSign, Plus};
 
     use std::cmp::{Less, Equal, Greater};
     use std::i64;
