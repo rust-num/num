@@ -7,9 +7,8 @@ Arbitrary sized numeric types for Rust.
 Add this to your `Cargo.toml`:
 
 ```toml
-[dependencies.num]
-
-git = "https://github.com/rust-lang/num"
+[dependencies]
+num = "*"
 ```
 
 and this to your crate root:
