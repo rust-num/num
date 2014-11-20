@@ -1491,12 +1491,12 @@ mod biguint_tests {
         fn check(slice: &[BigDigit], data: &[BigDigit]) {
             assert!(data == BigUint::from_slice(slice).data.as_slice());
         }
-        check([1], [1]);
-        check([0, 0, 0], []);
-        check([1, 2, 0, 0], [1, 2]);
-        check([0, 0, 1, 2], [0, 0, 1, 2]);
-        check([0, 0, 1, 2, 0, 0], [0, 0, 1, 2]);
-        check([-1], [-1]);
+        check(&[1], &[1]);
+        check(&[0, 0, 0], &[]);
+        check(&[1, 2, 0, 0], &[1, 2]);
+        check(&[0, 0, 1, 2], &[0, 0, 1, 2]);
+        check(&[0, 0, 1, 2, 0, 0], &[0, 0, 1, 2]);
+        check(&[-1], &[-1]);
     }
 
     #[test]
@@ -1557,10 +1557,10 @@ mod biguint_tests {
             assert_eq!(BigUint::from_slice(left) & BigUint::from_slice(right),
                        BigUint::from_slice(expected));
         }
-        check([], [], []);
-        check([268, 482, 17],
-              [964, 54],
-              [260, 34]);
+        check(&[], &[], &[]);
+        check(&[268, 482, 17],
+              &[964, 54],
+              &[260, 34]);
     }
 
     #[test]
@@ -1571,10 +1571,10 @@ mod biguint_tests {
             assert_eq!(BigUint::from_slice(left) | BigUint::from_slice(right),
                        BigUint::from_slice(expected));
         }
-        check([], [], []);
-        check([268, 482, 17],
-              [964, 54],
-              [972, 502, 17]);
+        check(&[], &[], &[]);
+        check(&[268, 482, 17],
+              &[964, 54],
+              &[972, 502, 17]);
     }
 
     #[test]
@@ -1585,10 +1585,10 @@ mod biguint_tests {
             assert_eq!(BigUint::from_slice(left) ^ BigUint::from_slice(right),
                        BigUint::from_slice(expected));
         }
-        check([], [], []);
-        check([268, 482, 17],
-              [964, 54],
-              [712, 468, 17]);
+        check(&[], &[], &[]);
+        check(&[268, 482, 17],
+              &[964, 54],
+              &[712, 468, 17]);
     }
 
     #[test]
@@ -2157,7 +2157,7 @@ mod biguint_tests {
         let bits = BigDigit::BITS;
         vec!(( Zero::zero(), vec!(
             (2, "0".to_string()), (3, "0".to_string())
-        )), ( BigUint::from_slice([ 0xff ]), vec!(
+        )), ( BigUint::from_slice(&[ 0xff ]), vec!(
             (2,  "11111111".to_string()),
             (3,  "100110".to_string()),
             (4,  "3333".to_string()),
@@ -2173,11 +2173,11 @@ mod biguint_tests {
             (14, "143".to_string()),
             (15, "120".to_string()),
             (16, "ff".to_string())
-        )), ( BigUint::from_slice([ 0xfff ]), vec!(
+        )), ( BigUint::from_slice(&[ 0xfff ]), vec!(
             (2,  "111111111111".to_string()),
             (4,  "333333".to_string()),
             (16, "fff".to_string())
-        )), ( BigUint::from_slice([ 1, 2 ]), vec!(
+        )), ( BigUint::from_slice(&[ 1, 2 ]), vec!(
             (2,
              format!("10{}1", "0".repeat(bits - 1))),
             (4,
@@ -2189,7 +2189,7 @@ mod biguint_tests {
             }),
             (16,
              format!("2{}1", "0".repeat(bits / 4 - 1)))
-        )), ( BigUint::from_slice([ 1, 2, 3 ]), vec!(
+        )), ( BigUint::from_slice(&[ 1, 2, 3 ]), vec!(
             (2,
              format!("11{}10{}1",
                      "0".repeat(bits - 2),
