@@ -384,14 +384,14 @@ impl<T: FromStrRadix + Clone + Integer + PartialOrd>
 }
 
 impl<A: Clone + Integer + PartialOrd, T: Iterator<Ratio<A>>> AdditiveIterator<Ratio<A>> for T {
-    fn sum(&mut self) -> Ratio<A> {
+    fn sum(self) -> Ratio<A> {
         let init: Ratio<A> = Zero::zero();
         self.fold(init, |acc, x| acc + x)
     }
 }
 
 impl<A: Clone + Integer + PartialOrd, T: Iterator<Ratio<A>>> MultiplicativeIterator<Ratio<A>> for T {
-    fn product(&mut self) -> Ratio<A> {
+    fn product(self) -> Ratio<A> {
         let init: Ratio<A> = One::one();
         self.fold(init, |acc, x| acc * x)
     }
