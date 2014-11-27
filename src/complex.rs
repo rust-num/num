@@ -176,14 +176,14 @@ impl<T: fmt::Show + Num + PartialOrd> fmt::Show for Complex<T> {
 }
 
 impl<A: Clone + Num, T: Iterator<Complex<A>>> AdditiveIterator<Complex<A>> for T {
-    fn sum(&mut self) -> Complex<A> {
+    fn sum(self) -> Complex<A> {
         let init: Complex<A> = Zero::zero();
         self.fold(init, |acc, x| acc + x)
     }
 }
 
 impl<A: Clone + Num, T: Iterator<Complex<A>>> MultiplicativeIterator<Complex<A>> for T {
-    fn product(&mut self) -> Complex<A> {
+    fn product(self) -> Complex<A> {
         let init: Complex<A> = One::one();
         self.fold(init, |acc, x| acc * x)
     }

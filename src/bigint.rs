@@ -740,14 +740,14 @@ impl FromStrRadix for BigUint {
 }
 
 impl<T: Iterator<BigUint>> AdditiveIterator<BigUint> for T {
-    fn sum(&mut self) -> BigUint {
+    fn sum(self) -> BigUint {
         let init: BigUint = Zero::zero();
         self.fold(init, |acc, x| acc + x)
     }
 }
 
 impl<T: Iterator<BigUint>> MultiplicativeIterator<BigUint> for T {
-    fn product(&mut self) -> BigUint {
+    fn product(self) -> BigUint {
         let init: BigUint = One::one();
         self.fold(init, |acc, x| acc * x)
     }
@@ -1388,14 +1388,14 @@ impl<R: Rng> RandBigInt for R {
 }
 
 impl<T: Iterator<BigInt>> AdditiveIterator<BigInt> for T {
-    fn sum(&mut self) -> BigInt {
+    fn sum(self) -> BigInt {
         let init: BigInt = Zero::zero();
         self.fold(init, |acc, x| acc + x)
     }
 }
 
 impl<T: Iterator<BigInt>> MultiplicativeIterator<BigInt> for T {
-    fn product(&mut self) -> BigInt {
+    fn product(self) -> BigInt {
         let init: BigInt = One::one();
         self.fold(init, |acc, x| acc * x)
     }
