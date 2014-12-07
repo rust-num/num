@@ -55,7 +55,6 @@
        html_favicon_url = "http://www.rust-lang.org/favicon.ico",
        html_root_url = "http://doc.rust-lang.org/master/",
        html_playground_url = "http://play.rust-lang.org/")]
-#![allow(deprecated)] // from_str_radix
 
 extern crate rand;
 extern crate serialize;
