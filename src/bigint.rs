@@ -857,7 +857,7 @@ fn get_radix_base(radix: uint) -> (DoubleBigDigit, uint) {
 }
 
 /// A Sign is a `BigInt`'s composing element.
-#[deriving(PartialEq, PartialOrd, Eq, Ord, Clone, Show, Encodable, Decodable)]
+#[deriving(PartialEq, PartialOrd, Eq, Ord, Copy, Clone, Show, Encodable, Decodable)]
 pub enum Sign { Minus, NoSign, Plus }
 
 impl Neg<Sign> for Sign {

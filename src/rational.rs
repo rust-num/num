@@ -22,7 +22,7 @@ use bigint::{BigInt, BigUint, Sign};
 use {Num, Signed, Zero, One};
 
 /// Represents the ratio between 2 numbers.
-#[deriving(Clone, Hash, Encodable, Decodable)]
+#[deriving(Copy, Clone, Hash, Encodable, Decodable)]
 #[allow(missing_docs)]
 pub struct Ratio<T> {
     numer: T,
