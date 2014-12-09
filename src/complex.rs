@@ -194,6 +194,7 @@ mod test {
     #![allow(non_upper_case_globals)]
 
     use super::{Complex64, Complex};
+    use std::f64;
     use std::num::Float;
     use std::hash::hash;
 
@@ -283,9 +284,9 @@ mod test {
             assert!((c.arg() - arg).abs() < 1.0e-6)
         }
         test(_1_0i, 0.0);
-        test(_1_1i, 0.25 * Float::pi());
-        test(_neg1_1i, 0.75 * Float::pi());
-        test(_05_05i, 0.25 * Float::pi());
+        test(_1_1i, 0.25 * f64::consts::PI);
+        test(_neg1_1i, 0.75 * f64::consts::PI);
+        test(_05_05i, 0.25 * f64::consts::PI);
     }
 
     #[test]
