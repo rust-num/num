@@ -70,24 +70,24 @@ impl Context {
     fn extract_digit(&self) -> int {
         if self.numer > self.accum {return -1;}
         let (q, r) =
-            (self.numer * Context::from_int(3) + self.accum)
+            (&self.numer * Context::from_int(3) + &self.accum)
             .div_rem(&self.denom);
-        if r + self.numer >= self.denom {return -1;}
+        if r + &self.numer >= self.denom {return -1;}
         q.to_int().unwrap()
     }
 
     fn next_term(&mut self, k: int) {
         let y2 = Context::from_int(k * 2 + 1);
-        self.accum = (self.accum + (self.numer << 1)) * y2;
-        self.numer = self.numer * Context::from_int(k);
-        self.denom = self.denom * y2;
+        self.accum = (&self.accum + (&self.numer << 1)) * &y2;
+        self.numer = &self.numer * Context::from_int(k);
+        self.denom = &self.denom * y2;
     }
 
     fn eliminate_digit(&mut self, d: int) {
         let d = Context::from_int(d);
         let ten = Context::from_int(10);
-        self.accum = (self.accum - self.denom * d) * ten;
-        self.numer = self.numer * ten;
+        self.accum = (&self.accum - &self.denom * d) * &ten;
+        self.numer = &self.numer * ten;
     }
 }
 

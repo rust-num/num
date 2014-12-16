@@ -27,7 +27,7 @@
 //!     let mut f0: BigUint = Zero::zero();
 //!     let mut f1: BigUint = One::one();
 //!     for _ in range(0, n) {
-//!         let f2 = f0 + f1;
+//!         let f2 = f0 + &f1;
 //!         // This is a low cost way of swapping f0 with f1 and f1 with f2.
 //!         f0 = replace(&mut f1, f2);
 //!     }
@@ -183,14 +183,60 @@ impl FromStr for BigUint {
 
 impl Num for BigUint {}
 
-impl BitAnd<BigUint, BigUint> for BigUint {
-    fn bitand(&self, other: &BigUint) -> BigUint {
+macro_rules! forward_val_val_binop {
+    (impl $imp:ident for $res:ty, $method:ident) => {
+        impl $imp<$res, $res> for $res {
+            #[inline]
+            fn $method(self, other: $res) -> $res {
+                (&self).$method(&other)
+            }
+        }
+    }
+}
+
+macro_rules! forward_ref_val_binop {
+    (impl $imp:ident for $res:ty, $method:ident) => {
+        impl<'a> $imp<$res, $res> for &'a $res {
+            #[inline]
+            fn $method(self, other: $res) -> $res {
+                self.$method(&other)
+            }
+        }
+    }
+}
+
+macro_rules! forward_val_ref_binop {
+    (impl $imp:ident for $res:ty, $method:ident) => {
+        impl<'a> $imp<&'a $res, $res> for $res {
+            #[inline]
+            fn $method(self, other: &$res) -> $res {
+                (&self).$method(other)
+            }
+        }
+    }
+}
+
+macro_rules! forward_all_binop {
+    (impl $imp:ident for $res:ty, $method:ident) => {
+        forward_val_val_binop!(impl $imp for $res, $method)
+        forward_ref_val_binop!(impl $imp for $res, $method)
+        forward_val_ref_binop!(impl $imp for $res, $method)
+    };
+}
+
+forward_all_binop!(impl BitAnd for BigUint, bitand)
+
+impl<'a, 'b> BitAnd<&'b BigUint, BigUint> for &'a BigUint {
+    #[inline]
+    fn bitand(self, other: &BigUint) -> BigUint {
         BigUint::new(self.data.iter().zip(other.data.iter()).map(|(ai, bi)| *ai & *bi).collect())
     }
 }
 
-impl BitOr<BigUint, BigUint> for BigUint {
-    fn bitor(&self, other: &BigUint) -> BigUint {
+forward_all_binop!(impl BitOr for BigUint, bitor)
+
+impl<'a, 'b> BitOr<&'b BigUint, BigUint> for &'a BigUint {
+    fn bitor(self, other: &BigUint) -> BigUint {
         let zeros = ZERO_VEC.iter().cycle();
         let (a, b) = if self.data.len() > other.data.len() { (self, other) } else { (other, self) };
         let ored = a.data.iter().zip(b.data.iter().chain(zeros)).map(
@@ -200,8 +246,10 @@ impl BitOr<BigUint, BigUint> for BigUint {
     }
 }
 
-impl BitXor<BigUint, BigUint> for BigUint {
-    fn bitxor(&self, other: &BigUint) -> BigUint {
+forward_all_binop!(impl BitXor for BigUint, bitxor)
+
+impl<'a, 'b> BitXor<&'b BigUint, BigUint> for &'a BigUint {
+    fn bitxor(self, other: &BigUint) -> BigUint {
         let zeros = ZERO_VEC.iter().cycle();
         let (a, b) = if self.data.len() > other.data.len() { (self, other) } else { (other, self) };
         let xored = a.data.iter().zip(b.data.iter().chain(zeros)).map(
@@ -213,18 +261,28 @@ impl BitXor<BigUint, BigUint> for BigUint {
 
 impl Shl<uint, BigUint> for BigUint {
     #[inline]
-    fn shl(&self, rhs: &uint) -> BigUint {
-        let n_unit = *rhs / BigDigit::BITS;
-        let n_bits = *rhs % BigDigit::BITS;
+    fn shl(self, rhs: uint) -> BigUint { (&self) << rhs }
+}
+
+impl<'a> Shl<uint, BigUint> for &'a BigUint {
+    #[inline]
+    fn shl(self, rhs: uint) -> BigUint {
+        let n_unit = rhs / BigDigit::BITS;
+        let n_bits = rhs % BigDigit::BITS;
         return self.shl_unit(n_unit).shl_bits(n_bits);
     }
 }
 
 impl Shr<uint, BigUint> for BigUint {
     #[inline]
-    fn shr(&self, rhs: &uint) -> BigUint {
-        let n_unit = *rhs / BigDigit::BITS;
-        let n_bits = *rhs % BigDigit::BITS;
+    fn shr(self, rhs: uint) -> BigUint { (&self) >> rhs }
+}
+
+impl<'a> Shr<uint, BigUint> for &'a BigUint {
+    #[inline]
+    fn shr(self, rhs: uint) -> BigUint {
+        let n_unit = rhs / BigDigit::BITS;
+        let n_bits = rhs % BigDigit::BITS;
         return self.shr_unit(n_unit).shr_bits(n_bits);
     }
 }
@@ -244,8 +302,10 @@ impl One for BigUint {
 
 impl Unsigned for BigUint {}
 
-impl Add<BigUint, BigUint> for BigUint {
-    fn add(&self, other: &BigUint) -> BigUint {
+forward_all_binop!(impl Add for BigUint, add)
+
+impl<'a, 'b> Add<&'b BigUint, BigUint> for &'a BigUint {
+    fn add(self, other: &BigUint) -> BigUint {
         let zeros = ZERO_VEC.iter().cycle();
         let (a, b) = if self.data.len() > other.data.len() { (self, other) } else { (other, self) };
 
@@ -261,8 +321,10 @@ impl Add<BigUint, BigUint> for BigUint {
     }
 }
 
-impl Sub<BigUint, BigUint> for BigUint {
-    fn sub(&self, other: &BigUint) -> BigUint {
+forward_all_binop!(impl Sub for BigUint, sub)
+
+impl<'a, 'b> Sub<&'b BigUint, BigUint> for &'a BigUint {
+    fn sub(self, other: &BigUint) -> BigUint {
         let new_len = cmp::max(self.data.len(), other.data.len());
         let zeros = ZERO_VEC.iter().cycle();
         let (a, b) = (self.data.iter().chain(zeros.clone()), other.data.iter().chain(zeros));
@@ -289,8 +351,11 @@ impl Sub<BigUint, BigUint> for BigUint {
     }
 }
 
-impl Mul<BigUint, BigUint> for BigUint {
-    fn mul(&self, other: &BigUint) -> BigUint {
+
+forward_all_binop!(impl Mul for BigUint, mul)
+
+impl<'a, 'b> Mul<&'b BigUint, BigUint> for &'a BigUint {
+    fn mul(self, other: &BigUint) -> BigUint {
         if self.is_zero() || other.is_zero() { return Zero::zero(); }
 
         let (s_len, o_len) = (self.data.len(), other.data.len());
@@ -306,15 +371,15 @@ impl Mul<BigUint, BigUint> for BigUint {
         let (s_hi, s_lo) = cut_at(self,  half_len);
         let (o_hi, o_lo) = cut_at(other, half_len);
 
-        let ll = s_lo * o_lo;
-        let hh = s_hi * o_hi;
+        let ll = &s_lo * &o_lo;
+        let hh = &s_hi * &o_hi;
         let mm = {
             let (s1, n1) = sub_sign(s_hi, s_lo);
             let (s2, n2) = sub_sign(o_hi, o_lo);
             match (s1, s2) {
-                (Equal, _) | (_, Equal) => hh + ll,
-                (Less, Greater) | (Greater, Less) => hh + ll + (n1 * n2),
-                (Less, Less) | (Greater, Greater) => hh + ll - (n1 * n2)
+                (Equal, _) | (_, Equal) => &hh + &ll,
+                (Less, Greater) | (Greater, Less) => &hh + &ll + (n1 * n2),
+                (Less, Less) | (Greater, Greater) => &hh + &ll - (n1 * n2)
             }
         };
 
@@ -323,7 +388,7 @@ impl Mul<BigUint, BigUint> for BigUint {
 
         fn mul_digit(a: &BigUint, n: BigDigit) -> BigUint {
             if n == 0 { return Zero::zero(); }
-            if n == 1 { return (*a).clone(); }
+            if n == 1 { return a.clone(); }
 
             let mut carry = 0;
             let mut prod: Vec<BigDigit> = a.data.iter().map(|ai| {
@@ -355,17 +420,22 @@ impl Mul<BigUint, BigUint> for BigUint {
     }
 }
 
-impl Div<BigUint, BigUint> for BigUint {
+
+forward_all_binop!(impl Div for BigUint, div)
+
+impl<'a, 'b> Div<&'b BigUint, BigUint> for &'a BigUint {
     #[inline]
-    fn div(&self, other: &BigUint) -> BigUint {
+    fn div(self, other: &BigUint) -> BigUint {
         let (q, _) = self.div_rem(other);
         return q;
     }
 }
 
-impl Rem<BigUint, BigUint> for BigUint {
+forward_all_binop!(impl Rem for BigUint, rem)
+
+impl<'a, 'b> Rem<&'b BigUint, BigUint> for &'a BigUint {
     #[inline]
-    fn rem(&self, other: &BigUint) -> BigUint {
+    fn rem(self, other: &BigUint) -> BigUint {
         let (_, r) = self.div_rem(other);
         return r;
     }
@@ -446,7 +516,7 @@ impl Integer for BigUint {
             shift += 1;
         }
         assert!(shift < BigDigit::BITS);
-        let (d, m) = div_mod_floor_inner(*self << shift, *other << shift);
+        let (d, m) = div_mod_floor_inner(self << shift, other << shift);
         return (d, m >> shift);
 
 
@@ -457,14 +527,14 @@ impl Integer for BigUint {
             while m >= b {
                 let (d0, d_unit, b_unit) = div_estimate(&m, &b, n);
                 let mut d0 = d0;
-                let mut prod = b * d0;
+                let mut prod = &b * &d0;
                 while prod > m {
                     // FIXME(#5992): assignment operator overloads
-                    // d0 -= d_unit
-                    d0   = d0 - d_unit;
+                    // d0 -= &d_unit
+                    d0   = d0 - &d_unit;
                     // FIXME(#5992): assignment operator overloads
-                    // prod -= b_unit;
-                    prod = prod - b_unit
+                    // prod -= &b_unit;
+                    prod = prod - &b_unit
                 }
                 if d0.is_zero() {
                     n = 2;
@@ -522,7 +592,7 @@ impl Integer for BigUint {
         let mut n = (*other).clone();
         while !m.is_zero() {
             let temp = m;
-            m = n % temp;
+            m = n % &temp;
             n = temp;
         }
         return n;
@@ -530,16 +600,16 @@ impl Integer for BigUint {
 
     /// Calculates the Lowest Common Multiple (LCM) of the number and `other`.
     #[inline]
-    fn lcm(&self, other: &BigUint) -> BigUint { ((*self * *other) / self.gcd(other)) }
+    fn lcm(&self, other: &BigUint) -> BigUint { ((self * other) / self.gcd(other)) }
 
     /// Deprecated, use `is_multiple_of` instead.
     #[deprecated = "function renamed to `is_multiple_of`"]
     #[inline]
-    fn divides(&self, other: &BigUint) -> bool { return self.is_multiple_of(other); }
+    fn divides(&self, other: &BigUint) -> bool { self.is_multiple_of(other) }
 
     /// Returns `true` if the number is a multiple of `other`.
     #[inline]
-    fn is_multiple_of(&self, other: &BigUint) -> bool { (*self % *other).is_zero() }
+    fn is_multiple_of(&self, other: &BigUint) -> bool { (self % other).is_zero() }
 
     /// Returns `true` if the number is divisible by `2`.
     #[inline]
@@ -720,8 +790,8 @@ impl FromStrRadix for BigUint {
                     match d {
                         Some(d) => {
                             // FIXME(#5992): assignment operator overloads
-                            // n += d * power;
-                            n = n + d * power;
+                            // n += d * &power;
+                            n = n + d * &power;
                         }
                         None => { return None; }
                     }
@@ -733,8 +803,8 @@ impl FromStrRadix for BigUint {
             }
             end -= unit_len;
             // FIXME(#5992): assignment operator overloads
-            // power *= base_num;
-            power = power * base_num;
+            // power *= &base_num;
+            power = power * &base_num;
         }
     }
 }
@@ -938,15 +1008,25 @@ impl Num for BigInt {}
 
 impl Shl<uint, BigInt> for BigInt {
     #[inline]
-    fn shl(&self, rhs: &uint) -> BigInt {
-        BigInt::from_biguint(self.sign, self.data << *rhs)
+    fn shl(self, rhs: uint) -> BigInt { (&self) << rhs }
+}
+
+impl<'a> Shl<uint, BigInt> for &'a BigInt {
+    #[inline]
+    fn shl(self, rhs: uint) -> BigInt {
+        BigInt::from_biguint(self.sign, &self.data << rhs)
     }
 }
 
 impl Shr<uint, BigInt> for BigInt {
     #[inline]
-    fn shr(&self, rhs: &uint) -> BigInt {
-        BigInt::from_biguint(self.sign, self.data >> *rhs)
+    fn shr(self, rhs: uint) -> BigInt { (&self) >> rhs }
+}
+
+impl<'a> Shr<uint, BigInt> for &'a BigInt {
+    #[inline]
+    fn shr(self, rhs: uint) -> BigInt {
+        BigInt::from_biguint(self.sign, &self.data >> rhs)
     }
 }
 
@@ -978,7 +1058,7 @@ impl Signed for BigInt {
 
     #[inline]
     fn abs_sub(&self, other: &BigInt) -> BigInt {
-        if *self <= *other { Zero::zero() } else { *self - *other }
+        if *self <= *other { Zero::zero() } else { self - other }
     }
 
     #[inline]
@@ -997,64 +1077,74 @@ impl Signed for BigInt {
     fn is_negative(&self) -> bool { self.sign == Minus }
 }
 
-impl Add<BigInt, BigInt> for BigInt {
+forward_all_binop!(impl Add for BigInt, add)
+
+impl<'a, 'b> Add<&'b BigInt, BigInt> for &'a BigInt {
     #[inline]
-    fn add(&self, other: &BigInt) -> BigInt {
+    fn add(self, other: &BigInt) -> BigInt {
         match (self.sign, other.sign) {
-            (NoSign, _)      => other.clone(),
-            (_,    NoSign)   => self.clone(),
-            (Plus, Plus)   => BigInt::from_biguint(Plus, self.data + other.data),
-            (Plus, Minus)  => *self - (-*other),
-            (Minus, Plus)  => *other - (-*self),
+            (NoSign, _)    => other.clone(),
+            (_,    NoSign) => self.clone(),
+            (Plus, Plus)   => BigInt::from_biguint(Plus, &self.data + &other.data),
+            (Plus, Minus)  => self - (-*other),
+            (Minus, Plus)  => other - (-*self),
             (Minus, Minus) => -((-*self) + (-*other))
         }
     }
 }
 
-impl Sub<BigInt, BigInt> for BigInt {
+forward_all_binop!(impl Sub for BigInt, sub)
+
+impl<'a, 'b> Sub<&'b BigInt, BigInt> for &'a BigInt {
     #[inline]
-    fn sub(&self, other: &BigInt) -> BigInt {
+    fn sub(self, other: &BigInt) -> BigInt {
         match (self.sign, other.sign) {
             (NoSign, _)    => -*other,
             (_,    NoSign) => self.clone(),
             (Plus, Plus) => match self.data.cmp(&other.data) {
-                Less    => BigInt::from_biguint(Minus, other.data - self.data),
-                Greater => BigInt::from_biguint(Plus, self.data - other.data),
+                Less    => BigInt::from_biguint(Minus, &other.data - &self.data),
+                Greater => BigInt::from_biguint(Plus, &self.data - &other.data),
                 Equal   => Zero::zero()
             },
-            (Plus, Minus) => *self + (-*other),
-            (Minus, Plus) => -((-*self) + *other),
+            (Plus, Minus) => self + (-*other),
+            (Minus, Plus) => -((-*self) + other),
             (Minus, Minus) => (-*other) - (-*self)
         }
     }
 }
 
-impl Mul<BigInt, BigInt> for BigInt {
+forward_all_binop!(impl Mul for BigInt, mul)
+
+impl<'a, 'b> Mul<&'b BigInt, BigInt> for &'a BigInt {
     #[inline]
-    fn mul(&self, other: &BigInt) -> BigInt {
+    fn mul(self, other: &BigInt) -> BigInt {
         match (self.sign, other.sign) {
             (NoSign, _)     | (_,     NoSign)  => Zero::zero(),
             (Plus, Plus)  | (Minus, Minus) => {
-                BigInt::from_biguint(Plus, self.data * other.data)
+                BigInt::from_biguint(Plus, &self.data * &other.data)
             },
             (Plus, Minus) | (Minus, Plus) => {
-                BigInt::from_biguint(Minus, self.data * other.data)
+                BigInt::from_biguint(Minus, &self.data * &other.data)
             }
         }
     }
 }
 
-impl Div<BigInt, BigInt> for BigInt {
+forward_all_binop!(impl Div for BigInt, div)
+
+impl<'a, 'b> Div<&'b BigInt, BigInt> for &'a BigInt {
     #[inline]
-    fn div(&self, other: &BigInt) -> BigInt {
+    fn div(self, other: &BigInt) -> BigInt {
         let (q, _) = self.div_rem(other);
         q
     }
 }
 
-impl Rem<BigInt, BigInt> for BigInt {
+forward_all_binop!(impl Rem for BigInt, rem)
+
+impl<'a, 'b> Rem<&'b BigInt, BigInt> for &'a BigInt {
     #[inline]
-    fn rem(&self, other: &BigInt) -> BigInt {
+    fn rem(self, other: &BigInt) -> BigInt {
         let (_, r) = self.div_rem(other);
         r
     }
@@ -1131,19 +1221,24 @@ impl Integer for BigInt {
         let (d_ui, m_ui) = self.data.div_rem(&other.data);
         let d = BigInt::from_biguint(Plus, d_ui);
         let m = BigInt::from_biguint(Plus, m_ui);
+        let one: BigInt = One::one();
         match (self.sign, other.sign) {
             (_,    NoSign)   => panic!(),
             (Plus, Plus)  | (NoSign, Plus)  => (d, m),
-            (Plus, Minus) | (NoSign, Minus) => if m.is_zero() {
-                (-d, Zero::zero())
-            } else {
-                (-d - One::one(), m + *other)
+            (Plus, Minus) | (NoSign, Minus) => {
+                if m.is_zero() {
+                    (-d, Zero::zero())
+                } else {
+                    (-d - one, m + other)
+                }
             },
-            (Minus, Plus) => if m.is_zero() {
-                (-d, Zero::zero())
-            } else {
-                (-d - One::one(), *other - m)
-            },
+            (Minus, Plus) => {
+                if m.is_zero() {
+                    (-d, Zero::zero())
+                } else {
+                    (-d - one, other - m)
+                }
+            }
             (Minus, Minus) => (d, -m)
         }
     }
@@ -1374,7 +1469,7 @@ impl<R: Rng> RandBigInt for R {
                          ubound: &BigUint)
                          -> BigUint {
         assert!(*lbound < *ubound);
-        return *lbound + self.gen_biguint_below(&(*ubound - *lbound));
+        return lbound + self.gen_biguint_below(&(ubound - lbound));
     }
 
     fn gen_bigint_range(&mut self,
@@ -1382,8 +1477,8 @@ impl<R: Rng> RandBigInt for R {
                         ubound: &BigInt)
                         -> BigInt {
         assert!(*lbound < *ubound);
-        let delta = (*ubound - *lbound).to_biguint().unwrap();
-        return *lbound + self.gen_biguint_below(&delta).to_bigint().unwrap();
+        let delta = (ubound - lbound).to_biguint().unwrap();
+        return lbound + self.gen_biguint_below(&delta).to_bigint().unwrap();
     }
 }
 
@@ -1912,8 +2007,8 @@ mod biguint_tests {
             let b = BigUint::from_slice(b_vec);
             let c = BigUint::from_slice(c_vec);
 
-            assert!(a + b == c);
-            assert!(b + a == c);
+            assert!(&a + &b == c);
+            assert!(&b + &a == c);
         }
     }
 
@@ -1925,8 +2020,8 @@ mod biguint_tests {
             let b = BigUint::from_slice(b_vec);
             let c = BigUint::from_slice(c_vec);
 
-            assert!(c - a == b);
-            assert!(c - b == a);
+            assert!(&c - &a == b);
+            assert!(&c - &b == a);
         }
     }
 
@@ -1983,8 +2078,8 @@ mod biguint_tests {
             let b = BigUint::from_slice(b_vec);
             let c = BigUint::from_slice(c_vec);
 
-            assert!(a * b == c);
-            assert!(b * a == c);
+            assert!(&a * &b == c);
+            assert!(&b * &a == c);
         }
 
         for elm in DIV_REM_QUADRUPLES.iter() {
@@ -1994,8 +2089,8 @@ mod biguint_tests {
             let c = BigUint::from_slice(c_vec);
             let d = BigUint::from_slice(d_vec);
 
-            assert!(a == b * c + d);
-            assert!(a == c * b + d);
+            assert!(a == &b * &c + &d);
+            assert!(a == &c * &b + &d);
         }
     }
 
@@ -2078,8 +2173,8 @@ mod biguint_tests {
             let c = BigUint::from_slice(c_vec);
             let d = BigUint::from_slice(d_vec);
 
-            assert!(a == b.checked_mul(&c).unwrap() + d);
-            assert!(a == c.checked_mul(&b).unwrap() + d);
+            assert!(a == b.checked_mul(&c).unwrap() + &d);
+            assert!(a == c.checked_mul(&b).unwrap() + &d);
         }
     }
 
@@ -2149,8 +2244,8 @@ mod biguint_tests {
         assert!(thousand.is_even());
         assert!(big.is_even());
         assert!(bigger.is_odd());
-        assert!((one << 64).is_even());
-        assert!(((one << 64) + one).is_odd());
+        assert!((&one << 64).is_even());
+        assert!(((&one << 64) + one).is_odd());
     }
 
     fn to_str_pairs() -> Vec<(BigUint, Vec<(uint, String)>)> {
@@ -2252,7 +2347,8 @@ mod biguint_tests {
             for i in range(2, n + 1) {
                 // FIXME(#5992): assignment operator overloads
                 // f *= FromPrimitive::from_uint(i);
-                f = f * FromPrimitive::from_uint(i).unwrap();
+                let bu: BigUint = FromPrimitive::from_uint(i).unwrap();
+                f = f * bu;
             }
             return f;
         }
@@ -2513,14 +2609,14 @@ mod bigint_tests {
             let b = BigInt::from_slice(Plus, b_vec);
             let c = BigInt::from_slice(Plus, c_vec);
 
-            assert!(a + b == c);
-            assert!(b + a == c);
-            assert!(c + (-a) == b);
-            assert!(c + (-b) == a);
-            assert!(a + (-c) == (-b));
-            assert!(b + (-c) == (-a));
+            assert!(&a + &b == c);
+            assert!(&b + &a == c);
+            assert!(&c + (-a) == b);
+            assert!(&c + (-b) == a);
+            assert!(&a + (-c) == (-b));
+            assert!(&b + (-c) == (-a));
             assert!((-a) + (-b) == (-c))
-            assert!(a + (-a) == Zero::zero());
+            assert!(&a + (-a) == Zero::zero());
         }
     }
 
@@ -2532,14 +2628,14 @@ mod bigint_tests {
             let b = BigInt::from_slice(Plus, b_vec);
             let c = BigInt::from_slice(Plus, c_vec);
 
-            assert!(c - a == b);
-            assert!(c - b == a);
-            assert!((-b) - a == (-c))
-            assert!((-a) - b == (-c))
-            assert!(b - (-a) == c);
-            assert!(a - (-b) == c);
+            assert!(&c - &a == b);
+            assert!(&c - &b == a);
+            assert!((-b) - &a == (-c))
+            assert!((-a) - &b == (-c))
+            assert!(&b - (-a) == c);
+            assert!(&a - (-b) == c);
             assert!((-c) - (-a) == (-b));
-            assert!(a - a == Zero::zero());
+            assert!(&a - &a == Zero::zero());
         }
     }
 
@@ -2589,11 +2685,11 @@ mod bigint_tests {
             let b = BigInt::from_slice(Plus, b_vec);
             let c = BigInt::from_slice(Plus, c_vec);
 
-            assert!(a * b == c);
-            assert!(b * a == c);
+            assert!(&a * &b == c);
+            assert!(&b * &a == c);
 
-            assert!((-a) * b == -c);
-            assert!((-b) * a == -c);
+            assert!((-a) * &b == -c);
+            assert!((-b) * &a == -c);
         }
 
         for elm in DIV_REM_QUADRUPLES.iter() {
@@ -2603,8 +2699,8 @@ mod bigint_tests {
             let c = BigInt::from_slice(Plus, c_vec);
             let d = BigInt::from_slice(Plus, d_vec);
 
-            assert!(a == b * c + d);
-            assert!(a == c * b + d);
+            assert!(a == &b * &c + &d);
+            assert!(a == &c * &b + &d);
         }
     }
 
@@ -2616,7 +2712,7 @@ mod bigint_tests {
                 assert_eq!(m.sign, b.sign);
             }
             assert!(m.abs() <= b.abs());
-            assert!(*a == (*b) * d + m);
+            assert!(*a == b * &d + &m);
             assert!(d == *ans_d);
             assert!(m == *ans_m);
         }
@@ -2628,9 +2724,10 @@ mod bigint_tests {
                 check_sub(&a.neg(), b, &d.neg(), m);
                 check_sub(&a.neg(), &b.neg(), d, m);
             } else {
+                let one: BigInt = One::one();
                 check_sub(a, b, d, m);
-                check_sub(a, &b.neg(), &(d.neg() - One::one()), &(*m - *b));
-                check_sub(&a.neg(), b, &(d.neg() - One::one()), &(*b - *m));
+                check_sub(a, &b.neg(), &(d.neg() - &one), &(m - b));
+                check_sub(&a.neg(), b, &(d.neg() - &one), &(b - m));
                 check_sub(&a.neg(), &b.neg(), d, &m.neg());
             }
         }
@@ -2667,7 +2764,7 @@ mod bigint_tests {
                 assert_eq!(r.sign, a.sign);
             }
             assert!(r.abs() <= b.abs());
-            assert!(*a == (*b) * q + r);
+            assert!(*a == b * &q + &r);
             assert!(q == *ans_q);
             assert!(r == *ans_r);
         }
@@ -2761,8 +2858,8 @@ mod bigint_tests {
             let c = BigInt::from_slice(Plus, c_vec);
             let d = BigInt::from_slice(Plus, d_vec);
 
-            assert!(a == b.checked_mul(&c).unwrap() + d);
-            assert!(a == c.checked_mul(&b).unwrap() + d);
+            assert!(a == b.checked_mul(&c).unwrap() + &d);
+            assert!(a == c.checked_mul(&b).unwrap() + &d);
         }
     }
     #[test]
@@ -2943,7 +3040,8 @@ mod bench {
     fn factorial(n: uint) -> BigUint {
         let mut f: BigUint = One::one();
         for i in iter::range_inclusive(1, n) {
-            f = f * FromPrimitive::from_uint(i).unwrap();
+            let bu: BigUint = FromPrimitive::from_uint(i).unwrap();
+            f = f * bu;
         }
         f
     }
@@ -2952,7 +3050,7 @@ mod bench {
         let mut f0: BigUint = Zero::zero();
         let mut f1: BigUint = One::one();
         for _ in range(0, n) {
-            let f2 = f0 + f1;
+            let f2 = f0 + &f1;
             f0 = replace(&mut f1, f2);
         }
         f0
