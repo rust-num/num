@@ -45,7 +45,7 @@ impl<A: Add<A, A> + PartialOrd + Clone + ToPrimitive> Iterator<A> for Range<A> {
     fn next(&mut self) -> Option<A> {
         if self.state < self.stop {
             let result = self.state.clone();
-            self.state = self.state + self.one;
+            self.state = self.state.clone() + self.one.clone();
             Some(result)
         } else {
             None
@@ -91,7 +91,7 @@ impl<A: Integer + PartialOrd + Clone + ToPrimitive> DoubleEndedIterator<A> for R
     #[inline]
     fn next_back(&mut self) -> Option<A> {
         if self.stop > self.state {
-            self.stop = self.stop - self.one;
+            self.stop = self.stop.clone() - self.one.clone();
             Some(self.stop.clone())
         } else {
             None
@@ -151,7 +151,7 @@ impl<A: Sub<A, A> + Integer + PartialOrd + Clone + ToPrimitive> DoubleEndedItera
     fn next_back(&mut self) -> Option<A> {
         if self.range.stop > self.range.state {
             let result = self.range.stop.clone();
-            self.range.stop = self.range.stop - self.range.one;
+            self.range.stop = self.range.stop.clone() - self.range.one.clone();
             Some(result)
         } else if !self.done && self.range.state == self.range.stop {
             self.done = true;
@@ -246,7 +246,7 @@ mod tests {
         }
 
         impl Add<Foo, Foo> for Foo {
-            fn add(&self, _: &Foo) -> Foo {
+            fn add(self, _: Foo) -> Foo {
                 Foo
             }
         }
@@ -270,7 +270,7 @@ mod tests {
         }
 
         impl Mul<Foo, Foo> for Foo {
-            fn mul(&self, _: &Foo) -> Foo {
+            fn mul(self, _: Foo) -> Foo {
                 Foo
             }
         }

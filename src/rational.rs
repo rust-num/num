@@ -92,10 +92,10 @@ impl<T: Clone + Integer + PartialOrd>
 
         // FIXME(#5992): assignment operator overloads
         // self.numer /= g;
-        self.numer = self.numer / g;
+        self.numer = self.numer.clone() / g.clone();
         // FIXME(#5992): assignment operator overloads
         // self.denom /= g;
-        self.denom = self.denom / g;
+        self.denom = self.denom.clone() / g;
 
         // keep denom positive!
         if self.denom < Zero::zero() {
@@ -121,9 +121,10 @@ impl<T: Clone + Integer + PartialOrd>
     #[inline]
     pub fn floor(&self) -> Ratio<T> {
         if *self < Zero::zero() {
-            Ratio::from_integer((self.numer - self.denom + One::one()) / self.denom)
+            let one: T = One::one();
+            Ratio::from_integer((self.numer.clone() - self.denom.clone() + one) / self.denom.clone())
         } else {
-            Ratio::from_integer(self.numer / self.denom)
+            Ratio::from_integer(self.numer.clone() / self.denom.clone())
         }
     }
 
@@ -131,9 +132,10 @@ impl<T: Clone + Integer + PartialOrd>
     #[inline]
     pub fn ceil(&self) -> Ratio<T> {
         if *self < Zero::zero() {
-            Ratio::from_integer(self.numer / self.denom)
+            Ratio::from_integer(self.numer.clone() / self.denom.clone())
         } else {
-            Ratio::from_integer((self.numer + self.denom - One::one()) / self.denom)
+            let one: T = One::one();
+            Ratio::from_integer((self.numer.clone() + self.denom.clone() - one) / self.denom.clone())
         }
     }
 
@@ -141,7 +143,7 @@ impl<T: Clone + Integer + PartialOrd>
     #[inline]
     pub fn round(&self) -> Ratio<T> {
         let one: T = One::one();
-        let two: T = one + one;
+        let two: T = one.clone() + one.clone();
 
         // Find unsigned fractional part of rational number
         let fractional = self.fract().abs();
@@ -150,16 +152,17 @@ impl<T: Clone + Integer + PartialOrd>
         // is, a/b >= 1/2, or a >= b/2. For odd denominators, we use
         // a >= (b/2)+1. This avoids overflow issues.
         let half_or_larger = if fractional.denom().is_even() {
-            *fractional.numer() >= *fractional.denom() / two
+            *fractional.numer() >= fractional.denom().clone() / two.clone()
         } else {
-            *fractional.numer() >= (*fractional.denom() / two) + one
+            *fractional.numer() >= (fractional.denom().clone() / two.clone()) + one.clone()
         };
 
         if half_or_larger {
+            let one: Ratio<T> = One::one();
             if *self >= Zero::zero() {
-                self.trunc() + One::one()
+                self.trunc() + one
             } else {
-                self.trunc() - One::one()
+                self.trunc() - one
             }
         } else {
             self.trunc()
@@ -169,13 +172,13 @@ impl<T: Clone + Integer + PartialOrd>
     /// Rounds towards zero.
     #[inline]
     pub fn trunc(&self) -> Ratio<T> {
-        Ratio::from_integer(self.numer / self.denom)
+        Ratio::from_integer(self.numer.clone() / self.denom.clone())
     }
 
     /// Returns the fractional part of a number.
     #[inline]
     pub fn fract(&self) -> Ratio<T> {
-        Ratio::new_raw(self.numer % self.denom, self.denom.clone())
+        Ratio::new_raw(self.numer.clone() % self.denom.clone(), self.denom.clone())
     }
 }
 
@@ -212,11 +215,11 @@ macro_rules! cmp_impl {
     };
     // return something other than a Ratio<T>
     (impl $imp:ident, $($method:ident -> $res:ty),*) => {
-        impl<T: Mul<T,T> + $imp> $imp for Ratio<T> {
+        impl<T: Clone + Mul<T,T> + $imp> $imp for Ratio<T> {
             $(
                 #[inline]
                 fn $method(&self, other: &Ratio<T>) -> $res {
-                    (self.numer * other.denom). $method (&(self.denom*other.numer))
+                    (self.numer.clone() * other.denom.clone()). $method (&(self.denom.clone()*other.numer.clone()))
                 }
             )*
         }
@@ -228,34 +231,78 @@ cmp_impl!(impl PartialOrd, lt -> bool, gt -> bool, le -> bool, ge -> bool,
 cmp_impl!(impl Eq, )
 cmp_impl!(impl Ord, cmp -> cmp::Ordering)
 
-/* Arithmetic */
-// a/b * c/d = (a*c)/(b*d)
-impl<T: Clone + Integer + PartialOrd>
-    Mul<Ratio<T>,Ratio<T>> for Ratio<T> {
-    #[inline]
-    fn mul(&self, rhs: &Ratio<T>) -> Ratio<T> {
-        Ratio::new(self.numer * rhs.numer, self.denom * rhs.denom)
+macro_rules! forward_val_val_binop {
+    (impl $imp:ident, $method:ident) => {
+        impl<T: Clone + Integer + PartialOrd> $imp<Ratio<T>, Ratio<T>> for Ratio<T> {
+            #[inline]
+            fn $method(self, other: Ratio<T>) -> Ratio<T> {
+                (&self).$method(&other)
+            }
+        }
     }
 }
 
-// (a/b) / (c/d) = (a*d)/(b*c)
-impl<T: Clone + Integer + PartialOrd>
-    Div<Ratio<T>,Ratio<T>> for Ratio<T> {
+macro_rules! forward_ref_val_binop {
+    (impl $imp:ident, $method:ident) => {
+        impl<'a, T: Clone + Integer + PartialOrd> $imp<Ratio<T>, Ratio<T>> for &'a Ratio<T> {
+            #[inline]
+            fn $method(self, other: Ratio<T>) -> Ratio<T> {
+                self.$method(&other)
+            }
+        }
+    }
+}
+
+macro_rules! forward_val_ref_binop {
+    (impl $imp:ident, $method:ident) => {
+        impl<'a, T: Clone + Integer + PartialOrd> $imp<&'a Ratio<T>, Ratio<T>> for Ratio<T> {
+            #[inline]
+            fn $method(self, other: &Ratio<T>) -> Ratio<T> {
+                (&self).$method(other)
+            }
+        }
+    }
+}
+
+macro_rules! forward_all_binop {
+    (impl $imp:ident, $method:ident) => {
+        forward_val_val_binop!(impl $imp, $method)
+        forward_ref_val_binop!(impl $imp, $method)
+        forward_val_ref_binop!(impl $imp, $method)
+    };
+}
+
+/* Arithmetic */
+forward_all_binop!(impl Mul, mul)
+// a/b * c/d = (a*c)/(b*d)
+impl<'a, 'b, T: Clone + Integer + PartialOrd>
+    Mul<&'b Ratio<T>, Ratio<T>> for &'a Ratio<T> {
     #[inline]
-    fn div(&self, rhs: &Ratio<T>) -> Ratio<T> {
-        Ratio::new(self.numer * rhs.denom, self.denom * rhs.numer)
+    fn mul(self, rhs: &Ratio<T>) -> Ratio<T> {
+        Ratio::new(self.numer.clone() * rhs.numer.clone(), self.denom.clone() * rhs.denom.clone())
+    }
+}
+
+forward_all_binop!(impl Div, div)
+// (a/b) / (c/d) = (a*d)/(b*c)
+impl<'a, 'b, T: Clone + Integer + PartialOrd>
+    Div<&'b Ratio<T>, Ratio<T>> for &'a Ratio<T> {
+    #[inline]
+    fn div(self, rhs: &Ratio<T>) -> Ratio<T> {
+        Ratio::new(self.numer.clone() * rhs.denom.clone(), self.denom.clone() * rhs.numer.clone())
     }
 }
 
 // Abstracts the a/b `op` c/d = (a*d `op` b*d) / (b*d) pattern
 macro_rules! arith_impl {
     (impl $imp:ident, $method:ident) => {
-        impl<T: Clone + Integer + PartialOrd>
-            $imp<Ratio<T>,Ratio<T>> for Ratio<T> {
+        forward_all_binop!(impl $imp, $method)
+        impl<'a, 'b, T: Clone + Integer + PartialOrd>
+            $imp<&'b Ratio<T>,Ratio<T>> for &'a Ratio<T> {
             #[inline]
-            fn $method(&self, rhs: &Ratio<T>) -> Ratio<T> {
-                Ratio::new((self.numer * rhs.denom).$method(&(self.denom * rhs.numer)),
-                           self.denom * rhs.denom)
+            fn $method(self, rhs: &Ratio<T>) -> Ratio<T> {
+                Ratio::new((self.numer.clone() * rhs.denom.clone()).$method(self.denom.clone() * rhs.numer.clone()),
+                           self.denom.clone() * rhs.denom.clone())
             }
         }
     }
@@ -312,7 +359,7 @@ impl<T: Clone + Integer + PartialOrd>
 
     #[inline]
     fn abs_sub(&self, other: &Ratio<T>) -> Ratio<T> {
-        if *self <= *other { Zero::zero() } else { *self - *other }
+        if *self <= *other { Zero::zero() } else { self - other }
     }
 
     #[inline]

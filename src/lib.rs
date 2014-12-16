@@ -28,7 +28,7 @@
 //!     let mut approx = start.clone();
 //!
 //!     for _ in range(0, iterations) {
-//!         approx = (approx + (start / approx)) /
+//!         approx = (&approx + (&start / &approx)) /
 //!             Ratio::from_integer(FromPrimitive::from_u64(2).unwrap());
 //!     }
 //!
@@ -123,15 +123,15 @@ pub fn abs_sub<T: Signed>(x: T, y: T) -> T {
 /// assert_eq!(num::pow(2i, 4), 16);
 /// ```
 #[inline]
-pub fn pow<T: One + Mul<T, T>>(mut base: T, mut exp: uint) -> T {
+pub fn pow<T: Clone + One + Mul<T, T>>(mut base: T, mut exp: uint) -> T {
     if exp == 1 { base }
     else {
         let mut acc = one::<T>();
         while exp > 0 {
             if (exp & 1) == 1 {
-                acc = acc * base;
+                acc = acc * base.clone();
             }
-            base = base * base;
+            base = base.clone() * base;
             exp = exp >> 1;
         }
         acc

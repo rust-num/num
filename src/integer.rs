@@ -134,9 +134,7 @@ pub trait Integer: Num + PartialOrd
     /// assert_eq!((-1i).div_rem(&-2), ( 0, -1));
     /// ~~~
     #[inline]
-    fn div_rem(&self, other: &Self) -> (Self, Self) {
-        (*self / *other, *self % *other)
-    }
+    fn div_rem(&self, other: &Self) -> (Self, Self);
 
     /// Simultaneous floored integer division and modulus.
     /// Returns `(quotient, remainder)`.
@@ -253,6 +251,12 @@ macro_rules! impl_integer_for_int {
             /// Returns `true` if the number is not divisible by `2`
             #[inline]
             fn is_odd(&self) -> bool { !self.is_even() }
+
+            /// Simultaneous truncated integer division and modulus.
+            #[inline]
+            fn div_rem(&self, other: &$T) -> ($T, $T) {
+                (*self / *other, *self % *other)
+            }
         }
 
         #[cfg(test)]
@@ -425,6 +429,12 @@ macro_rules! impl_integer_for_uint {
             /// Returns `true` if the number is not divisible by `2`.
             #[inline]
             fn is_odd(&self) -> bool { !(*self).is_even() }
+
+            /// Simultaneous truncated integer division and modulus.
+            #[inline]
+            fn div_rem(&self, other: &$T) -> ($T, $T) {
+                (*self / *other, *self % *other)
+            }
         }
 
         #[cfg(test)]
