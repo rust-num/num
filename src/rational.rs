@@ -211,7 +211,7 @@ impl Ratio<BigInt> {
 // "method name" (return value is bool in that case)
 macro_rules! cmp_impl {
     (impl $imp:ident, $($method:ident),+) => {
-        cmp_impl!(impl $imp, $($method -> bool),+)
+        cmp_impl!(impl $imp, $($method -> bool),+);
     };
     // return something other than a Ratio<T>
     (impl $imp:ident, $($method:ident -> $res:ty),*) => {
@@ -225,11 +225,11 @@ macro_rules! cmp_impl {
         }
     };
 }
-cmp_impl!(impl PartialEq, eq, ne)
+cmp_impl!(impl PartialEq, eq, ne);
 cmp_impl!(impl PartialOrd, lt -> bool, gt -> bool, le -> bool, ge -> bool,
-          partial_cmp -> Option<cmp::Ordering>)
-cmp_impl!(impl Eq, )
-cmp_impl!(impl Ord, cmp -> cmp::Ordering)
+          partial_cmp -> Option<cmp::Ordering>);
+cmp_impl!(impl Eq, );
+cmp_impl!(impl Ord, cmp -> cmp::Ordering);
 
 macro_rules! forward_val_val_binop {
     (impl $imp:ident, $method:ident) => {
@@ -266,14 +266,14 @@ macro_rules! forward_val_ref_binop {
 
 macro_rules! forward_all_binop {
     (impl $imp:ident, $method:ident) => {
-        forward_val_val_binop!(impl $imp, $method)
-        forward_ref_val_binop!(impl $imp, $method)
-        forward_val_ref_binop!(impl $imp, $method)
+        forward_val_val_binop!(impl $imp, $method);
+        forward_ref_val_binop!(impl $imp, $method);
+        forward_val_ref_binop!(impl $imp, $method);
     };
 }
 
 /* Arithmetic */
-forward_all_binop!(impl Mul, mul)
+forward_all_binop!(impl Mul, mul);
 // a/b * c/d = (a*c)/(b*d)
 impl<'a, 'b, T: Clone + Integer + PartialOrd>
     Mul<&'b Ratio<T>, Ratio<T>> for &'a Ratio<T> {
@@ -283,7 +283,7 @@ impl<'a, 'b, T: Clone + Integer + PartialOrd>
     }
 }
 
-forward_all_binop!(impl Div, div)
+forward_all_binop!(impl Div, div);
 // (a/b) / (c/d) = (a*d)/(b*c)
 impl<'a, 'b, T: Clone + Integer + PartialOrd>
     Div<&'b Ratio<T>, Ratio<T>> for &'a Ratio<T> {
@@ -296,7 +296,7 @@ impl<'a, 'b, T: Clone + Integer + PartialOrd>
 // Abstracts the a/b `op` c/d = (a*d `op` b*d) / (b*d) pattern
 macro_rules! arith_impl {
     (impl $imp:ident, $method:ident) => {
-        forward_all_binop!(impl $imp, $method)
+        forward_all_binop!(impl $imp, $method);
         impl<'a, 'b, T: Clone + Integer + PartialOrd>
             $imp<&'b Ratio<T>,Ratio<T>> for &'a Ratio<T> {
             #[inline]
@@ -309,13 +309,13 @@ macro_rules! arith_impl {
 }
 
 // a/b + c/d = (a*d + b*c)/(b*d)
-arith_impl!(impl Add, add)
+arith_impl!(impl Add, add);
 
 // a/b - c/d = (a*d - b*c)/(b*d)
-arith_impl!(impl Sub, sub)
+arith_impl!(impl Sub, sub);
 
 // a/b % c/d = (a*d % b*c)/(b*d)
-arith_impl!(impl Rem, rem)
+arith_impl!(impl Rem, rem);
 
 impl<T: Clone + Integer + PartialOrd>
     Neg<Ratio<T>> for Ratio<T> {

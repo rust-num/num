@@ -24,13 +24,13 @@ pub trait Num: PartialEq + Zero + One
              + Div<Self,Self>
              + Rem<Self,Self> {}
 
-macro_rules! trait_impl(
+macro_rules! trait_impl {
     ($name:ident for $($t:ty)*) => ($(
         impl $name for $t {}
     )*)
-)
+}
 
-trait_impl!(Num for uint u8 u16 u32 u64 int i8 i16 i32 i64 f32 f64)
+trait_impl!(Num for uint u8 u16 u32 u64 int i8 i16 i32 i64 f32 f64);
 
 /// Defines an additive identity element for `Self`.
 ///
@@ -62,7 +62,7 @@ pub trait Zero: Add<Self, Self> {
     fn is_zero(&self) -> bool;
 }
 
-macro_rules! zero_impl(
+macro_rules! zero_impl {
     ($t:ty, $v:expr) => {
         impl Zero for $t {
             #[inline]
@@ -71,22 +71,22 @@ macro_rules! zero_impl(
             fn is_zero(&self) -> bool { *self == $v }
         }
     }
-)
+}
 
-zero_impl!(uint, 0u)
-zero_impl!(u8,   0u8)
-zero_impl!(u16,  0u16)
-zero_impl!(u32,  0u32)
-zero_impl!(u64,  0u64)
+zero_impl!(uint, 0u);
+zero_impl!(u8,   0u8);
+zero_impl!(u16,  0u16);
+zero_impl!(u32,  0u32);
+zero_impl!(u64,  0u64);
 
-zero_impl!(int, 0i)
-zero_impl!(i8,  0i8)
-zero_impl!(i16, 0i16)
-zero_impl!(i32, 0i32)
-zero_impl!(i64, 0i64)
+zero_impl!(int, 0i);
+zero_impl!(i8,  0i8);
+zero_impl!(i16, 0i16);
+zero_impl!(i32, 0i32);
+zero_impl!(i64, 0i64);
 
-zero_impl!(f32, 0.0f32)
-zero_impl!(f64, 0.0f64)
+zero_impl!(f32, 0.0f32);
+zero_impl!(f64, 0.0f64);
 
 /// Defines a multiplicative identity element for `Self`.
 pub trait One: Mul<Self, Self> {
@@ -108,29 +108,29 @@ pub trait One: Mul<Self, Self> {
     fn one() -> Self;
 }
 
-macro_rules! one_impl(
+macro_rules! one_impl {
     ($t:ty, $v:expr) => {
         impl One for $t {
             #[inline]
             fn one() -> $t { $v }
         }
     }
-)
+}
 
-one_impl!(uint, 1u)
-one_impl!(u8,  1u8)
-one_impl!(u16, 1u16)
-one_impl!(u32, 1u32)
-one_impl!(u64, 1u64)
+one_impl!(uint, 1u);
+one_impl!(u8,  1u8);
+one_impl!(u16, 1u16);
+one_impl!(u32, 1u32);
+one_impl!(u64, 1u64);
 
-one_impl!(int, 1i)
-one_impl!(i8,  1i8)
-one_impl!(i16, 1i16)
-one_impl!(i32, 1i32)
-one_impl!(i64, 1i64)
+one_impl!(int, 1i);
+one_impl!(i8,  1i8);
+one_impl!(i16, 1i16);
+one_impl!(i32, 1i32);
+one_impl!(i64, 1i64);
 
-one_impl!(f32, 1.0f32)
-one_impl!(f64, 1.0f64)
+one_impl!(f32, 1.0f32);
+one_impl!(f64, 1.0f64);
 
 /// Useful functions for signed numbers (i.e. numbers that can be negative).
 pub trait Signed: Num + Neg<Self> {
@@ -169,7 +169,7 @@ pub trait Signed: Num + Neg<Self> {
     fn is_negative(&self) -> bool;
 }
 
-macro_rules! signed_impl(
+macro_rules! signed_impl {
     ($($t:ty)*) => ($(
         impl Signed for $t {
             #[inline]
@@ -198,11 +198,11 @@ macro_rules! signed_impl(
             fn is_negative(&self) -> bool { *self < 0 }
         }
     )*)
-)
+}
 
-signed_impl!(int i8 i16 i32 i64)
+signed_impl!(int i8 i16 i32 i64);
 
-macro_rules! signed_float_impl(
+macro_rules! signed_float_impl {
     ($t:ty, $nan:expr, $inf:expr, $neg_inf:expr, $fabs:path, $fcopysign:path, $fdim:ident) => {
         impl Signed for $t {
             /// Computes the absolute value. Returns `NAN` if the number is `NAN`.
@@ -241,17 +241,17 @@ macro_rules! signed_float_impl(
             fn is_negative(&self) -> bool { *self < 0.0 || (1.0 / *self) == $neg_inf }
         }
     }
-)
+}
 
 signed_float_impl!(f32, f32::NAN, f32::INFINITY, f32::NEG_INFINITY,
-                   intrinsics::fabsf32, intrinsics::copysignf32, fdimf)
+                   intrinsics::fabsf32, intrinsics::copysignf32, fdimf);
 signed_float_impl!(f64, f64::NAN, f64::INFINITY, f64::NEG_INFINITY,
-                   intrinsics::fabsf64, intrinsics::copysignf64, fdim)
+                   intrinsics::fabsf64, intrinsics::copysignf64, fdim);
 
 /// A trait for values which cannot be negative
 pub trait Unsigned: Num {}
 
-trait_impl!(Unsigned for uint u8 u16 u32 u64)
+trait_impl!(Unsigned for uint u8 u16 u32 u64);
 
 /// Numbers which have upper and lower bounds
 pub trait Bounded {
@@ -262,7 +262,7 @@ pub trait Bounded {
     fn max_value() -> Self;
 }
 
-macro_rules! bounded_impl(
+macro_rules! bounded_impl {
     ($t:ty, $min:expr, $max:expr) => {
         impl Bounded for $t {
             #[inline]
@@ -272,22 +272,22 @@ macro_rules! bounded_impl(
             fn max_value() -> $t { $max }
         }
     }
-)
+}
 
-bounded_impl!(uint, uint::MIN, uint::MAX)
-bounded_impl!(u8, u8::MIN, u8::MAX)
-bounded_impl!(u16, u16::MIN, u16::MAX)
-bounded_impl!(u32, u32::MIN, u32::MAX)
-bounded_impl!(u64, u64::MIN, u64::MAX)
+bounded_impl!(uint, uint::MIN, uint::MAX);
+bounded_impl!(u8, u8::MIN, u8::MAX);
+bounded_impl!(u16, u16::MIN, u16::MAX);
+bounded_impl!(u32, u32::MIN, u32::MAX);
+bounded_impl!(u64, u64::MIN, u64::MAX);
 
-bounded_impl!(int, int::MIN, int::MAX)
-bounded_impl!(i8, i8::MIN, i8::MAX)
-bounded_impl!(i16, i16::MIN, i16::MAX)
-bounded_impl!(i32, i32::MIN, i32::MAX)
-bounded_impl!(i64, i64::MIN, i64::MAX)
+bounded_impl!(int, int::MIN, int::MAX);
+bounded_impl!(i8, i8::MIN, i8::MAX);
+bounded_impl!(i16, i16::MIN, i16::MAX);
+bounded_impl!(i32, i32::MIN, i32::MAX);
+bounded_impl!(i64, i64::MIN, i64::MAX);
 
-bounded_impl!(f32, f32::MIN_VALUE, f32::MAX_VALUE)
-bounded_impl!(f64, f64::MIN_VALUE, f64::MAX_VALUE)
+bounded_impl!(f32, f32::MIN_VALUE, f32::MAX_VALUE);
+bounded_impl!(f64, f64::MIN_VALUE, f64::MAX_VALUE);
 
 /// Saturating math operations
 pub trait Saturating {
@@ -340,7 +340,7 @@ pub trait CheckedAdd: Add<Self, Self> {
     fn checked_add(&self, v: &Self) -> Option<Self>;
 }
 
-macro_rules! checked_impl(
+macro_rules! checked_impl {
     ($trait_name:ident, $method:ident, $t:ty, $op:path) => {
         impl $trait_name for $t {
             #[inline]
@@ -352,8 +352,8 @@ macro_rules! checked_impl(
             }
         }
     }
-)
-macro_rules! checked_cast_impl(
+}
+macro_rules! checked_cast_impl {
     ($trait_name:ident, $method:ident, $t:ty, $cast:ty, $op:path) => {
         impl $trait_name for $t {
             #[inline]
@@ -365,27 +365,27 @@ macro_rules! checked_cast_impl(
             }
         }
     }
-)
+}
 
 #[cfg(target_word_size = "32")]
-checked_cast_impl!(CheckedAdd, checked_add, uint, u32, intrinsics::u32_add_with_overflow)
+checked_cast_impl!(CheckedAdd, checked_add, uint, u32, intrinsics::u32_add_with_overflow);
 #[cfg(target_word_size = "64")]
-checked_cast_impl!(CheckedAdd, checked_add, uint, u64, intrinsics::u64_add_with_overflow)
+checked_cast_impl!(CheckedAdd, checked_add, uint, u64, intrinsics::u64_add_with_overflow);
 
-checked_impl!(CheckedAdd, checked_add, u8,  intrinsics::u8_add_with_overflow)
-checked_impl!(CheckedAdd, checked_add, u16, intrinsics::u16_add_with_overflow)
-checked_impl!(CheckedAdd, checked_add, u32, intrinsics::u32_add_with_overflow)
-checked_impl!(CheckedAdd, checked_add, u64, intrinsics::u64_add_with_overflow)
+checked_impl!(CheckedAdd, checked_add, u8,  intrinsics::u8_add_with_overflow);
+checked_impl!(CheckedAdd, checked_add, u16, intrinsics::u16_add_with_overflow);
+checked_impl!(CheckedAdd, checked_add, u32, intrinsics::u32_add_with_overflow);
+checked_impl!(CheckedAdd, checked_add, u64, intrinsics::u64_add_with_overflow);
 
 #[cfg(target_word_size = "32")]
-checked_cast_impl!(CheckedAdd, checked_add, int, i32, intrinsics::i32_add_with_overflow)
+checked_cast_impl!(CheckedAdd, checked_add, int, i32, intrinsics::i32_add_with_overflow);
 #[cfg(target_word_size = "64")]
-checked_cast_impl!(CheckedAdd, checked_add, int, i64, intrinsics::i64_add_with_overflow)
+checked_cast_impl!(CheckedAdd, checked_add, int, i64, intrinsics::i64_add_with_overflow);
 
-checked_impl!(CheckedAdd, checked_add, i8,  intrinsics::i8_add_with_overflow)
-checked_impl!(CheckedAdd, checked_add, i16, intrinsics::i16_add_with_overflow)
-checked_impl!(CheckedAdd, checked_add, i32, intrinsics::i32_add_with_overflow)
-checked_impl!(CheckedAdd, checked_add, i64, intrinsics::i64_add_with_overflow)
+checked_impl!(CheckedAdd, checked_add, i8,  intrinsics::i8_add_with_overflow);
+checked_impl!(CheckedAdd, checked_add, i16, intrinsics::i16_add_with_overflow);
+checked_impl!(CheckedAdd, checked_add, i32, intrinsics::i32_add_with_overflow);
+checked_impl!(CheckedAdd, checked_add, i64, intrinsics::i64_add_with_overflow);
 
 /// Performs subtraction that returns `None` instead of wrapping around on underflow.
 pub trait CheckedSub: Sub<Self, Self> {
@@ -402,24 +402,24 @@ pub trait CheckedSub: Sub<Self, Self> {
 }
 
 #[cfg(target_word_size = "32")]
-checked_cast_impl!(CheckedSub, checked_sub, uint, u32, intrinsics::u32_sub_with_overflow)
+checked_cast_impl!(CheckedSub, checked_sub, uint, u32, intrinsics::u32_sub_with_overflow);
 #[cfg(target_word_size = "64")]
-checked_cast_impl!(CheckedSub, checked_sub, uint, u64, intrinsics::u64_sub_with_overflow)
+checked_cast_impl!(CheckedSub, checked_sub, uint, u64, intrinsics::u64_sub_with_overflow);
 
-checked_impl!(CheckedSub, checked_sub, u8,  intrinsics::u8_sub_with_overflow)
-checked_impl!(CheckedSub, checked_sub, u16, intrinsics::u16_sub_with_overflow)
-checked_impl!(CheckedSub, checked_sub, u32, intrinsics::u32_sub_with_overflow)
-checked_impl!(CheckedSub, checked_sub, u64, intrinsics::u64_sub_with_overflow)
+checked_impl!(CheckedSub, checked_sub, u8,  intrinsics::u8_sub_with_overflow);
+checked_impl!(CheckedSub, checked_sub, u16, intrinsics::u16_sub_with_overflow);
+checked_impl!(CheckedSub, checked_sub, u32, intrinsics::u32_sub_with_overflow);
+checked_impl!(CheckedSub, checked_sub, u64, intrinsics::u64_sub_with_overflow);
 
 #[cfg(target_word_size = "32")]
-checked_cast_impl!(CheckedSub, checked_sub, int, i32, intrinsics::i32_sub_with_overflow)
+checked_cast_impl!(CheckedSub, checked_sub, int, i32, intrinsics::i32_sub_with_overflow);
 #[cfg(target_word_size = "64")]
-checked_cast_impl!(CheckedSub, checked_sub, int, i64, intrinsics::i64_sub_with_overflow)
+checked_cast_impl!(CheckedSub, checked_sub, int, i64, intrinsics::i64_sub_with_overflow);
 
-checked_impl!(CheckedSub, checked_sub, i8,  intrinsics::i8_sub_with_overflow)
-checked_impl!(CheckedSub, checked_sub, i16, intrinsics::i16_sub_with_overflow)
-checked_impl!(CheckedSub, checked_sub, i32, intrinsics::i32_sub_with_overflow)
-checked_impl!(CheckedSub, checked_sub, i64, intrinsics::i64_sub_with_overflow)
+checked_impl!(CheckedSub, checked_sub, i8,  intrinsics::i8_sub_with_overflow);
+checked_impl!(CheckedSub, checked_sub, i16, intrinsics::i16_sub_with_overflow);
+checked_impl!(CheckedSub, checked_sub, i32, intrinsics::i32_sub_with_overflow);
+checked_impl!(CheckedSub, checked_sub, i64, intrinsics::i64_sub_with_overflow);
 
 /// Performs multiplication that returns `None` instead of wrapping around on underflow or
 /// overflow.
@@ -438,24 +438,24 @@ pub trait CheckedMul: Mul<Self, Self> {
 }
 
 #[cfg(target_word_size = "32")]
-checked_cast_impl!(CheckedMul, checked_mul, uint, u32, intrinsics::u32_mul_with_overflow)
+checked_cast_impl!(CheckedMul, checked_mul, uint, u32, intrinsics::u32_mul_with_overflow);
 #[cfg(target_word_size = "64")]
-checked_cast_impl!(CheckedMul, checked_mul, uint, u64, intrinsics::u64_mul_with_overflow)
+checked_cast_impl!(CheckedMul, checked_mul, uint, u64, intrinsics::u64_mul_with_overflow);
 
-checked_impl!(CheckedMul, checked_mul, u8,  intrinsics::u8_mul_with_overflow)
-checked_impl!(CheckedMul, checked_mul, u16, intrinsics::u16_mul_with_overflow)
-checked_impl!(CheckedMul, checked_mul, u32, intrinsics::u32_mul_with_overflow)
-checked_impl!(CheckedMul, checked_mul, u64, intrinsics::u64_mul_with_overflow)
+checked_impl!(CheckedMul, checked_mul, u8,  intrinsics::u8_mul_with_overflow);
+checked_impl!(CheckedMul, checked_mul, u16, intrinsics::u16_mul_with_overflow);
+checked_impl!(CheckedMul, checked_mul, u32, intrinsics::u32_mul_with_overflow);
+checked_impl!(CheckedMul, checked_mul, u64, intrinsics::u64_mul_with_overflow);
 
 #[cfg(target_word_size = "32")]
-checked_cast_impl!(CheckedMul, checked_mul, int, i32, intrinsics::i32_mul_with_overflow)
+checked_cast_impl!(CheckedMul, checked_mul, int, i32, intrinsics::i32_mul_with_overflow);
 #[cfg(target_word_size = "64")]
-checked_cast_impl!(CheckedMul, checked_mul, int, i64, intrinsics::i64_mul_with_overflow)
+checked_cast_impl!(CheckedMul, checked_mul, int, i64, intrinsics::i64_mul_with_overflow);
 
-checked_impl!(CheckedMul, checked_mul, i8,  intrinsics::i8_mul_with_overflow)
-checked_impl!(CheckedMul, checked_mul, i16, intrinsics::i16_mul_with_overflow)
-checked_impl!(CheckedMul, checked_mul, i32, intrinsics::i32_mul_with_overflow)
-checked_impl!(CheckedMul, checked_mul, i64, intrinsics::i64_mul_with_overflow)
+checked_impl!(CheckedMul, checked_mul, i8,  intrinsics::i8_mul_with_overflow);
+checked_impl!(CheckedMul, checked_mul, i16, intrinsics::i16_mul_with_overflow);
+checked_impl!(CheckedMul, checked_mul, i32, intrinsics::i32_mul_with_overflow);
+checked_impl!(CheckedMul, checked_mul, i64, intrinsics::i64_mul_with_overflow);
 
 /// Performs division that returns `None` instead of panicking on division by zero and instead of
 /// wrapping around on underflow and overflow.
@@ -474,7 +474,7 @@ pub trait CheckedDiv: Div<Self, Self> {
     fn checked_div(&self, v: &Self) -> Option<Self>;
 }
 
-macro_rules! checkeddiv_int_impl(
+macro_rules! checkeddiv_int_impl {
     ($t:ty, $min:expr) => {
         impl CheckedDiv for $t {
             #[inline]
@@ -487,15 +487,15 @@ macro_rules! checkeddiv_int_impl(
             }
         }
     }
-)
+}
 
-checkeddiv_int_impl!(int, int::MIN)
-checkeddiv_int_impl!(i8, i8::MIN)
-checkeddiv_int_impl!(i16, i16::MIN)
-checkeddiv_int_impl!(i32, i32::MIN)
-checkeddiv_int_impl!(i64, i64::MIN)
+checkeddiv_int_impl!(int, int::MIN);
+checkeddiv_int_impl!(i8, i8::MIN);
+checkeddiv_int_impl!(i16, i16::MIN);
+checkeddiv_int_impl!(i32, i32::MIN);
+checkeddiv_int_impl!(i64, i64::MIN);
 
-macro_rules! checkeddiv_uint_impl(
+macro_rules! checkeddiv_uint_impl {
     ($($t:ty)*) => ($(
         impl CheckedDiv for $t {
             #[inline]
@@ -508,7 +508,7 @@ macro_rules! checkeddiv_uint_impl(
             }
         }
     )*)
-)
+}
 
-checkeddiv_uint_impl!(uint u8 u16 u32 u64)
+checkeddiv_uint_impl!(uint u8 u16 u32 u64);
 

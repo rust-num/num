@@ -218,13 +218,13 @@ macro_rules! forward_val_ref_binop {
 
 macro_rules! forward_all_binop {
     (impl $imp:ident for $res:ty, $method:ident) => {
-        forward_val_val_binop!(impl $imp for $res, $method)
-        forward_ref_val_binop!(impl $imp for $res, $method)
-        forward_val_ref_binop!(impl $imp for $res, $method)
+        forward_val_val_binop!(impl $imp for $res, $method);
+        forward_ref_val_binop!(impl $imp for $res, $method);
+        forward_val_ref_binop!(impl $imp for $res, $method);
     };
 }
 
-forward_all_binop!(impl BitAnd for BigUint, bitand)
+forward_all_binop!(impl BitAnd for BigUint, bitand);
 
 impl<'a, 'b> BitAnd<&'b BigUint, BigUint> for &'a BigUint {
     #[inline]
@@ -233,7 +233,7 @@ impl<'a, 'b> BitAnd<&'b BigUint, BigUint> for &'a BigUint {
     }
 }
 
-forward_all_binop!(impl BitOr for BigUint, bitor)
+forward_all_binop!(impl BitOr for BigUint, bitor);
 
 impl<'a, 'b> BitOr<&'b BigUint, BigUint> for &'a BigUint {
     fn bitor(self, other: &BigUint) -> BigUint {
@@ -246,7 +246,7 @@ impl<'a, 'b> BitOr<&'b BigUint, BigUint> for &'a BigUint {
     }
 }
 
-forward_all_binop!(impl BitXor for BigUint, bitxor)
+forward_all_binop!(impl BitXor for BigUint, bitxor);
 
 impl<'a, 'b> BitXor<&'b BigUint, BigUint> for &'a BigUint {
     fn bitxor(self, other: &BigUint) -> BigUint {
@@ -302,7 +302,7 @@ impl One for BigUint {
 
 impl Unsigned for BigUint {}
 
-forward_all_binop!(impl Add for BigUint, add)
+forward_all_binop!(impl Add for BigUint, add);
 
 impl<'a, 'b> Add<&'b BigUint, BigUint> for &'a BigUint {
     fn add(self, other: &BigUint) -> BigUint {
@@ -321,7 +321,7 @@ impl<'a, 'b> Add<&'b BigUint, BigUint> for &'a BigUint {
     }
 }
 
-forward_all_binop!(impl Sub for BigUint, sub)
+forward_all_binop!(impl Sub for BigUint, sub);
 
 impl<'a, 'b> Sub<&'b BigUint, BigUint> for &'a BigUint {
     fn sub(self, other: &BigUint) -> BigUint {
@@ -352,7 +352,7 @@ impl<'a, 'b> Sub<&'b BigUint, BigUint> for &'a BigUint {
 }
 
 
-forward_all_binop!(impl Mul for BigUint, mul)
+forward_all_binop!(impl Mul for BigUint, mul);
 
 impl<'a, 'b> Mul<&'b BigUint, BigUint> for &'a BigUint {
     fn mul(self, other: &BigUint) -> BigUint {
@@ -421,7 +421,7 @@ impl<'a, 'b> Mul<&'b BigUint, BigUint> for &'a BigUint {
 }
 
 
-forward_all_binop!(impl Div for BigUint, div)
+forward_all_binop!(impl Div for BigUint, div);
 
 impl<'a, 'b> Div<&'b BigUint, BigUint> for &'a BigUint {
     #[inline]
@@ -431,7 +431,7 @@ impl<'a, 'b> Div<&'b BigUint, BigUint> for &'a BigUint {
     }
 }
 
-forward_all_binop!(impl Rem for BigUint, rem)
+forward_all_binop!(impl Rem for BigUint, rem);
 
 impl<'a, 'b> Rem<&'b BigUint, BigUint> for &'a BigUint {
     #[inline]
@@ -702,7 +702,7 @@ impl ToBigUint for BigUint {
     }
 }
 
-macro_rules! impl_to_biguint(
+macro_rules! impl_to_biguint {
     ($T:ty, $from_ty:path) => {
         impl ToBigUint for $T {
             #[inline]
@@ -711,18 +711,18 @@ macro_rules! impl_to_biguint(
             }
         }
     }
-)
+}
 
-impl_to_biguint!(int,  FromPrimitive::from_int)
-impl_to_biguint!(i8,   FromPrimitive::from_i8)
-impl_to_biguint!(i16,  FromPrimitive::from_i16)
-impl_to_biguint!(i32,  FromPrimitive::from_i32)
-impl_to_biguint!(i64,  FromPrimitive::from_i64)
-impl_to_biguint!(uint, FromPrimitive::from_uint)
-impl_to_biguint!(u8,   FromPrimitive::from_u8)
-impl_to_biguint!(u16,  FromPrimitive::from_u16)
-impl_to_biguint!(u32,  FromPrimitive::from_u32)
-impl_to_biguint!(u64,  FromPrimitive::from_u64)
+impl_to_biguint!(int,  FromPrimitive::from_int);
+impl_to_biguint!(i8,   FromPrimitive::from_i8);
+impl_to_biguint!(i16,  FromPrimitive::from_i16);
+impl_to_biguint!(i32,  FromPrimitive::from_i32);
+impl_to_biguint!(i64,  FromPrimitive::from_i64);
+impl_to_biguint!(uint, FromPrimitive::from_uint);
+impl_to_biguint!(u8,   FromPrimitive::from_u8);
+impl_to_biguint!(u16,  FromPrimitive::from_u16);
+impl_to_biguint!(u32,  FromPrimitive::from_u32);
+impl_to_biguint!(u64,  FromPrimitive::from_u64);
 
 fn to_str_radix(me: &BigUint, radix: uint) -> String {
     assert!(1 < radix && radix <= 16, "The radix must be within (1, 16]");
@@ -1077,7 +1077,7 @@ impl Signed for BigInt {
     fn is_negative(&self) -> bool { self.sign == Minus }
 }
 
-forward_all_binop!(impl Add for BigInt, add)
+forward_all_binop!(impl Add for BigInt, add);
 
 impl<'a, 'b> Add<&'b BigInt, BigInt> for &'a BigInt {
     #[inline]
@@ -1093,7 +1093,7 @@ impl<'a, 'b> Add<&'b BigInt, BigInt> for &'a BigInt {
     }
 }
 
-forward_all_binop!(impl Sub for BigInt, sub)
+forward_all_binop!(impl Sub for BigInt, sub);
 
 impl<'a, 'b> Sub<&'b BigInt, BigInt> for &'a BigInt {
     #[inline]
@@ -1113,7 +1113,7 @@ impl<'a, 'b> Sub<&'b BigInt, BigInt> for &'a BigInt {
     }
 }
 
-forward_all_binop!(impl Mul for BigInt, mul)
+forward_all_binop!(impl Mul for BigInt, mul);
 
 impl<'a, 'b> Mul<&'b BigInt, BigInt> for &'a BigInt {
     #[inline]
@@ -1130,7 +1130,7 @@ impl<'a, 'b> Mul<&'b BigInt, BigInt> for &'a BigInt {
     }
 }
 
-forward_all_binop!(impl Div for BigInt, div)
+forward_all_binop!(impl Div for BigInt, div);
 
 impl<'a, 'b> Div<&'b BigInt, BigInt> for &'a BigInt {
     #[inline]
@@ -1140,7 +1140,7 @@ impl<'a, 'b> Div<&'b BigInt, BigInt> for &'a BigInt {
     }
 }
 
-forward_all_binop!(impl Rem for BigInt, rem)
+forward_all_binop!(impl Rem for BigInt, rem);
 
 impl<'a, 'b> Rem<&'b BigInt, BigInt> for &'a BigInt {
     #[inline]
@@ -1359,7 +1359,7 @@ impl ToBigInt for BigUint {
     }
 }
 
-macro_rules! impl_to_bigint(
+macro_rules! impl_to_bigint {
     ($T:ty, $from_ty:path) => {
         impl ToBigInt for $T {
             #[inline]
@@ -1368,18 +1368,18 @@ macro_rules! impl_to_bigint(
             }
         }
     }
-)
+}
 
-impl_to_bigint!(int,  FromPrimitive::from_int)
-impl_to_bigint!(i8,   FromPrimitive::from_i8)
-impl_to_bigint!(i16,  FromPrimitive::from_i16)
-impl_to_bigint!(i32,  FromPrimitive::from_i32)
-impl_to_bigint!(i64,  FromPrimitive::from_i64)
-impl_to_bigint!(uint, FromPrimitive::from_uint)
-impl_to_bigint!(u8,   FromPrimitive::from_u8)
-impl_to_bigint!(u16,  FromPrimitive::from_u16)
-impl_to_bigint!(u32,  FromPrimitive::from_u32)
-impl_to_bigint!(u64,  FromPrimitive::from_u64)
+impl_to_bigint!(int,  FromPrimitive::from_int);
+impl_to_bigint!(i8,   FromPrimitive::from_i8);
+impl_to_bigint!(i16,  FromPrimitive::from_i16);
+impl_to_bigint!(i32,  FromPrimitive::from_i32);
+impl_to_bigint!(i64,  FromPrimitive::from_i64);
+impl_to_bigint!(uint, FromPrimitive::from_uint);
+impl_to_bigint!(u8,   FromPrimitive::from_u8);
+impl_to_bigint!(u16,  FromPrimitive::from_u16);
+impl_to_bigint!(u32,  FromPrimitive::from_u32);
+impl_to_bigint!(u64,  FromPrimitive::from_u64);
 
 impl FromStrRadix for BigInt {
     /// Creates and initializes a BigInt.
@@ -2615,7 +2615,7 @@ mod bigint_tests {
             assert!(&c + (-b) == a);
             assert!(&a + (-c) == (-b));
             assert!(&b + (-c) == (-a));
-            assert!((-a) + (-b) == (-c))
+            assert!((-a) + (-b) == (-c));
             assert!(&a + (-a) == Zero::zero());
         }
     }
@@ -2630,8 +2630,8 @@ mod bigint_tests {
 
             assert!(&c - &a == b);
             assert!(&c - &b == a);
-            assert!((-b) - &a == (-c))
-            assert!((-a) - &b == (-c))
+            assert!((-b) - &a == (-c));
+            assert!((-a) - &b == (-c));
             assert!(&b - (-a) == c);
             assert!(&a - (-b) == c);
             assert!((-c) - (-a) == (-b));
@@ -2812,7 +2812,7 @@ mod bigint_tests {
             assert!(c.checked_add(&(-b)).unwrap() == a);
             assert!(a.checked_add(&(-c)).unwrap() == (-b));
             assert!(b.checked_add(&(-c)).unwrap() == (-a));
-            assert!((-a).checked_add(&(-b)).unwrap() == (-c))
+            assert!((-a).checked_add(&(-b)).unwrap() == (-c));
             assert!(a.checked_add(&(-a)).unwrap() == Zero::zero());
         }
     }
@@ -2827,8 +2827,8 @@ mod bigint_tests {
 
             assert!(c.checked_sub(&a).unwrap() == b);
             assert!(c.checked_sub(&b).unwrap() == a);
-            assert!((-b).checked_sub(&a).unwrap() == (-c))
-            assert!((-a).checked_sub(&b).unwrap() == (-c))
+            assert!((-b).checked_sub(&a).unwrap() == (-c));
+            assert!((-a).checked_sub(&b).unwrap() == (-c));
             assert!(b.checked_sub(&(-a)).unwrap() == c);
             assert!(a.checked_sub(&(-b)).unwrap() == c);
             assert!((-c).checked_sub(&(-a)).unwrap() == (-b));
