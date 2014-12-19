@@ -137,14 +137,14 @@ macro_rules! forward_val_ref_binop {
 
 macro_rules! forward_all_binop {
     (impl $imp:ident, $method:ident) => {
-        forward_val_val_binop!(impl $imp, $method)
-        forward_ref_val_binop!(impl $imp, $method)
-        forward_val_ref_binop!(impl $imp, $method)
+        forward_val_val_binop!(impl $imp, $method);
+        forward_ref_val_binop!(impl $imp, $method);
+        forward_val_ref_binop!(impl $imp, $method);
     };
 }
 
 /* arithmetic */
-forward_all_binop!(impl Add, add)
+forward_all_binop!(impl Add, add);
 
 // (a + i b) + (c + i d) == (a + c) + i (b + d)
 impl<'a, 'b, T: Clone + Num> Add<&'b Complex<T>, Complex<T>> for &'a Complex<T> {
@@ -155,7 +155,7 @@ impl<'a, 'b, T: Clone + Num> Add<&'b Complex<T>, Complex<T>> for &'a Complex<T> 
     }
 }
 
-forward_all_binop!(impl Sub, sub)
+forward_all_binop!(impl Sub, sub);
 
 // (a + i b) - (c + i d) == (a - c) + i (b - d)
 impl<'a, 'b, T: Clone + Num> Sub<&'b Complex<T>, Complex<T>> for &'a Complex<T> {
@@ -166,7 +166,7 @@ impl<'a, 'b, T: Clone + Num> Sub<&'b Complex<T>, Complex<T>> for &'a Complex<T> 
     }
 }
 
-forward_all_binop!(impl Mul, mul)
+forward_all_binop!(impl Mul, mul);
 
 // (a + i b) * (c + i d) == (a*c - b*d) + i (a*d + b*c)
 impl<'a, 'b, T: Clone + Num> Mul<&'b Complex<T>, Complex<T>> for &'a Complex<T> {
@@ -177,7 +177,7 @@ impl<'a, 'b, T: Clone + Num> Mul<&'b Complex<T>, Complex<T>> for &'a Complex<T> 
     }
 }
 
-forward_all_binop!(impl Div, div)
+forward_all_binop!(impl Div, div);
 
 // (a + i b) / (c + i d) == [(a + i b) * (c - i d)] / (c*c + d*d)
 //   == [(a*c + b*d) / (c*c + d*d)] + i [(b*c - a*d) / (c*c + d*d)]

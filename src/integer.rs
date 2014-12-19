@@ -376,11 +376,11 @@ macro_rules! impl_integer_for_int {
     )
 }
 
-impl_integer_for_int!(i8,   test_integer_i8)
-impl_integer_for_int!(i16,  test_integer_i16)
-impl_integer_for_int!(i32,  test_integer_i32)
-impl_integer_for_int!(i64,  test_integer_i64)
-impl_integer_for_int!(int,  test_integer_int)
+impl_integer_for_int!(i8,   test_integer_i8);
+impl_integer_for_int!(i16,  test_integer_i16);
+impl_integer_for_int!(i32,  test_integer_i32);
+impl_integer_for_int!(i64,  test_integer_i64);
+impl_integer_for_int!(int,  test_integer_int);
 
 macro_rules! impl_integer_for_uint {
     ($T:ty, $test_mod:ident) => (
@@ -501,8 +501,8 @@ macro_rules! impl_integer_for_uint {
     )
 }
 
-impl_integer_for_uint!(u8,   test_integer_u8)
-impl_integer_for_uint!(u16,  test_integer_u16)
-impl_integer_for_uint!(u32,  test_integer_u32)
-impl_integer_for_uint!(u64,  test_integer_u64)
-impl_integer_for_uint!(uint, test_integer_uint)
+impl_integer_for_uint!(u8,   test_integer_u8);
+impl_integer_for_uint!(u16,  test_integer_u16);
+impl_integer_for_uint!(u32,  test_integer_u32);
+impl_integer_for_uint!(u64,  test_integer_u64);
+impl_integer_for_uint!(uint, test_integer_uint);
