@@ -99,8 +99,8 @@ impl<T: Clone + Integer + PartialOrd>
 
         // keep denom positive!
         if self.denom < Zero::zero() {
-            self.numer = -self.numer;
-            self.denom = -self.denom;
+            self.numer = -self.numer.clone();
+            self.denom = -self.denom.clone();
         }
     }
 
@@ -320,8 +320,14 @@ arith_impl!(impl Rem, rem);
 impl<T: Clone + Integer + PartialOrd>
     Neg<Ratio<T>> for Ratio<T> {
     #[inline]
-    fn neg(&self) -> Ratio<T> {
-        Ratio::new_raw(-self.numer, self.denom.clone())
+    fn neg(self) -> Ratio<T> { -&self }
+}
+
+impl<'a, T: Clone + Integer + PartialOrd>
+    Neg<Ratio<T>> for &'a Ratio<T> {
+    #[inline]
+    fn neg(self) -> Ratio<T> {
+        Ratio::new_raw(-self.numer.clone(), self.denom.clone())
     }
 }
 

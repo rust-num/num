@@ -50,7 +50,7 @@ impl<T: Clone + Num> Complex<T> {
     /// Returns the complex conjugate. i.e. `re - i im`
     #[inline]
     pub fn conj(&self) -> Complex<T> {
-        Complex::new(self.re.clone(), -self.im)
+        Complex::new(self.re.clone(), -self.im.clone())
     }
 
 
@@ -192,8 +192,13 @@ impl<'a, 'b, T: Clone + Num> Div<&'b Complex<T>, Complex<T>> for &'a Complex<T> 
 
 impl<T: Clone + Num> Neg<Complex<T>> for Complex<T> {
     #[inline]
-    fn neg(&self) -> Complex<T> {
-        Complex::new(-self.re, -self.im)
+    fn neg(self) -> Complex<T> { -&self }
+}
+
+impl<'a, T: Clone + Num> Neg<Complex<T>> for &'a Complex<T> {
+    #[inline]
+    fn neg(self) -> Complex<T> {
+        Complex::new(-self.re.clone(), -self.im.clone())
     }
 }
 
@@ -218,10 +223,10 @@ impl<T: Clone + Num> One for Complex<T> {
 }
 
 /* string conversions */
-impl<T: fmt::Show + Num + PartialOrd> fmt::Show for Complex<T> {
+impl<T: fmt::Show + Num + PartialOrd + Clone> fmt::Show for Complex<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.im < Zero::zero() {
-            write!(f, "{}-{}i", self.re, -self.im)
+            write!(f, "{}-{}i", self.re, -self.im.clone())
         } else {
             write!(f, "{}+{}i", self.re, self.im)
         }
