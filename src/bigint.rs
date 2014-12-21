@@ -443,7 +443,12 @@ impl<'a, 'b> Rem<&'b BigUint, BigUint> for &'a BigUint {
 
 impl Neg<BigUint> for BigUint {
     #[inline]
-    fn neg(&self) -> BigUint { panic!() }
+    fn neg(self) -> BigUint { panic!() }
+}
+
+impl<'a> Neg<BigUint> for &'a BigUint {
+    #[inline]
+    fn neg(self) -> BigUint { panic!() }
 }
 
 impl CheckedAdd for BigUint {
@@ -933,11 +938,11 @@ pub enum Sign { Minus, NoSign, Plus }
 impl Neg<Sign> for Sign {
     /// Negate Sign value.
     #[inline]
-    fn neg(&self) -> Sign {
-        match *self {
-          Minus => Plus,
-          NoSign  => NoSign,
-          Plus  => Minus
+    fn neg(self) -> Sign {
+        match self {
+          Minus  => Plus,
+          NoSign => NoSign,
+          Plus   => Minus
         }
     }
 }
@@ -1086,9 +1091,9 @@ impl<'a, 'b> Add<&'b BigInt, BigInt> for &'a BigInt {
             (NoSign, _)    => other.clone(),
             (_,    NoSign) => self.clone(),
             (Plus, Plus)   => BigInt::from_biguint(Plus, &self.data + &other.data),
-            (Plus, Minus)  => self - (-*other),
-            (Minus, Plus)  => other - (-*self),
-            (Minus, Minus) => -((-*self) + (-*other))
+            (Plus, Minus)  => self - (-other),
+            (Minus, Plus)  => other - (-self),
+            (Minus, Minus) => -((-self) + (-other))
         }
     }
 }
@@ -1099,16 +1104,16 @@ impl<'a, 'b> Sub<&'b BigInt, BigInt> for &'a BigInt {
     #[inline]
     fn sub(self, other: &BigInt) -> BigInt {
         match (self.sign, other.sign) {
-            (NoSign, _)    => -*other,
+            (NoSign, _)    => -other,
             (_,    NoSign) => self.clone(),
             (Plus, Plus) => match self.data.cmp(&other.data) {
                 Less    => BigInt::from_biguint(Minus, &other.data - &self.data),
                 Greater => BigInt::from_biguint(Plus, &self.data - &other.data),
                 Equal   => Zero::zero()
             },
-            (Plus, Minus) => self + (-*other),
-            (Minus, Plus) => -((-*self) + other),
-            (Minus, Minus) => (-*other) - (-*self)
+            (Plus, Minus) => self + (-other),
+            (Minus, Plus) => -((-self) + other),
+            (Minus, Minus) => (-other) - (-self)
         }
     }
 }
@@ -1152,7 +1157,12 @@ impl<'a, 'b> Rem<&'b BigInt, BigInt> for &'a BigInt {
 
 impl Neg<BigInt> for BigInt {
     #[inline]
-    fn neg(&self) -> BigInt {
+    fn neg(self) -> BigInt { -&self }
+}
+
+impl<'a> Neg<BigInt> for &'a BigInt {
+    #[inline]
+    fn neg(self) -> BigInt {
         BigInt::from_biguint(self.sign.neg(), self.data.clone())
     }
 }
@@ -2579,7 +2589,7 @@ mod bigint_tests {
         let unsigned_zero: BigUint = Zero::zero();
         let positive = BigInt::from_biguint(
             Plus, BigUint::new(vec!(1,2,3)));
-        let negative = -positive;
+        let negative = -&positive;
 
         check(zero, unsigned_zero);
         check(positive, BigUint::new(vec!(1,2,3)));
@@ -2611,12 +2621,12 @@ mod bigint_tests {
 
             assert!(&a + &b == c);
             assert!(&b + &a == c);
-            assert!(&c + (-a) == b);
-            assert!(&c + (-b) == a);
-            assert!(&a + (-c) == (-b));
-            assert!(&b + (-c) == (-a));
-            assert!((-a) + (-b) == (-c));
-            assert!(&a + (-a) == Zero::zero());
+            assert!(&c + (-&a) == b);
+            assert!(&c + (-&b) == a);
+            assert!(&a + (-&c) == (-&b));
+            assert!(&b + (-&c) == (-&a));
+            assert!((-&a) + (-&b) == (-&c));
+            assert!(&a + (-&a) == Zero::zero());
         }
     }
 
@@ -2630,11 +2640,11 @@ mod bigint_tests {
 
             assert!(&c - &a == b);
             assert!(&c - &b == a);
-            assert!((-b) - &a == (-c));
-            assert!((-a) - &b == (-c));
-            assert!(&b - (-a) == c);
-            assert!(&a - (-b) == c);
-            assert!((-c) - (-a) == (-b));
+            assert!((-&b) - &a == (-&c));
+            assert!((-&a) - &b == (-&c));
+            assert!(&b - (-&a) == c);
+            assert!(&a - (-&b) == c);
+            assert!((-&c) - (-&a) == (-&b));
             assert!(&a - &a == Zero::zero());
         }
     }
@@ -2688,8 +2698,8 @@ mod bigint_tests {
             assert!(&a * &b == c);
             assert!(&b * &a == c);
 
-            assert!((-a) * &b == -c);
-            assert!((-b) * &a == -c);
+            assert!((-&a) * &b == -&c);
+            assert!((-&b) * &a == -&c);
         }
 
         for elm in DIV_REM_QUADRUPLES.iter() {
@@ -2808,12 +2818,12 @@ mod bigint_tests {
 
             assert!(a.checked_add(&b).unwrap() == c);
             assert!(b.checked_add(&a).unwrap() == c);
-            assert!(c.checked_add(&(-a)).unwrap() == b);
-            assert!(c.checked_add(&(-b)).unwrap() == a);
-            assert!(a.checked_add(&(-c)).unwrap() == (-b));
-            assert!(b.checked_add(&(-c)).unwrap() == (-a));
-            assert!((-a).checked_add(&(-b)).unwrap() == (-c));
-            assert!(a.checked_add(&(-a)).unwrap() == Zero::zero());
+            assert!(c.checked_add(&(-&a)).unwrap() == b);
+            assert!(c.checked_add(&(-&b)).unwrap() == a);
+            assert!(a.checked_add(&(-&c)).unwrap() == (-&b));
+            assert!(b.checked_add(&(-&c)).unwrap() == (-&a));
+            assert!((-&a).checked_add(&(-&b)).unwrap() == (-&c));
+            assert!(a.checked_add(&(-&a)).unwrap() == Zero::zero());
         }
     }
 
@@ -2827,11 +2837,11 @@ mod bigint_tests {
 
             assert!(c.checked_sub(&a).unwrap() == b);
             assert!(c.checked_sub(&b).unwrap() == a);
-            assert!((-b).checked_sub(&a).unwrap() == (-c));
-            assert!((-a).checked_sub(&b).unwrap() == (-c));
-            assert!(b.checked_sub(&(-a)).unwrap() == c);
-            assert!(a.checked_sub(&(-b)).unwrap() == c);
-            assert!((-c).checked_sub(&(-a)).unwrap() == (-b));
+            assert!((-&b).checked_sub(&a).unwrap() == (-&c));
+            assert!((-&a).checked_sub(&b).unwrap() == (-&c));
+            assert!(b.checked_sub(&(-&a)).unwrap() == c);
+            assert!(a.checked_sub(&(-&b)).unwrap() == c);
+            assert!((-&c).checked_sub(&(-&a)).unwrap() == (-&b));
             assert!(a.checked_sub(&a).unwrap() == Zero::zero());
         }
     }
@@ -2847,8 +2857,8 @@ mod bigint_tests {
             assert!(a.checked_mul(&b).unwrap() == c);
             assert!(b.checked_mul(&a).unwrap() == c);
 
-            assert!((-a).checked_mul(&b).unwrap() == -c);
-            assert!((-b).checked_mul(&a).unwrap() == -c);
+            assert!((-&a).checked_mul(&b).unwrap() == -&c);
+            assert!((-&b).checked_mul(&a).unwrap() == -&c);
         }
 
         for elm in DIV_REM_QUADRUPLES.iter() {
@@ -2872,17 +2882,17 @@ mod bigint_tests {
 
             if !a.is_zero() {
                 assert!(c.checked_div(&a).unwrap() == b);
-                assert!((-c).checked_div(&(-a)).unwrap() == b);
-                assert!((-c).checked_div(&a).unwrap() == -b);
+                assert!((-&c).checked_div(&(-&a)).unwrap() == b);
+                assert!((-&c).checked_div(&a).unwrap() == -&b);
             }
             if !b.is_zero() {
                 assert!(c.checked_div(&b).unwrap() == a);
-                assert!((-c).checked_div(&(-b)).unwrap() == a);
-                assert!((-c).checked_div(&b).unwrap() == -a);
+                assert!((-&c).checked_div(&(-&b)).unwrap() == a);
+                assert!((-&c).checked_div(&b).unwrap() == -&a);
             }
 
             assert!(c.checked_div(&Zero::zero()).is_none());
-            assert!((-c).checked_div(&Zero::zero()).is_none());
+            assert!((-&c).checked_div(&Zero::zero()).is_none());
         }
     }
 
@@ -2930,7 +2940,7 @@ mod bigint_tests {
     fn test_abs_sub() {
         let zero: BigInt = Zero::zero();
         let one: BigInt = One::one();
-        assert_eq!((-one).abs_sub(&one), zero);
+        assert_eq!((-&one).abs_sub(&one), zero);
         let one: BigInt = One::one();
         let zero: BigInt = Zero::zero();
         assert_eq!(one.abs_sub(&one), zero);
@@ -2939,7 +2949,7 @@ mod bigint_tests {
         assert_eq!(one.abs_sub(&zero), one);
         let one: BigInt = One::one();
         let two: BigInt = FromPrimitive::from_int(2).unwrap();
-        assert_eq!(one.abs_sub(&-one), two);
+        assert_eq!(one.abs_sub(&-&one), two);
     }
 
     #[test]
@@ -2973,7 +2983,7 @@ mod bigint_tests {
         assert!(-BigInt::new(Minus, vec!(1, 1, 1)) ==
             BigInt::new(Plus,  vec!(1, 1, 1)));
         let zero: BigInt = Zero::zero();
-        assert_eq!(-zero, zero);
+        assert_eq!(-&zero, zero);
     }
 
     #[test]
