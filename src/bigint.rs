@@ -851,7 +851,7 @@ impl BigUint {
     /// Creates and initializes a `BigUint`.
     #[inline]
     pub fn parse_bytes(buf: &[u8], radix: uint) -> Option<BigUint> {
-        str::from_utf8(buf).and_then(|s| FromStrRadix::from_str_radix(s, radix))
+        str::from_utf8(buf).ok().and_then(|s| FromStrRadix::from_str_radix(s, radix))
     }
 
     #[inline]
@@ -1535,7 +1535,7 @@ impl BigInt {
     /// Creates and initializes a `BigInt`.
     #[inline]
     pub fn parse_bytes(buf: &[u8], radix: uint) -> Option<BigInt> {
-        str::from_utf8(buf).and_then(|s| FromStrRadix::from_str_radix(s, radix))
+        str::from_utf8(buf).ok().and_then(|s| FromStrRadix::from_str_radix(s, radix))
     }
 
 
@@ -1580,7 +1580,7 @@ mod biguint_tests {
     use super::{BigInt, RandBigInt, ToBigInt};
     use super::Sign::Plus;
 
-    use std::cmp::{Less, Equal, Greater};
+    use std::cmp::Ordering::{Less, Equal, Greater};
     use std::str::FromStr;
     use std::i64;
     use std::num::FromStrRadix;
@@ -2446,7 +2446,7 @@ mod bigint_tests {
     use super::{Sign, BigInt, RandBigInt, ToBigInt};
     use super::Sign::{Minus, NoSign, Plus};
 
-    use std::cmp::{Less, Equal, Greater};
+    use std::cmp::Ordering::{Less, Equal, Greater};
     use std::i64;
     use std::num::FromStrRadix;
     use std::num::{ToPrimitive, FromPrimitive};
