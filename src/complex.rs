@@ -21,7 +21,7 @@ use {Zero, One, Num};
 // probably doesn't map to C's _Complex correctly.
 
 /// A complex number in Cartesian form.
-#[deriving(PartialEq, Copy, Clone, Hash, Encodable, Decodable)]
+#[deriving(PartialEq, Copy, Clone, Hash, RustcEncodable, RustcDecodable)]
 pub struct Complex<T> {
     /// Real portion of the complex number
     pub re: T,

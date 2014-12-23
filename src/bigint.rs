@@ -56,14 +56,15 @@
 //! ```
 
 use Integer;
-use rand::Rng;
 
-use std::{cmp, fmt, hash};
 use std::default::Default;
+use std::iter::repeat;
 use std::iter::{AdditiveIterator, MultiplicativeIterator};
-use std::num::{Int, ToPrimitive, FromPrimitive};
 use std::num::FromStrRadix;
+use std::num::{Int, ToPrimitive, FromPrimitive};
+use std::rand::Rng;
 use std::str::{mod, FromStr};
+use std::{cmp, fmt, hash};
 use std::{i64, u64};
 
 use {Num, Unsigned, CheckedAdd, CheckedSub, CheckedMul, CheckedDiv, Signed, Zero, One};
@@ -112,7 +113,7 @@ pub mod BigDigit {
 ///
 /// A `BigUint`-typed value `BigUint { data: vec!(a, b, c) }` represents a number
 /// `(a + b * BigDigit::BASE + c * BigDigit::BASE^2)`.
-#[deriving(Clone, Encodable, Decodable)]
+#[deriving(Clone, RustcEncodable, RustcDecodable)]
 pub struct BigUint {
     data: Vec<BigDigit>
 }
@@ -759,7 +760,7 @@ fn to_str_radix(me: &BigUint, radix: uint) -> String {
         let mut s = String::with_capacity(v.len() * l);
         for n in v.iter().rev() {
             let ss = fmt::radix(*n as uint, radix as u8).to_string();
-            s.push_str("0".repeat(l - ss.len())[]);
+            s.extend(repeat("0").take(l - ss.len()));
             s.push_str(ss[]);
         }
         s.trim_left_chars('0').to_string()
@@ -932,7 +933,7 @@ fn get_radix_base(radix: uint) -> (DoubleBigDigit, uint) {
 }
 
 /// A Sign is a `BigInt`'s composing element.
-#[deriving(PartialEq, PartialOrd, Eq, Ord, Copy, Clone, Show, Encodable, Decodable)]
+#[deriving(PartialEq, PartialOrd, Eq, Ord, Copy, Clone, Show, RustcEncodable, RustcDecodable)]
 pub enum Sign { Minus, NoSign, Plus }
 
 impl Neg<Sign> for Sign {
@@ -948,7 +949,7 @@ impl Neg<Sign> for Sign {
 }
 
 /// A big signed integer type.
-#[deriving(Clone, Encodable, Decodable)]
+#[deriving(Clone, RustcEncodable, RustcDecodable)]
 pub struct BigInt {
     sign: Sign,
     data: BigUint
@@ -1581,13 +1582,14 @@ mod biguint_tests {
     use super::Sign::Plus;
 
     use std::cmp::Ordering::{Less, Equal, Greater};
-    use std::str::FromStr;
+    use std::hash::hash;
     use std::i64;
+    use std::iter::repeat;
     use std::num::FromStrRadix;
     use std::num::{ToPrimitive, FromPrimitive};
     use std::rand::task_rng;
+    use std::str::FromStr;
     use std::u64;
-    use std::hash::hash;
 
     use {Zero, One, CheckedAdd, CheckedSub, CheckedMul, CheckedDiv};
 
@@ -2284,25 +2286,25 @@ mod biguint_tests {
             (16, "fff".to_string())
         )), ( BigUint::from_slice(&[ 1, 2 ]), vec!(
             (2,
-             format!("10{}1", "0".repeat(bits - 1))),
+             format!("10{}1", repeat("0").take(bits - 1).collect::<String>())),
             (4,
-             format!("2{}1", "0".repeat(bits / 2 - 1))),
+             format!("2{}1", repeat("0").take(bits / 2 - 1).collect::<String>())),
             (10, match bits {
                 32 => "8589934593".to_string(),
                 16 => "131073".to_string(),
                 _ => panic!()
             }),
             (16,
-             format!("2{}1", "0".repeat(bits / 4 - 1)))
+             format!("2{}1", repeat("0").take(bits / 4 - 1).collect::<String>()))
         )), ( BigUint::from_slice(&[ 1, 2, 3 ]), vec!(
             (2,
              format!("11{}10{}1",
-                     "0".repeat(bits - 2),
-                     "0".repeat(bits - 1))),
+                     repeat("0").take(bits - 2).collect::<String>(),
+                     repeat("0").take(bits - 1).collect::<String>())),
             (4,
              format!("3{}2{}1",
-                     "0".repeat(bits / 2 - 1),
-                     "0".repeat(bits / 2 - 1))),
+                     repeat("0").take(bits / 2 - 1).collect::<String>(),
+                     repeat("0").take(bits / 2 - 1).collect::<String>())),
             (10, match bits {
                 32 => "55340232229718589441".to_string(),
                 16 => "12885032961".to_string(),
@@ -2310,8 +2312,8 @@ mod biguint_tests {
             }),
             (16,
              format!("3{}2{}1",
-                     "0".repeat(bits / 4 - 1),
-                     "0".repeat(bits / 4 - 1)))
+                     repeat("0").take(bits / 4 - 1).collect::<String>(),
+                     repeat("0").take(bits / 4 - 1).collect::<String>()))
         )) )
     }
 
@@ -2447,12 +2449,13 @@ mod bigint_tests {
     use super::Sign::{Minus, NoSign, Plus};
 
     use std::cmp::Ordering::{Less, Equal, Greater};
+    use std::hash::hash;
     use std::i64;
+    use std::iter::repeat;
     use std::num::FromStrRadix;
     use std::num::{ToPrimitive, FromPrimitive};
     use std::rand::task_rng;
     use std::u64;
-    use std::hash::hash;
 
     use {Zero, One, Signed};
 
@@ -2972,7 +2975,7 @@ mod bigint_tests {
         // issue 10522, this hit an edge case that caused it to
         // attempt to allocate a vector of size (-1u) == huge.
         let x: BigInt =
-            from_str(format!("1{}", "0".repeat(36)).as_slice()).unwrap();
+            format!("1{}", repeat("0").take(36).collect::<String>()).parse().unwrap();
         let _y = x.to_string();
     }
 

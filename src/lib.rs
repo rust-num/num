@@ -45,18 +45,13 @@
 #![feature(macro_rules)]
 #![feature(default_type_params)]
 #![feature(slicing_syntax)]
-
-#![crate_name = "num"]
-#![experimental]
-#![crate_type = "rlib"]
-#![crate_type = "dylib"]
+#![cfg_attr(test, deny(warnings))]
 #![doc(html_logo_url = "http://www.rust-lang.org/logos/rust-logo-128x128-blk-v2.png",
        html_favicon_url = "http://www.rust-lang.org/favicon.ico",
-       html_root_url = "http://doc.rust-lang.org/master/",
+       html_root_url = "http://doc.rust-lang.org/num/",
        html_playground_url = "http://play.rust-lang.org/")]
 
-extern crate rand;
-extern crate serialize;
+extern crate "rustc-serialize" as rustc_serialize;
 
 pub use bigint::{BigInt, BigUint};
 pub use rational::{Rational, BigRational};
