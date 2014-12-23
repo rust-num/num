@@ -851,7 +851,7 @@ impl BigUint {
     /// Creates and initializes a `BigUint`.
     #[inline]
     pub fn parse_bytes(buf: &[u8], radix: uint) -> Option<BigUint> {
-        str::from_utf8(buf).and_then(|s| FromStrRadix::from_str_radix(s, radix))
+        str::from_utf8(buf).ok().and_then(|s| FromStrRadix::from_str_radix(s, radix))
     }
 
     #[inline]
@@ -1535,7 +1535,7 @@ impl BigInt {
     /// Creates and initializes a `BigInt`.
     #[inline]
     pub fn parse_bytes(buf: &[u8], radix: uint) -> Option<BigInt> {
-        str::from_utf8(buf).and_then(|s| FromStrRadix::from_str_radix(s, radix))
+        str::from_utf8(buf).ok().and_then(|s| FromStrRadix::from_str_radix(s, radix))
     }
 
 
