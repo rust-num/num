@@ -1580,7 +1580,7 @@ mod biguint_tests {
     use super::{BigInt, RandBigInt, ToBigInt};
     use super::Sign::Plus;
 
-    use std::cmp::{Less, Equal, Greater};
+    use std::cmp::Ordering::{Less, Equal, Greater};
     use std::str::FromStr;
     use std::i64;
     use std::num::FromStrRadix;
@@ -2446,7 +2446,7 @@ mod bigint_tests {
     use super::{Sign, BigInt, RandBigInt, ToBigInt};
     use super::Sign::{Minus, NoSign, Plus};
 
-    use std::cmp::{Less, Equal, Greater};
+    use std::cmp::Ordering::{Less, Equal, Greater};
     use std::i64;
     use std::num::FromStrRadix;
     use std::num::{ToPrimitive, FromPrimitive};
