@@ -2,6 +2,8 @@
 
 Arbitrary sized numeric types for Rust.
 
+[Documentation](http://doc.rust-lang.org/num)
+
 ## Usage
 
 Add this to your `Cargo.toml`:
