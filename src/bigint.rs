@@ -44,7 +44,7 @@
 //! use num::bigint::{ToBigInt, RandBigInt};
 //! use std::rand;
 //!
-//! let mut rng = rand::task_rng();
+//! let mut rng = rand::thread_rng();
 //! let a = rng.gen_bigint(1000u);
 //!
 //! let low = -10000i.to_bigint().unwrap();
@@ -621,7 +621,7 @@ impl Integer for BigUint {
     #[inline]
     fn is_even(&self) -> bool {
         // Considering only the last digit.
-        match self.data.head() {
+        match self.data.first() {
             Some(x) => x.is_even(),
             None => true
         }
@@ -763,7 +763,7 @@ fn to_str_radix(me: &BigUint, radix: uint) -> String {
             s.extend(repeat("0").take(l - ss.len()));
             s.push_str(ss[]);
         }
-        s.trim_left_chars('0').to_string()
+        s.trim_left_matches('0').to_string()
     }
 }
 
@@ -859,7 +859,7 @@ impl BigUint {
     fn shl_unit(&self, n_unit: uint) -> BigUint {
         if n_unit == 0 || self.is_zero() { return (*self).clone(); }
 
-        let mut v = Vec::from_elem(n_unit, ZERO_BIG_DIGIT);
+        let mut v = repeat(ZERO_BIG_DIGIT).take(n_unit).collect::<Vec<_>>();
         v.push_all(self.data[]);
         BigUint::new(v)
     }
@@ -1587,7 +1587,7 @@ mod biguint_tests {
     use std::iter::repeat;
     use std::num::FromStrRadix;
     use std::num::{ToPrimitive, FromPrimitive};
-    use std::rand::task_rng;
+    use std::rand::thread_rng;
     use std::str::FromStr;
     use std::u64;
 
@@ -2396,14 +2396,14 @@ mod biguint_tests {
 
     #[test]
     fn test_rand() {
-        let mut rng = task_rng();
+        let mut rng = thread_rng();
         let _n: BigUint = rng.gen_biguint(137);
         assert!(rng.gen_biguint(0).is_zero());
     }
 
     #[test]
     fn test_rand_range() {
-        let mut rng = task_rng();
+        let mut rng = thread_rng();
 
         for _ in range(0u, 10) {
             assert_eq!(rng.gen_bigint_range(&FromPrimitive::from_uint(236).unwrap(),
@@ -2426,14 +2426,14 @@ mod biguint_tests {
     #[test]
     #[should_fail]
     fn test_zero_rand_range() {
-        task_rng().gen_biguint_range(&FromPrimitive::from_uint(54).unwrap(),
+        thread_rng().gen_biguint_range(&FromPrimitive::from_uint(54).unwrap(),
                                      &FromPrimitive::from_uint(54).unwrap());
     }
 
     #[test]
     #[should_fail]
     fn test_negative_rand_range() {
-        let mut rng = task_rng();
+        let mut rng = thread_rng();
         let l = FromPrimitive::from_uint(2352).unwrap();
         let u = FromPrimitive::from_uint(3513).unwrap();
         // Switching u and l should fail:
@@ -2454,7 +2454,7 @@ mod bigint_tests {
     use std::iter::repeat;
     use std::num::FromStrRadix;
     use std::num::{ToPrimitive, FromPrimitive};
-    use std::rand::task_rng;
+    use std::rand::thread_rng;
     use std::u64;
 
     use {Zero, One, Signed};
@@ -2991,14 +2991,14 @@ mod bigint_tests {
 
     #[test]
     fn test_rand() {
-        let mut rng = task_rng();
+        let mut rng = thread_rng();
         let _n: BigInt = rng.gen_bigint(137);
         assert!(rng.gen_bigint(0).is_zero());
     }
 
     #[test]
     fn test_rand_range() {
-        let mut rng = task_rng();
+        let mut rng = thread_rng();
 
         for _ in range(0u, 10) {
             assert_eq!(rng.gen_bigint_range(&FromPrimitive::from_uint(236).unwrap(),
@@ -3007,7 +3007,7 @@ mod bigint_tests {
         }
 
         fn check(l: BigInt, u: BigInt) {
-            let mut rng = task_rng();
+            let mut rng = thread_rng();
             for _ in range(0u, 1000) {
                 let n: BigInt = rng.gen_bigint_range(&l, &u);
                 assert!(n >= l);
@@ -3024,14 +3024,14 @@ mod bigint_tests {
     #[test]
     #[should_fail]
     fn test_zero_rand_range() {
-        task_rng().gen_bigint_range(&FromPrimitive::from_int(54).unwrap(),
+        thread_rng().gen_bigint_range(&FromPrimitive::from_int(54).unwrap(),
                                     &FromPrimitive::from_int(54).unwrap());
     }
 
     #[test]
     #[should_fail]
     fn test_negative_rand_range() {
-        let mut rng = task_rng();
+        let mut rng = thread_rng();
         let l = FromPrimitive::from_uint(2352).unwrap();
         let u = FromPrimitive::from_uint(3513).unwrap();
         // Switching u and l should fail:
