@@ -22,6 +22,7 @@
 //! ```
 //! extern crate num;
 //!
+//! use std::num::FromPrimitive;
 //! use num::bigint::BigInt;
 //! use num::rational::{Ratio, BigRational};
 //!
