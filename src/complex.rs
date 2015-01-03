@@ -14,6 +14,7 @@
 use std::fmt;
 use std::num::FloatMath;
 use std::iter::{AdditiveIterator, MultiplicativeIterator};
+use std::ops::{Add, Div, Mul, Neg, Sub};
 
 use {Zero, One, Num};
 
@@ -21,7 +22,7 @@ use {Zero, One, Num};
 // probably doesn't map to C's _Complex correctly.
 
 /// A complex number in Cartesian form.
-#[deriving(PartialEq, Copy, Clone, Hash, RustcEncodable, RustcDecodable)]
+#[derive(PartialEq, Copy, Clone, Hash, RustcEncodable, RustcDecodable)]
 pub struct Complex<T> {
     /// Real portion of the complex number
     pub re: T,
@@ -264,7 +265,7 @@ mod test {
     pub const _0_1i : Complex64 = Complex { re: 0.0, im: 1.0 };
     pub const _neg1_1i : Complex64 = Complex { re: -1.0, im: 1.0 };
     pub const _05_05i : Complex64 = Complex { re: 0.5, im: 0.5 };
-    pub const all_consts : [Complex64, .. 5] = [_0_0i, _1_0i, _1_1i, _neg1_1i, _05_05i];
+    pub const all_consts : [Complex64; 5] = [_0_0i, _1_0i, _1_1i, _neg1_1i, _05_05i];
 
     #[test]
     fn test_consts() {

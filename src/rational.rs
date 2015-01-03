@@ -14,15 +14,16 @@ use Integer;
 
 use std::cmp;
 use std::fmt;
+use std::ops::{Add, Div, Mul, Neg, Rem, Sub};
 use std::str::FromStr;
-use std::num::{FromStrRadix, Float};
+use std::num::{FromPrimitive, FromStrRadix, Float};
 use std::iter::{AdditiveIterator, MultiplicativeIterator};
 
 use bigint::{BigInt, BigUint, Sign};
 use {Num, Signed, Zero, One};
 
 /// Represents the ratio between 2 numbers.
-#[deriving(Copy, Clone, Hash, RustcEncodable, RustcDecodable)]
+#[derive(Copy, Clone, Hash, RustcEncodable, RustcDecodable)]
 #[allow(missing_docs)]
 pub struct Ratio<T> {
     numer: T,

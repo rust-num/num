@@ -11,10 +11,11 @@
 //! External iterators for generic mathematics
 
 use {Integer, Zero, One, CheckedAdd};
-use std::num::Int;
+use std::ops::{Add, Sub};
+use std::num::{ToPrimitive, Int};
 
 /// An iterator over the range [start, stop)
-#[deriving(Clone)]
+#[derive(Clone)]
 pub struct Range<A> {
     state: A,
     stop: A,
@@ -100,7 +101,7 @@ impl<A: Integer + PartialOrd + Clone + ToPrimitive> DoubleEndedIterator<A> for R
 }
 
 /// An iterator over the range [start, stop]
-#[deriving(Clone)]
+#[derive(Clone)]
 pub struct RangeInclusive<A> {
     range: Range<A>,
     done: bool,
@@ -163,7 +164,7 @@ impl<A: Sub<A, A> + Integer + PartialOrd + Clone + ToPrimitive> DoubleEndedItera
 }
 
 /// An iterator over the range [start, stop) by `step`. It handles overflow by stopping.
-#[deriving(Clone)]
+#[derive(Clone)]
 pub struct RangeStep<A> {
     state: A,
     stop: A,
@@ -196,7 +197,7 @@ impl<A: CheckedAdd + PartialOrd + Clone> Iterator<A> for RangeStep<A> {
 }
 
 /// An iterator over the range [start, stop] by `step`. It handles overflow by stopping.
-#[deriving(Clone)]
+#[derive(Clone)]
 pub struct RangeStepInclusive<A> {
     state: A,
     stop: A,
@@ -233,6 +234,9 @@ impl<A: CheckedAdd + PartialOrd + Clone + PartialEq> Iterator<A> for RangeStepIn
 #[cfg(test)]
 mod tests {
     use std::uint;
+    use std::num::ToPrimitive;
+    use std::ops::{Add, Mul};
+    use std::cmp::Ordering;
     use One;
 
     #[test]

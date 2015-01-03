@@ -1,3 +1,5 @@
+#![feature(old_orphan_check)]
+
 // Copyright 2014 The Rust Project Developers. See the COPYRIGHT
 // file at the top-level directory of this distribution and at
 // http://rust-lang.org/COPYRIGHT.
@@ -60,6 +62,8 @@ pub use integer::Integer;
 pub use iter::{range, range_inclusive, range_step, range_step_inclusive};
 pub use traits::{Num, Zero, One, Signed, Unsigned, Bounded,
                  Saturating, CheckedAdd, CheckedSub, CheckedMul, CheckedDiv};
+
+use std::ops::{Mul};
 
 pub mod bigint;
 pub mod complex;

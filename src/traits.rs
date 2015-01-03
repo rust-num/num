@@ -11,6 +11,7 @@
 //! Numeric traits for generic mathematics
 
 use std::intrinsics;
+use std::ops::{Add, Div, Mul, Neg, Rem, Sub};
 use std::{uint, u8, u16, u32, u64};
 use std::{int, i8, i16, i32, i64};
 use std::{f32, f64};

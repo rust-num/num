@@ -62,9 +62,12 @@ use std::iter::repeat;
 use std::iter::{AdditiveIterator, MultiplicativeIterator};
 use std::num::FromStrRadix;
 use std::num::{Int, ToPrimitive, FromPrimitive};
+use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Rem, Shl, Shr, Sub};
 use std::rand::Rng;
-use std::str::{mod, FromStr};
+use std::str::{self, FromStr};
 use std::{cmp, fmt, hash};
+use std::cmp::Ordering;
+use std::cmp::Ordering::{Less, Greater, Equal};
 use std::{i64, u64};
 
 use {Num, Unsigned, CheckedAdd, CheckedSub, CheckedMul, CheckedDiv, Signed, Zero, One};
@@ -78,7 +81,7 @@ pub type BigDigit = u32;
 pub type DoubleBigDigit = u64;
 
 pub const ZERO_BIG_DIGIT: BigDigit = 0;
-static ZERO_VEC: [BigDigit, ..1] = [ZERO_BIG_DIGIT];
+static ZERO_VEC: [BigDigit; 1] = [ZERO_BIG_DIGIT];
 
 #[allow(non_snake_case)]
 pub mod BigDigit {
@@ -113,7 +116,7 @@ pub mod BigDigit {
 ///
 /// A `BigUint`-typed value `BigUint { data: vec!(a, b, c) }` represents a number
 /// `(a + b * BigDigit::BASE + c * BigDigit::BASE^2)`.
-#[deriving(Clone, RustcEncodable, RustcDecodable)]
+#[derive(Clone, RustcEncodable, RustcDecodable)]
 pub struct BigUint {
     data: Vec<BigDigit>
 }
@@ -933,7 +936,7 @@ fn get_radix_base(radix: uint) -> (DoubleBigDigit, uint) {
 }
 
 /// A Sign is a `BigInt`'s composing element.
-#[deriving(PartialEq, PartialOrd, Eq, Ord, Copy, Clone, Show, RustcEncodable, RustcDecodable)]
+#[derive(PartialEq, PartialOrd, Eq, Ord, Copy, Clone, Show, RustcEncodable, RustcDecodable)]
 pub enum Sign { Minus, NoSign, Plus }
 
 impl Neg<Sign> for Sign {
@@ -949,7 +952,7 @@ impl Neg<Sign> for Sign {
 }
 
 /// A big signed integer type.
-#[deriving(Clone, RustcEncodable, RustcDecodable)]
+#[derive(Clone, RustcEncodable, RustcDecodable)]
 pub struct BigInt {
     sign: Sign,
     data: BigUint
@@ -1608,7 +1611,7 @@ mod biguint_tests {
 
     #[test]
     fn test_cmp() {
-        let data: [&[_], ..7] = [ &[], &[1], &[2], &[-1], &[0, 1], &[2, 1], &[1, 1, 1]  ];
+        let data: [&[_]; 7] = [ &[], &[1], &[2], &[-1], &[0, 1], &[2, 1], &[1, 1, 1]  ];
         let data: Vec<BigUint> = data.iter().map(|v| BigUint::from_slice(*v)).collect();
         for (i, ni) in data.iter().enumerate() {
             for (j0, nj) in data.slice(i, data.len()).iter().enumerate() {
@@ -2456,6 +2459,7 @@ mod bigint_tests {
     use std::num::{ToPrimitive, FromPrimitive};
     use std::rand::thread_rng;
     use std::u64;
+    use std::ops::{Neg};
 
     use {Zero, One, Signed};
 
@@ -2474,7 +2478,7 @@ mod bigint_tests {
 
     #[test]
     fn test_cmp() {
-        let vs: [&[BigDigit], ..4] = [ &[2 as BigDigit], &[1, 1], &[2, 1], &[1, 1, 1] ];
+        let vs: [&[BigDigit]; 4] = [ &[2 as BigDigit], &[1, 1], &[2, 1], &[1, 1, 1] ];
         let mut nums = Vec::new();
         for s in vs.iter().rev() {
             nums.push(BigInt::from_slice(Minus, *s));
