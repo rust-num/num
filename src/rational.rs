@@ -216,7 +216,7 @@ macro_rules! cmp_impl {
     };
     // return something other than a Ratio<T>
     (impl $imp:ident, $($method:ident -> $res:ty),*) => {
-        impl<T: Clone + Mul<T,T> + $imp> $imp for Ratio<T> {
+        impl<T: Clone + Mul<T, Output = T> + $imp> $imp for Ratio<T> {
             $(
                 #[inline]
                 fn $method(&self, other: &Ratio<T>) -> $res {
@@ -234,7 +234,9 @@ cmp_impl!(impl Ord, cmp -> cmp::Ordering);
 
 macro_rules! forward_val_val_binop {
     (impl $imp:ident, $method:ident) => {
-        impl<T: Clone + Integer + PartialOrd> $imp<Ratio<T>, Ratio<T>> for Ratio<T> {
+        impl<T: Clone + Integer + PartialOrd> $imp<Ratio<T>> for Ratio<T> {
+            type Output = Ratio<T>;
+
             #[inline]
             fn $method(self, other: Ratio<T>) -> Ratio<T> {
                 (&self).$method(&other)
@@ -245,7 +247,9 @@ macro_rules! forward_val_val_binop {
 
 macro_rules! forward_ref_val_binop {
     (impl $imp:ident, $method:ident) => {
-        impl<'a, T: Clone + Integer + PartialOrd> $imp<Ratio<T>, Ratio<T>> for &'a Ratio<T> {
+        impl<'a, T: Clone + Integer + PartialOrd> $imp<Ratio<T>> for &'a Ratio<T> {
+            type Output = Ratio<T>;
+
             #[inline]
             fn $method(self, other: Ratio<T>) -> Ratio<T> {
                 self.$method(&other)
@@ -256,7 +260,9 @@ macro_rules! forward_ref_val_binop {
 
 macro_rules! forward_val_ref_binop {
     (impl $imp:ident, $method:ident) => {
-        impl<'a, T: Clone + Integer + PartialOrd> $imp<&'a Ratio<T>, Ratio<T>> for Ratio<T> {
+        impl<'a, T: Clone + Integer + PartialOrd> $imp<&'a Ratio<T>> for Ratio<T> {
+            type Output = Ratio<T>;
+
             #[inline]
             fn $method(self, other: &Ratio<T>) -> Ratio<T> {
                 (&self).$method(other)
@@ -276,8 +282,11 @@ macro_rules! forward_all_binop {
 /* Arithmetic */
 forward_all_binop!(impl Mul, mul);
 // a/b * c/d = (a*c)/(b*d)
-impl<'a, 'b, T: Clone + Integer + PartialOrd>
-    Mul<&'b Ratio<T>, Ratio<T>> for &'a Ratio<T> {
+impl<'a, 'b, T> Mul<&'b Ratio<T>> for &'a Ratio<T>
+    where T: Clone + Integer + PartialOrd
+{
+
+        type Output = Ratio<T>;
     #[inline]
     fn mul(self, rhs: &Ratio<T>) -> Ratio<T> {
         Ratio::new(self.numer.clone() * rhs.numer.clone(), self.denom.clone() * rhs.denom.clone())
@@ -286,8 +295,11 @@ impl<'a, 'b, T: Clone + Integer + PartialOrd>
 
 forward_all_binop!(impl Div, div);
 // (a/b) / (c/d) = (a*d)/(b*c)
-impl<'a, 'b, T: Clone + Integer + PartialOrd>
-    Div<&'b Ratio<T>, Ratio<T>> for &'a Ratio<T> {
+impl<'a, 'b, T> Div<&'b Ratio<T>> for &'a Ratio<T>
+    where T: Clone + Integer + PartialOrd
+{
+    type Output = Ratio<T>;
+
     #[inline]
     fn div(self, rhs: &Ratio<T>) -> Ratio<T> {
         Ratio::new(self.numer.clone() * rhs.denom.clone(), self.denom.clone() * rhs.numer.clone())
@@ -299,7 +311,8 @@ macro_rules! arith_impl {
     (impl $imp:ident, $method:ident) => {
         forward_all_binop!(impl $imp, $method);
         impl<'a, 'b, T: Clone + Integer + PartialOrd>
-            $imp<&'b Ratio<T>,Ratio<T>> for &'a Ratio<T> {
+            $imp<&'b Ratio<T>> for &'a Ratio<T> {
+            type Output = Ratio<T>;
             #[inline]
             fn $method(self, rhs: &Ratio<T>) -> Ratio<T> {
                 Ratio::new((self.numer.clone() * rhs.denom.clone()).$method(self.denom.clone() * rhs.numer.clone()),
@@ -318,14 +331,20 @@ arith_impl!(impl Sub, sub);
 // a/b % c/d = (a*d % b*c)/(b*d)
 arith_impl!(impl Rem, rem);
 
-impl<T: Clone + Integer + PartialOrd>
-    Neg<Ratio<T>> for Ratio<T> {
+impl<T> Neg for Ratio<T>
+    where T: Clone + Integer + PartialOrd
+{
+    type Output = Ratio<T>;
+
     #[inline]
     fn neg(self) -> Ratio<T> { -&self }
 }
 
-impl<'a, T: Clone + Integer + PartialOrd>
-    Neg<Ratio<T>> for &'a Ratio<T> {
+impl<'a, T> Neg for &'a Ratio<T>
+    where T: Clone + Integer + PartialOrd
+{
+    type Output = Ratio<T>;
+
     #[inline]
     fn neg(self) -> Ratio<T> {
         Ratio::new_raw(-self.numer.clone(), self.denom.clone())
@@ -437,14 +456,18 @@ impl<T: FromStrRadix + Clone + Integer + PartialOrd>
     }
 }
 
-impl<A: Clone + Integer + PartialOrd, T: Iterator<Ratio<A>>> AdditiveIterator<Ratio<A>> for T {
+impl<A, T> AdditiveIterator<Ratio<A>> for T
+    where A: Clone + Integer + PartialOrd, T: Iterator<Item = Ratio<A>>
+{
     fn sum(self) -> Ratio<A> {
         let init: Ratio<A> = Zero::zero();
         self.fold(init, |acc, x| acc + x)
     }
 }
 
-impl<A: Clone + Integer + PartialOrd, T: Iterator<Ratio<A>>> MultiplicativeIterator<Ratio<A>> for T {
+impl<A, T> MultiplicativeIterator<Ratio<A>> for T
+    where A: Clone + Integer + PartialOrd, T: Iterator<Item = Ratio<A>>
+{
     fn product(self) -> Ratio<A> {
         let init: Ratio<A> = One::one();
         self.fold(init, |acc, x| acc * x)

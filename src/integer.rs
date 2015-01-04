@@ -15,8 +15,7 @@ use std::ops::{Div, Rem};
 use {Num, Signed};
 
 pub trait Integer: Sized + Num + PartialOrd
-                 + Div<Self, Self>
-                 + Rem<Self, Self> {
+                 + Div<Self, Output = Self> + Rem<Self, Output = Self> {
     /// Floored integer division.
     ///
     /// # Examples

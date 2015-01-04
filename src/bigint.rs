@@ -189,7 +189,9 @@ impl Num for BigUint {}
 
 macro_rules! forward_val_val_binop {
     (impl $imp:ident for $res:ty, $method:ident) => {
-        impl $imp<$res, $res> for $res {
+        impl $imp<$res> for $res {
+            type Output = $res;
+
             #[inline]
             fn $method(self, other: $res) -> $res {
                 (&self).$method(&other)
@@ -200,7 +202,9 @@ macro_rules! forward_val_val_binop {
 
 macro_rules! forward_ref_val_binop {
     (impl $imp:ident for $res:ty, $method:ident) => {
-        impl<'a> $imp<$res, $res> for &'a $res {
+        impl<'a> $imp<$res> for &'a $res {
+            type Output = $res;
+
             #[inline]
             fn $method(self, other: $res) -> $res {
                 self.$method(&other)
@@ -211,7 +215,9 @@ macro_rules! forward_ref_val_binop {
 
 macro_rules! forward_val_ref_binop {
     (impl $imp:ident for $res:ty, $method:ident) => {
-        impl<'a> $imp<&'a $res, $res> for $res {
+        impl<'a> $imp<&'a $res> for $res {
+            type Output = $res;
+
             #[inline]
             fn $method(self, other: &$res) -> $res {
                 (&self).$method(other)
@@ -230,7 +236,9 @@ macro_rules! forward_all_binop {
 
 forward_all_binop!(impl BitAnd for BigUint, bitand);
 
-impl<'a, 'b> BitAnd<&'b BigUint, BigUint> for &'a BigUint {
+impl<'a, 'b> BitAnd<&'b BigUint> for &'a BigUint {
+    type Output = BigUint;
+
     #[inline]
     fn bitand(self, other: &BigUint) -> BigUint {
         BigUint::new(self.data.iter().zip(other.data.iter()).map(|(ai, bi)| *ai & *bi).collect())
@@ -239,7 +247,9 @@ impl<'a, 'b> BitAnd<&'b BigUint, BigUint> for &'a BigUint {
 
 forward_all_binop!(impl BitOr for BigUint, bitor);
 
-impl<'a, 'b> BitOr<&'b BigUint, BigUint> for &'a BigUint {
+impl<'a, 'b> BitOr<&'b BigUint> for &'a BigUint {
+    type Output = BigUint;
+
     fn bitor(self, other: &BigUint) -> BigUint {
         let zeros = ZERO_VEC.iter().cycle();
         let (a, b) = if self.data.len() > other.data.len() { (self, other) } else { (other, self) };
@@ -252,7 +262,9 @@ impl<'a, 'b> BitOr<&'b BigUint, BigUint> for &'a BigUint {
 
 forward_all_binop!(impl BitXor for BigUint, bitxor);
 
-impl<'a, 'b> BitXor<&'b BigUint, BigUint> for &'a BigUint {
+impl<'a, 'b> BitXor<&'b BigUint> for &'a BigUint {
+    type Output = BigUint;
+
     fn bitxor(self, other: &BigUint) -> BigUint {
         let zeros = ZERO_VEC.iter().cycle();
         let (a, b) = if self.data.len() > other.data.len() { (self, other) } else { (other, self) };
@@ -263,12 +275,16 @@ impl<'a, 'b> BitXor<&'b BigUint, BigUint> for &'a BigUint {
     }
 }
 
-impl Shl<uint, BigUint> for BigUint {
+impl Shl<uint> for BigUint {
+    type Output = BigUint;
+
     #[inline]
     fn shl(self, rhs: uint) -> BigUint { (&self) << rhs }
 }
 
-impl<'a> Shl<uint, BigUint> for &'a BigUint {
+impl<'a> Shl<uint> for &'a BigUint {
+    type Output = BigUint;
+
     #[inline]
     fn shl(self, rhs: uint) -> BigUint {
         let n_unit = rhs / BigDigit::BITS;
@@ -277,12 +293,16 @@ impl<'a> Shl<uint, BigUint> for &'a BigUint {
     }
 }
 
-impl Shr<uint, BigUint> for BigUint {
+impl Shr<uint> for BigUint {
+    type Output = BigUint;
+
     #[inline]
     fn shr(self, rhs: uint) -> BigUint { (&self) >> rhs }
 }
 
-impl<'a> Shr<uint, BigUint> for &'a BigUint {
+impl<'a> Shr<uint> for &'a BigUint {
+    type Output = BigUint;
+
     #[inline]
     fn shr(self, rhs: uint) -> BigUint {
         let n_unit = rhs / BigDigit::BITS;
@@ -308,7 +328,9 @@ impl Unsigned for BigUint {}
 
 forward_all_binop!(impl Add for BigUint, add);
 
-impl<'a, 'b> Add<&'b BigUint, BigUint> for &'a BigUint {
+impl<'a, 'b> Add<&'b BigUint> for &'a BigUint {
+    type Output = BigUint;
+
     fn add(self, other: &BigUint) -> BigUint {
         let zeros = ZERO_VEC.iter().cycle();
         let (a, b) = if self.data.len() > other.data.len() { (self, other) } else { (other, self) };
@@ -327,7 +349,9 @@ impl<'a, 'b> Add<&'b BigUint, BigUint> for &'a BigUint {
 
 forward_all_binop!(impl Sub for BigUint, sub);
 
-impl<'a, 'b> Sub<&'b BigUint, BigUint> for &'a BigUint {
+impl<'a, 'b> Sub<&'b BigUint> for &'a BigUint {
+    type Output = BigUint;
+
     fn sub(self, other: &BigUint) -> BigUint {
         let new_len = cmp::max(self.data.len(), other.data.len());
         let zeros = ZERO_VEC.iter().cycle();
@@ -358,7 +382,9 @@ impl<'a, 'b> Sub<&'b BigUint, BigUint> for &'a BigUint {
 
 forward_all_binop!(impl Mul for BigUint, mul);
 
-impl<'a, 'b> Mul<&'b BigUint, BigUint> for &'a BigUint {
+impl<'a, 'b> Mul<&'b BigUint> for &'a BigUint {
+    type Output = BigUint;
+
     fn mul(self, other: &BigUint) -> BigUint {
         if self.is_zero() || other.is_zero() { return Zero::zero(); }
 
@@ -427,7 +453,9 @@ impl<'a, 'b> Mul<&'b BigUint, BigUint> for &'a BigUint {
 
 forward_all_binop!(impl Div for BigUint, div);
 
-impl<'a, 'b> Div<&'b BigUint, BigUint> for &'a BigUint {
+impl<'a, 'b> Div<&'b BigUint> for &'a BigUint {
+    type Output = BigUint;
+
     #[inline]
     fn div(self, other: &BigUint) -> BigUint {
         let (q, _) = self.div_rem(other);
@@ -437,7 +465,9 @@ impl<'a, 'b> Div<&'b BigUint, BigUint> for &'a BigUint {
 
 forward_all_binop!(impl Rem for BigUint, rem);
 
-impl<'a, 'b> Rem<&'b BigUint, BigUint> for &'a BigUint {
+impl<'a, 'b> Rem<&'b BigUint> for &'a BigUint {
+    type Output = BigUint;
+
     #[inline]
     fn rem(self, other: &BigUint) -> BigUint {
         let (_, r) = self.div_rem(other);
@@ -445,12 +475,16 @@ impl<'a, 'b> Rem<&'b BigUint, BigUint> for &'a BigUint {
     }
 }
 
-impl Neg<BigUint> for BigUint {
+impl Neg for BigUint {
+    type Output = BigUint;
+
     #[inline]
     fn neg(self) -> BigUint { panic!() }
 }
 
-impl<'a> Neg<BigUint> for &'a BigUint {
+impl<'a> Neg for &'a BigUint {
+    type Output = BigUint;
+
     #[inline]
     fn neg(self) -> BigUint { panic!() }
 }
@@ -818,14 +852,14 @@ impl FromStrRadix for BigUint {
     }
 }
 
-impl<T: Iterator<BigUint>> AdditiveIterator<BigUint> for T {
+impl<T: Iterator<Item = BigUint>> AdditiveIterator<BigUint> for T {
     fn sum(self) -> BigUint {
         let init: BigUint = Zero::zero();
         self.fold(init, |acc, x| acc + x)
     }
 }
 
-impl<T: Iterator<BigUint>> MultiplicativeIterator<BigUint> for T {
+impl<T: Iterator<Item = BigUint>> MultiplicativeIterator<BigUint> for T {
     fn product(self) -> BigUint {
         let init: BigUint = One::one();
         self.fold(init, |acc, x| acc * x)
@@ -939,7 +973,9 @@ fn get_radix_base(radix: uint) -> (DoubleBigDigit, uint) {
 #[derive(PartialEq, PartialOrd, Eq, Ord, Copy, Clone, Show, RustcEncodable, RustcDecodable)]
 pub enum Sign { Minus, NoSign, Plus }
 
-impl Neg<Sign> for Sign {
+impl Neg for Sign {
+    type Output = Sign;
+
     /// Negate Sign value.
     #[inline]
     fn neg(self) -> Sign {
@@ -1015,24 +1051,32 @@ impl FromStr for BigInt {
 
 impl Num for BigInt {}
 
-impl Shl<uint, BigInt> for BigInt {
+impl Shl<uint> for BigInt {
+    type Output = BigInt;
+
     #[inline]
     fn shl(self, rhs: uint) -> BigInt { (&self) << rhs }
 }
 
-impl<'a> Shl<uint, BigInt> for &'a BigInt {
+impl<'a> Shl<uint> for &'a BigInt {
+    type Output = BigInt;
+
     #[inline]
     fn shl(self, rhs: uint) -> BigInt {
         BigInt::from_biguint(self.sign, &self.data << rhs)
     }
 }
 
-impl Shr<uint, BigInt> for BigInt {
+impl Shr<uint> for BigInt {
+    type Output = BigInt;
+
     #[inline]
     fn shr(self, rhs: uint) -> BigInt { (&self) >> rhs }
 }
 
-impl<'a> Shr<uint, BigInt> for &'a BigInt {
+impl<'a> Shr<uint> for &'a BigInt {
+    type Output = BigInt;
+
     #[inline]
     fn shr(self, rhs: uint) -> BigInt {
         BigInt::from_biguint(self.sign, &self.data >> rhs)
@@ -1088,7 +1132,9 @@ impl Signed for BigInt {
 
 forward_all_binop!(impl Add for BigInt, add);
 
-impl<'a, 'b> Add<&'b BigInt, BigInt> for &'a BigInt {
+impl<'a, 'b> Add<&'b BigInt> for &'a BigInt {
+    type Output = BigInt;
+
     #[inline]
     fn add(self, other: &BigInt) -> BigInt {
         match (self.sign, other.sign) {
@@ -1104,7 +1150,9 @@ impl<'a, 'b> Add<&'b BigInt, BigInt> for &'a BigInt {
 
 forward_all_binop!(impl Sub for BigInt, sub);
 
-impl<'a, 'b> Sub<&'b BigInt, BigInt> for &'a BigInt {
+impl<'a, 'b> Sub<&'b BigInt> for &'a BigInt {
+    type Output = BigInt;
+
     #[inline]
     fn sub(self, other: &BigInt) -> BigInt {
         match (self.sign, other.sign) {
@@ -1124,7 +1172,9 @@ impl<'a, 'b> Sub<&'b BigInt, BigInt> for &'a BigInt {
 
 forward_all_binop!(impl Mul for BigInt, mul);
 
-impl<'a, 'b> Mul<&'b BigInt, BigInt> for &'a BigInt {
+impl<'a, 'b> Mul<&'b BigInt> for &'a BigInt {
+    type Output = BigInt;
+
     #[inline]
     fn mul(self, other: &BigInt) -> BigInt {
         match (self.sign, other.sign) {
@@ -1141,7 +1191,9 @@ impl<'a, 'b> Mul<&'b BigInt, BigInt> for &'a BigInt {
 
 forward_all_binop!(impl Div for BigInt, div);
 
-impl<'a, 'b> Div<&'b BigInt, BigInt> for &'a BigInt {
+impl<'a, 'b> Div<&'b BigInt> for &'a BigInt {
+    type Output = BigInt;
+
     #[inline]
     fn div(self, other: &BigInt) -> BigInt {
         let (q, _) = self.div_rem(other);
@@ -1151,7 +1203,9 @@ impl<'a, 'b> Div<&'b BigInt, BigInt> for &'a BigInt {
 
 forward_all_binop!(impl Rem for BigInt, rem);
 
-impl<'a, 'b> Rem<&'b BigInt, BigInt> for &'a BigInt {
+impl<'a, 'b> Rem<&'b BigInt> for &'a BigInt {
+    type Output = BigInt;
+
     #[inline]
     fn rem(self, other: &BigInt) -> BigInt {
         let (_, r) = self.div_rem(other);
@@ -1159,12 +1213,16 @@ impl<'a, 'b> Rem<&'b BigInt, BigInt> for &'a BigInt {
     }
 }
 
-impl Neg<BigInt> for BigInt {
+impl Neg for BigInt {
+    type Output = BigInt;
+
     #[inline]
     fn neg(self) -> BigInt { -&self }
 }
 
-impl<'a> Neg<BigInt> for &'a BigInt {
+impl<'a> Neg for &'a BigInt {
+    type Output = BigInt;
+
     #[inline]
     fn neg(self) -> BigInt {
         BigInt::from_biguint(self.sign.neg(), self.data.clone())
@@ -1496,14 +1554,14 @@ impl<R: Rng> RandBigInt for R {
     }
 }
 
-impl<T: Iterator<BigInt>> AdditiveIterator<BigInt> for T {
+impl<T: Iterator<Item = BigInt>> AdditiveIterator<BigInt> for T {
     fn sum(self) -> BigInt {
         let init: BigInt = Zero::zero();
         self.fold(init, |acc, x| acc + x)
     }
 }
 
-impl<T: Iterator<BigInt>> MultiplicativeIterator<BigInt> for T {
+impl<T: Iterator<Item = BigInt>> MultiplicativeIterator<BigInt> for T {
     fn product(self) -> BigInt {
         let init: BigInt = One::one();
         self.fold(init, |acc, x| acc * x)

@@ -45,6 +45,7 @@
 //!
 //! [newt]: https://en.wikipedia.org/wiki/Methods_of_computing_square_roots#Babylonian_method
 
+#![feature(associated_types)]
 #![feature(macro_rules)]
 #![feature(default_type_params)]
 #![feature(slicing_syntax)]
@@ -123,7 +124,7 @@ pub fn abs_sub<T: Signed>(x: T, y: T) -> T {
 /// assert_eq!(num::pow(2i, 4), 16);
 /// ```
 #[inline]
-pub fn pow<T: Clone + One + Mul<T, T>>(mut base: T, mut exp: uint) -> T {
+pub fn pow<T: Clone + One + Mul<T, Output = T>>(mut base: T, mut exp: uint) -> T {
     if exp == 1 { base }
     else {
         let mut acc = one::<T>();

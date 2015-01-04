@@ -105,7 +105,9 @@ impl<T: Clone + FloatMath + Num> Complex<T> {
 
 macro_rules! forward_val_val_binop {
     (impl $imp:ident, $method:ident) => {
-        impl<T: Clone + Num> $imp<Complex<T>, Complex<T>> for Complex<T> {
+        impl<T: Clone + Num> $imp<Complex<T>> for Complex<T> {
+            type Output = Complex<T>;
+
             #[inline]
             fn $method(self, other: Complex<T>) -> Complex<T> {
                 (&self).$method(&other)
@@ -116,7 +118,9 @@ macro_rules! forward_val_val_binop {
 
 macro_rules! forward_ref_val_binop {
     (impl $imp:ident, $method:ident) => {
-        impl<'a, T: Clone + Num> $imp<Complex<T>, Complex<T>> for &'a Complex<T> {
+        impl<'a, T: Clone + Num> $imp<Complex<T>> for &'a Complex<T> {
+            type Output = Complex<T>;
+
             #[inline]
             fn $method(self, other: Complex<T>) -> Complex<T> {
                 self.$method(&other)
@@ -127,7 +131,9 @@ macro_rules! forward_ref_val_binop {
 
 macro_rules! forward_val_ref_binop {
     (impl $imp:ident, $method:ident) => {
-        impl<'a, T: Clone + Num> $imp<&'a Complex<T>, Complex<T>> for Complex<T> {
+        impl<'a, T: Clone + Num> $imp<&'a Complex<T>> for Complex<T> {
+            type Output = Complex<T>;
+
             #[inline]
             fn $method(self, other: &Complex<T>) -> Complex<T> {
                 (&self).$method(other)
@@ -148,7 +154,9 @@ macro_rules! forward_all_binop {
 forward_all_binop!(impl Add, add);
 
 // (a + i b) + (c + i d) == (a + c) + i (b + d)
-impl<'a, 'b, T: Clone + Num> Add<&'b Complex<T>, Complex<T>> for &'a Complex<T> {
+impl<'a, 'b, T: Clone + Num> Add<&'b Complex<T>> for &'a Complex<T> {
+    type Output = Complex<T>;
+
     #[inline]
     fn add(self, other: &Complex<T>) -> Complex<T> {
         Complex::new(self.re.clone() + other.re.clone(),
@@ -159,7 +167,9 @@ impl<'a, 'b, T: Clone + Num> Add<&'b Complex<T>, Complex<T>> for &'a Complex<T> 
 forward_all_binop!(impl Sub, sub);
 
 // (a + i b) - (c + i d) == (a - c) + i (b - d)
-impl<'a, 'b, T: Clone + Num> Sub<&'b Complex<T>, Complex<T>> for &'a Complex<T> {
+impl<'a, 'b, T: Clone + Num> Sub<&'b Complex<T>> for &'a Complex<T> {
+    type Output = Complex<T>;
+
     #[inline]
     fn sub(self, other: &Complex<T>) -> Complex<T> {
         Complex::new(self.re.clone() - other.re.clone(),
@@ -170,7 +180,9 @@ impl<'a, 'b, T: Clone + Num> Sub<&'b Complex<T>, Complex<T>> for &'a Complex<T> 
 forward_all_binop!(impl Mul, mul);
 
 // (a + i b) * (c + i d) == (a*c - b*d) + i (a*d + b*c)
-impl<'a, 'b, T: Clone + Num> Mul<&'b Complex<T>, Complex<T>> for &'a Complex<T> {
+impl<'a, 'b, T: Clone + Num> Mul<&'b Complex<T>> for &'a Complex<T> {
+    type Output = Complex<T>;
+
     #[inline]
     fn mul(self, other: &Complex<T>) -> Complex<T> {
         Complex::new(self.re.clone() * other.re.clone() - self.im.clone() * other.im.clone(),
@@ -182,7 +194,9 @@ forward_all_binop!(impl Div, div);
 
 // (a + i b) / (c + i d) == [(a + i b) * (c - i d)] / (c*c + d*d)
 //   == [(a*c + b*d) / (c*c + d*d)] + i [(b*c - a*d) / (c*c + d*d)]
-impl<'a, 'b, T: Clone + Num> Div<&'b Complex<T>, Complex<T>> for &'a Complex<T> {
+impl<'a, 'b, T: Clone + Num> Div<&'b Complex<T>> for &'a Complex<T> {
+    type Output = Complex<T>;
+
     #[inline]
     fn div(self, other: &Complex<T>) -> Complex<T> {
         let norm_sqr = other.norm_sqr();
@@ -191,12 +205,16 @@ impl<'a, 'b, T: Clone + Num> Div<&'b Complex<T>, Complex<T>> for &'a Complex<T> 
     }
 }
 
-impl<T: Clone + Num> Neg<Complex<T>> for Complex<T> {
+impl<T: Clone + Num> Neg for Complex<T> {
+    type Output = Complex<T>;
+
     #[inline]
     fn neg(self) -> Complex<T> { -&self }
 }
 
-impl<'a, T: Clone + Num> Neg<Complex<T>> for &'a Complex<T> {
+impl<'a, T: Clone + Num> Neg for &'a Complex<T> {
+    type Output = Complex<T>;
+
     #[inline]
     fn neg(self) -> Complex<T> {
         Complex::new(-self.re.clone(), -self.im.clone())
@@ -234,14 +252,18 @@ impl<T: fmt::Show + Num + PartialOrd + Clone> fmt::Show for Complex<T> {
     }
 }
 
-impl<A: Clone + Num, T: Iterator<Complex<A>>> AdditiveIterator<Complex<A>> for T {
+impl<A, T> AdditiveIterator<Complex<A>> for T
+    where A: Clone + Num, T: Iterator<Item = Complex<A>>
+{
     fn sum(self) -> Complex<A> {
         let init: Complex<A> = Zero::zero();
         self.fold(init, |acc, x| acc + x)
     }
 }
 
-impl<A: Clone + Num, T: Iterator<Complex<A>>> MultiplicativeIterator<Complex<A>> for T {
+impl<A, T> MultiplicativeIterator<Complex<A>> for T
+    where A: Clone + Num, T: Iterator<Item = Complex<A>>
+{
     fn product(self) -> Complex<A> {
         let init: Complex<A> = One::one();
         self.fold(init, |acc, x| acc * x)
