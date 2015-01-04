@@ -18,12 +18,8 @@ use std::{f32, f64};
 
 /// The base trait for numeric types
 pub trait Num: PartialEq + Zero + One
-             + Neg<Self>
-             + Add<Self,Self>
-             + Sub<Self,Self>
-             + Mul<Self,Self>
-             + Div<Self,Self>
-             + Rem<Self,Self> {}
+    + Neg<Output = Self> + Add<Output = Self> + Sub<Output = Self>
+    + Mul<Output = Self> + Div<Output = Self> + Rem<Output = Self> {}
 
 macro_rules! trait_impl {
     ($name:ident for $($t:ty)*) => ($(
@@ -40,7 +36,7 @@ trait_impl!(Num for uint u8 u16 u32 u64 int i8 i16 i32 i64 f32 f64);
 /// This trait can be automatically be derived using `#[deriving(Zero)]`
 /// attribute. If you choose to use this, make sure that the laws outlined in
 /// the documentation for `Zero::zero` still hold.
-pub trait Zero: Add<Self, Self> {
+pub trait Zero: Add<Self, Output = Self> {
     /// Returns the additive identity element of `Self`, `0`.
     ///
     /// # Laws
@@ -90,7 +86,7 @@ zero_impl!(f32, 0.0f32);
 zero_impl!(f64, 0.0f64);
 
 /// Defines a multiplicative identity element for `Self`.
-pub trait One: Mul<Self, Self> {
+pub trait One: Mul<Self, Output = Self> {
     /// Returns the multiplicative identity element of `Self`, `1`.
     ///
     /// # Laws
@@ -134,7 +130,7 @@ one_impl!(f32, 1.0f32);
 one_impl!(f64, 1.0f64);
 
 /// Useful functions for signed numbers (i.e. numbers that can be negative).
-pub trait Signed: Num + Neg<Self> {
+pub trait Signed: Num + Neg<Output = Self> {
     /// Computes the absolute value.
     ///
     /// For `f32` and `f64`, `NaN` will be returned if the number is `NaN`.
@@ -328,7 +324,7 @@ impl<T: CheckedAdd + CheckedSub + Zero + PartialOrd + Bounded> Saturating for T 
 }
 
 /// Performs addition that returns `None` instead of wrapping around on overflow.
-pub trait CheckedAdd: Add<Self, Self> {
+pub trait CheckedAdd: Add<Self, Output = Self> {
     /// Adds two numbers, checking for overflow. If overflow happens, `None` is returned.
     ///
     /// # Example
@@ -389,7 +385,7 @@ checked_impl!(CheckedAdd, checked_add, i32, intrinsics::i32_add_with_overflow);
 checked_impl!(CheckedAdd, checked_add, i64, intrinsics::i64_add_with_overflow);
 
 /// Performs subtraction that returns `None` instead of wrapping around on underflow.
-pub trait CheckedSub: Sub<Self, Self> {
+pub trait CheckedSub: Sub<Self, Output = Self> {
     /// Subtracts two numbers, checking for underflow. If underflow happens, `None` is returned.
     ///
     /// # Example
@@ -424,7 +420,7 @@ checked_impl!(CheckedSub, checked_sub, i64, intrinsics::i64_sub_with_overflow);
 
 /// Performs multiplication that returns `None` instead of wrapping around on underflow or
 /// overflow.
-pub trait CheckedMul: Mul<Self, Self> {
+pub trait CheckedMul: Mul<Self, Output = Self> {
     /// Multiplies two numbers, checking for underflow or overflow. If underflow or overflow
     /// happens, `None` is returned.
     ///
@@ -460,7 +456,7 @@ checked_impl!(CheckedMul, checked_mul, i64, intrinsics::i64_mul_with_overflow);
 
 /// Performs division that returns `None` instead of panicking on division by zero and instead of
 /// wrapping around on underflow and overflow.
-pub trait CheckedDiv: Div<Self, Self> {
+pub trait CheckedDiv: Div<Self, Output = Self> {
     /// Divides two numbers, checking for underflow, overflow and division by zero. If any of that
     /// happens, `None` is returned.
     ///

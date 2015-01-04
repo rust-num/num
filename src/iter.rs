@@ -36,12 +36,18 @@ pub struct Range<A> {
 /// }
 /// ```
 #[inline]
-pub fn range<A: Add<A, A> + PartialOrd + Clone + One>(start: A, stop: A) -> Range<A> {
+pub fn range<A>(start: A, stop: A) -> Range<A>
+    where A: Add<A, Output = A> + PartialOrd + Clone + One
+{
     Range{state: start, stop: stop, one: One::one()}
 }
 
 // FIXME: rust-lang/rust#10414: Unfortunate type bound
-impl<A: Add<A, A> + PartialOrd + Clone + ToPrimitive> Iterator<A> for Range<A> {
+impl<A> Iterator for Range<A>
+    where A: Add<A, Output = A> + PartialOrd + Clone + ToPrimitive
+{
+    type Item = A;
+
     #[inline]
     fn next(&mut self) -> Option<A> {
         if self.state < self.stop {
@@ -88,7 +94,9 @@ impl<A: Add<A, A> + PartialOrd + Clone + ToPrimitive> Iterator<A> for Range<A> {
 
 /// `Integer` is required to ensure the range will be the same regardless of
 /// the direction it is consumed.
-impl<A: Integer + PartialOrd + Clone + ToPrimitive> DoubleEndedIterator<A> for Range<A> {
+impl<A> DoubleEndedIterator for Range<A>
+    where A: Integer + PartialOrd + Clone + ToPrimitive
+{
     #[inline]
     fn next_back(&mut self) -> Option<A> {
         if self.stop > self.state {
@@ -109,12 +117,17 @@ pub struct RangeInclusive<A> {
 
 /// Return an iterator over the range [start, stop]
 #[inline]
-pub fn range_inclusive<A: Add<A, A> + PartialOrd + Clone + One>(start: A, stop: A)
-    -> RangeInclusive<A> {
+pub fn range_inclusive<A>(start: A, stop: A) -> RangeInclusive<A>
+    where A: Add<A, Output = A> + PartialOrd + Clone + One
+{
     RangeInclusive{range: range(start, stop), done: false}
 }
 
-impl<A: Add<A, A> + PartialOrd + Clone + ToPrimitive> Iterator<A> for RangeInclusive<A> {
+impl<A> Iterator for RangeInclusive<A>
+    where A: Add<A, Output = A> + PartialOrd + Clone + ToPrimitive
+{
+    type Item = A;
+
     #[inline]
     fn next(&mut self) -> Option<A> {
         match self.range.next() {
@@ -146,8 +159,9 @@ impl<A: Add<A, A> + PartialOrd + Clone + ToPrimitive> Iterator<A> for RangeInclu
     }
 }
 
-impl<A: Sub<A, A> + Integer + PartialOrd + Clone + ToPrimitive> DoubleEndedIterator<A>
-    for RangeInclusive<A> {
+impl<A> DoubleEndedIterator for RangeInclusive<A>
+    where A: Sub<A, Output = A> + Integer + PartialOrd + Clone + ToPrimitive
+{
     #[inline]
     fn next_back(&mut self) -> Option<A> {
         if self.range.stop > self.range.state {
@@ -174,13 +188,18 @@ pub struct RangeStep<A> {
 
 /// Return an iterator over the range [start, stop) by `step`. It handles overflow by stopping.
 #[inline]
-pub fn range_step<A: CheckedAdd + PartialOrd +
-                  Clone + Zero>(start: A, stop: A, step: A) -> RangeStep<A> {
+pub fn range_step<A>(start: A, stop: A, step: A) -> RangeStep<A>
+    where A: CheckedAdd + PartialOrd + Clone + Zero
+{
     let rev = step < Zero::zero();
     RangeStep{state: start, stop: stop, step: step, rev: rev}
 }
 
-impl<A: CheckedAdd + PartialOrd + Clone> Iterator<A> for RangeStep<A> {
+impl<A> Iterator for RangeStep<A>
+    where A: CheckedAdd + PartialOrd + Clone
+{
+    type Item = A;
+
     #[inline]
     fn next(&mut self) -> Option<A> {
         if (self.rev && self.state > self.stop) || (!self.rev && self.state < self.stop) {
@@ -208,13 +227,18 @@ pub struct RangeStepInclusive<A> {
 
 /// Return an iterator over the range [start, stop] by `step`. It handles overflow by stopping.
 #[inline]
-pub fn range_step_inclusive<A: CheckedAdd + PartialOrd + Clone + Zero>(start: A, stop: A,
-                                                                step: A) -> RangeStepInclusive<A> {
+pub fn range_step_inclusive<A>(start: A, stop: A, step: A) -> RangeStepInclusive<A>
+    where A: CheckedAdd + PartialOrd + Clone + Zero
+{
     let rev = step < Zero::zero();
     RangeStepInclusive{state: start, stop: stop, step: step, rev: rev, done: false}
 }
 
-impl<A: CheckedAdd + PartialOrd + Clone + PartialEq> Iterator<A> for RangeStepInclusive<A> {
+impl<A> Iterator for RangeStepInclusive<A>
+    where A: CheckedAdd + PartialOrd + Clone + PartialEq
+{
+    type Item = A;
+
     #[inline]
     fn next(&mut self) -> Option<A> {
         if !self.done && ((self.rev && self.state >= self.stop) ||
@@ -249,7 +273,9 @@ mod tests {
             fn to_u64(&self) -> Option<u64> { None }
         }
 
-        impl Add<Foo, Foo> for Foo {
+        impl Add<Foo> for Foo {
+            type Output = Foo;
+
             fn add(self, _: Foo) -> Foo {
                 Foo
             }
@@ -273,7 +299,9 @@ mod tests {
             }
         }
 
-        impl Mul<Foo, Foo> for Foo {
+        impl Mul<Foo> for Foo {
+            type Output = Foo;
+
             fn mul(self, _: Foo) -> Foo {
                 Foo
             }
