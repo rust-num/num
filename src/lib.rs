@@ -1,5 +1,3 @@
-#![feature(old_orphan_check)]
-
 // Copyright 2014 The Rust Project Developers. See the COPYRIGHT
 // file at the top-level directory of this distribution and at
 // http://rust-lang.org/COPYRIGHT.
@@ -45,9 +43,6 @@
 //!
 //! [newt]: https://en.wikipedia.org/wiki/Methods_of_computing_square_roots#Babylonian_method
 
-#![feature(associated_types)]
-#![feature(macro_rules)]
-#![feature(default_type_params)]
 #![feature(slicing_syntax)]
 #![cfg_attr(test, deny(warnings))]
 #![doc(html_logo_url = "http://www.rust-lang.org/logos/rust-logo-128x128-blk-v2.png",

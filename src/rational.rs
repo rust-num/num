@@ -17,7 +17,6 @@ use std::fmt;
 use std::ops::{Add, Div, Mul, Neg, Rem, Sub};
 use std::str::FromStr;
 use std::num::{FromPrimitive, FromStrRadix, Float};
-use std::iter::{AdditiveIterator, MultiplicativeIterator};
 
 use bigint::{BigInt, BigUint, Sign};
 use {Num, Signed, Zero, One};
@@ -455,25 +454,6 @@ impl<T: FromStrRadix + Clone + Integer + PartialOrd>
         }
     }
 }
-
-impl<A, T> AdditiveIterator<Ratio<A>> for T
-    where A: Clone + Integer + PartialOrd, T: Iterator<Item = Ratio<A>>
-{
-    fn sum(self) -> Ratio<A> {
-        let init: Ratio<A> = Zero::zero();
-        self.fold(init, |acc, x| acc + x)
-    }
-}
-
-impl<A, T> MultiplicativeIterator<Ratio<A>> for T
-    where A: Clone + Integer + PartialOrd, T: Iterator<Item = Ratio<A>>
-{
-    fn product(self) -> Ratio<A> {
-        let init: Ratio<A> = One::one();
-        self.fold(init, |acc, x| acc * x)
-    }
-}
-
 
 #[cfg(test)]
 mod test {

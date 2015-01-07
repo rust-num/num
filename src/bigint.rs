@@ -59,7 +59,6 @@ use Integer;
 
 use std::default::Default;
 use std::iter::repeat;
-use std::iter::{AdditiveIterator, MultiplicativeIterator};
 use std::num::FromStrRadix;
 use std::num::{Int, ToPrimitive, FromPrimitive};
 use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Rem, Shl, Shr, Sub};
@@ -852,20 +851,6 @@ impl FromStrRadix for BigUint {
     }
 }
 
-impl<T: Iterator<Item = BigUint>> AdditiveIterator<BigUint> for T {
-    fn sum(self) -> BigUint {
-        let init: BigUint = Zero::zero();
-        self.fold(init, |acc, x| acc + x)
-    }
-}
-
-impl<T: Iterator<Item = BigUint>> MultiplicativeIterator<BigUint> for T {
-    fn product(self) -> BigUint {
-        let init: BigUint = One::one();
-        self.fold(init, |acc, x| acc * x)
-    }
-}
-
 impl BigUint {
     /// Creates and initializes a `BigUint`.
     ///
@@ -1551,20 +1536,6 @@ impl<R: Rng> RandBigInt for R {
         assert!(*lbound < *ubound);
         let delta = (ubound - lbound).to_biguint().unwrap();
         return lbound + self.gen_biguint_below(&delta).to_bigint().unwrap();
-    }
-}
-
-impl<T: Iterator<Item = BigInt>> AdditiveIterator<BigInt> for T {
-    fn sum(self) -> BigInt {
-        let init: BigInt = Zero::zero();
-        self.fold(init, |acc, x| acc + x)
-    }
-}
-
-impl<T: Iterator<Item = BigInt>> MultiplicativeIterator<BigInt> for T {
-    fn product(self) -> BigInt {
-        let init: BigInt = One::one();
-        self.fold(init, |acc, x| acc * x)
     }
 }
 

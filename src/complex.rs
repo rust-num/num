@@ -12,8 +12,7 @@
 //! Complex numbers.
 
 use std::fmt;
-use std::num::FloatMath;
-use std::iter::{AdditiveIterator, MultiplicativeIterator};
+use std::num::Float;
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
 use {Zero, One, Num};
@@ -76,7 +75,7 @@ impl<T: Clone + Num> Complex<T> {
     }
 }
 
-impl<T: Clone + FloatMath> Complex<T> {
+impl<T: Clone + Float> Complex<T> {
     /// Calculate |self|
     #[inline]
     pub fn norm(&self) -> T {
@@ -84,7 +83,7 @@ impl<T: Clone + FloatMath> Complex<T> {
     }
 }
 
-impl<T: Clone + FloatMath + Num> Complex<T> {
+impl<T: Clone + Float + Num> Complex<T> {
     /// Calculate the principal Arg of self.
     #[inline]
     pub fn arg(&self) -> T {
@@ -249,24 +248,6 @@ impl<T: fmt::Show + Num + PartialOrd + Clone> fmt::Show for Complex<T> {
         } else {
             write!(f, "{}+{}i", self.re, self.im)
         }
-    }
-}
-
-impl<A, T> AdditiveIterator<Complex<A>> for T
-    where A: Clone + Num, T: Iterator<Item = Complex<A>>
-{
-    fn sum(self) -> Complex<A> {
-        let init: Complex<A> = Zero::zero();
-        self.fold(init, |acc, x| acc + x)
-    }
-}
-
-impl<A, T> MultiplicativeIterator<Complex<A>> for T
-    where A: Clone + Num, T: Iterator<Item = Complex<A>>
-{
-    fn product(self) -> Complex<A> {
-        let init: Complex<A> = One::one();
-        self.fold(init, |acc, x| acc * x)
     }
 }
 
