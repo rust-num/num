@@ -174,7 +174,7 @@ pub trait Integer: Sized + Num + PartialOrd
 /// Calculates the Lowest Common Multiple (LCM) of the number and `other`.
 #[inline(always)] pub fn lcm<T: Integer>(x: T, y: T) -> T { x.lcm(&y) }
 
-macro_rules! impl_integer_for_int {
+macro_rules! impl_integer_for_isize {
     ($T:ty, $test_mod:ident) => (
         impl Integer for $T {
             /// Floored integer division
@@ -377,13 +377,13 @@ macro_rules! impl_integer_for_int {
     )
 }
 
-impl_integer_for_int!(i8,   test_integer_i8);
-impl_integer_for_int!(i16,  test_integer_i16);
-impl_integer_for_int!(i32,  test_integer_i32);
-impl_integer_for_int!(i64,  test_integer_i64);
-impl_integer_for_int!(int,  test_integer_int);
+impl_integer_for_isize!(i8,   test_integer_i8);
+impl_integer_for_isize!(i16,  test_integer_i16);
+impl_integer_for_isize!(i32,  test_integer_i32);
+impl_integer_for_isize!(i64,  test_integer_i64);
+impl_integer_for_isize!(isize,  test_integer_isize);
 
-macro_rules! impl_integer_for_uint {
+macro_rules! impl_integer_for_usize {
     ($T:ty, $test_mod:ident) => (
         impl Integer for $T {
             /// Unsigned integer division. Returns the same result as `div` (`/`).
@@ -502,8 +502,8 @@ macro_rules! impl_integer_for_uint {
     )
 }
 
-impl_integer_for_uint!(u8,   test_integer_u8);
-impl_integer_for_uint!(u16,  test_integer_u16);
-impl_integer_for_uint!(u32,  test_integer_u32);
-impl_integer_for_uint!(u64,  test_integer_u64);
-impl_integer_for_uint!(uint, test_integer_uint);
+impl_integer_for_usize!(u8,   test_integer_u8);
+impl_integer_for_usize!(u16,  test_integer_u16);
+impl_integer_for_usize!(u32,  test_integer_u32);
+impl_integer_for_usize!(u64,  test_integer_u64);
+impl_integer_for_usize!(usize, test_integer_usize);

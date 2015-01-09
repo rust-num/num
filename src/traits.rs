@@ -12,8 +12,8 @@
 
 use std::intrinsics;
 use std::ops::{Add, Div, Mul, Neg, Rem, Sub};
-use std::{uint, u8, u16, u32, u64};
-use std::{int, i8, i16, i32, i64};
+use std::{usize, u8, u16, u32, u64};
+use std::{isize, i8, i16, i32, i64};
 use std::{f32, f64};
 
 /// The base trait for numeric types
@@ -27,7 +27,7 @@ macro_rules! trait_impl {
     )*)
 }
 
-trait_impl!(Num for uint u8 u16 u32 u64 int i8 i16 i32 i64 f32 f64);
+trait_impl!(Num for usize u8 u16 u32 u64 isize i8 i16 i32 i64 f32 f64);
 
 /// Defines an additive identity element for `Self`.
 ///
@@ -70,13 +70,13 @@ macro_rules! zero_impl {
     }
 }
 
-zero_impl!(uint, 0u);
+zero_impl!(usize, 0us);
 zero_impl!(u8,   0u8);
 zero_impl!(u16,  0u16);
 zero_impl!(u32,  0u32);
 zero_impl!(u64,  0u64);
 
-zero_impl!(int, 0i);
+zero_impl!(isize, 0is);
 zero_impl!(i8,  0i8);
 zero_impl!(i16, 0i16);
 zero_impl!(i32, 0i32);
@@ -114,13 +114,13 @@ macro_rules! one_impl {
     }
 }
 
-one_impl!(uint, 1u);
+one_impl!(usize, 1us);
 one_impl!(u8,  1u8);
 one_impl!(u16, 1u16);
 one_impl!(u32, 1u32);
 one_impl!(u64, 1u64);
 
-one_impl!(int, 1i);
+one_impl!(isize, 1is);
 one_impl!(i8,  1i8);
 one_impl!(i16, 1i16);
 one_impl!(i32, 1i32);
@@ -197,7 +197,7 @@ macro_rules! signed_impl {
     )*)
 }
 
-signed_impl!(int i8 i16 i32 i64);
+signed_impl!(isize i8 i16 i32 i64);
 
 macro_rules! signed_float_impl {
     ($t:ty, $nan:expr, $inf:expr, $neg_inf:expr, $fabs:path, $fcopysign:path, $fdim:ident) => {
@@ -248,7 +248,7 @@ signed_float_impl!(f64, f64::NAN, f64::INFINITY, f64::NEG_INFINITY,
 /// A trait for values which cannot be negative
 pub trait Unsigned: Num {}
 
-trait_impl!(Unsigned for uint u8 u16 u32 u64);
+trait_impl!(Unsigned for usize u8 u16 u32 u64);
 
 /// Numbers which have upper and lower bounds
 pub trait Bounded {
@@ -271,13 +271,13 @@ macro_rules! bounded_impl {
     }
 }
 
-bounded_impl!(uint, uint::MIN, uint::MAX);
+bounded_impl!(usize, usize::MIN, usize::MAX);
 bounded_impl!(u8, u8::MIN, u8::MAX);
 bounded_impl!(u16, u16::MIN, u16::MAX);
 bounded_impl!(u32, u32::MIN, u32::MAX);
 bounded_impl!(u64, u64::MIN, u64::MAX);
 
-bounded_impl!(int, int::MIN, int::MAX);
+bounded_impl!(isize, isize::MIN, isize::MAX);
 bounded_impl!(i8, i8::MIN, i8::MAX);
 bounded_impl!(i16, i16::MIN, i16::MAX);
 bounded_impl!(i32, i32::MIN, i32::MAX);
@@ -364,20 +364,20 @@ macro_rules! checked_cast_impl {
     }
 }
 
-#[cfg(target_word_size = "32")]
-checked_cast_impl!(CheckedAdd, checked_add, uint, u32, intrinsics::u32_add_with_overflow);
-#[cfg(target_word_size = "64")]
-checked_cast_impl!(CheckedAdd, checked_add, uint, u64, intrinsics::u64_add_with_overflow);
+#[cfg(target_pointer_width = "32")]
+checked_cast_impl!(CheckedAdd, checked_add, usize, u32, intrinsics::u32_add_with_overflow);
+#[cfg(target_pointer_width = "64")]
+checked_cast_impl!(CheckedAdd, checked_add, usize, u64, intrinsics::u64_add_with_overflow);
 
 checked_impl!(CheckedAdd, checked_add, u8,  intrinsics::u8_add_with_overflow);
 checked_impl!(CheckedAdd, checked_add, u16, intrinsics::u16_add_with_overflow);
 checked_impl!(CheckedAdd, checked_add, u32, intrinsics::u32_add_with_overflow);
 checked_impl!(CheckedAdd, checked_add, u64, intrinsics::u64_add_with_overflow);
 
-#[cfg(target_word_size = "32")]
-checked_cast_impl!(CheckedAdd, checked_add, int, i32, intrinsics::i32_add_with_overflow);
-#[cfg(target_word_size = "64")]
-checked_cast_impl!(CheckedAdd, checked_add, int, i64, intrinsics::i64_add_with_overflow);
+#[cfg(target_pointer_width = "32")]
+checked_cast_impl!(CheckedAdd, checked_add, isize, i32, intrinsics::i32_add_with_overflow);
+#[cfg(target_pointer_width = "64")]
+checked_cast_impl!(CheckedAdd, checked_add, isize, i64, intrinsics::i64_add_with_overflow);
 
 checked_impl!(CheckedAdd, checked_add, i8,  intrinsics::i8_add_with_overflow);
 checked_impl!(CheckedAdd, checked_add, i16, intrinsics::i16_add_with_overflow);
@@ -398,20 +398,20 @@ pub trait CheckedSub: Sub<Self, Output = Self> {
     fn checked_sub(&self, v: &Self) -> Option<Self>;
 }
 
-#[cfg(target_word_size = "32")]
-checked_cast_impl!(CheckedSub, checked_sub, uint, u32, intrinsics::u32_sub_with_overflow);
-#[cfg(target_word_size = "64")]
-checked_cast_impl!(CheckedSub, checked_sub, uint, u64, intrinsics::u64_sub_with_overflow);
+#[cfg(target_pointer_width = "32")]
+checked_cast_impl!(CheckedSub, checked_sub, usize, u32, intrinsics::u32_sub_with_overflow);
+#[cfg(target_pointer_width = "64")]
+checked_cast_impl!(CheckedSub, checked_sub, usize, u64, intrinsics::u64_sub_with_overflow);
 
 checked_impl!(CheckedSub, checked_sub, u8,  intrinsics::u8_sub_with_overflow);
 checked_impl!(CheckedSub, checked_sub, u16, intrinsics::u16_sub_with_overflow);
 checked_impl!(CheckedSub, checked_sub, u32, intrinsics::u32_sub_with_overflow);
 checked_impl!(CheckedSub, checked_sub, u64, intrinsics::u64_sub_with_overflow);
 
-#[cfg(target_word_size = "32")]
-checked_cast_impl!(CheckedSub, checked_sub, int, i32, intrinsics::i32_sub_with_overflow);
-#[cfg(target_word_size = "64")]
-checked_cast_impl!(CheckedSub, checked_sub, int, i64, intrinsics::i64_sub_with_overflow);
+#[cfg(target_pointer_width = "32")]
+checked_cast_impl!(CheckedSub, checked_sub, isize, i32, intrinsics::i32_sub_with_overflow);
+#[cfg(target_pointer_width = "64")]
+checked_cast_impl!(CheckedSub, checked_sub, isize, i64, intrinsics::i64_sub_with_overflow);
 
 checked_impl!(CheckedSub, checked_sub, i8,  intrinsics::i8_sub_with_overflow);
 checked_impl!(CheckedSub, checked_sub, i16, intrinsics::i16_sub_with_overflow);
@@ -434,20 +434,20 @@ pub trait CheckedMul: Mul<Self, Output = Self> {
     fn checked_mul(&self, v: &Self) -> Option<Self>;
 }
 
-#[cfg(target_word_size = "32")]
-checked_cast_impl!(CheckedMul, checked_mul, uint, u32, intrinsics::u32_mul_with_overflow);
-#[cfg(target_word_size = "64")]
-checked_cast_impl!(CheckedMul, checked_mul, uint, u64, intrinsics::u64_mul_with_overflow);
+#[cfg(target_pointer_width = "32")]
+checked_cast_impl!(CheckedMul, checked_mul, usize, u32, intrinsics::u32_mul_with_overflow);
+#[cfg(target_pointer_width = "64")]
+checked_cast_impl!(CheckedMul, checked_mul, usize, u64, intrinsics::u64_mul_with_overflow);
 
 checked_impl!(CheckedMul, checked_mul, u8,  intrinsics::u8_mul_with_overflow);
 checked_impl!(CheckedMul, checked_mul, u16, intrinsics::u16_mul_with_overflow);
 checked_impl!(CheckedMul, checked_mul, u32, intrinsics::u32_mul_with_overflow);
 checked_impl!(CheckedMul, checked_mul, u64, intrinsics::u64_mul_with_overflow);
 
-#[cfg(target_word_size = "32")]
-checked_cast_impl!(CheckedMul, checked_mul, int, i32, intrinsics::i32_mul_with_overflow);
-#[cfg(target_word_size = "64")]
-checked_cast_impl!(CheckedMul, checked_mul, int, i64, intrinsics::i64_mul_with_overflow);
+#[cfg(target_pointer_width = "32")]
+checked_cast_impl!(CheckedMul, checked_mul, isize, i32, intrinsics::i32_mul_with_overflow);
+#[cfg(target_pointer_width = "64")]
+checked_cast_impl!(CheckedMul, checked_mul, isize, i64, intrinsics::i64_mul_with_overflow);
 
 checked_impl!(CheckedMul, checked_mul, i8,  intrinsics::i8_mul_with_overflow);
 checked_impl!(CheckedMul, checked_mul, i16, intrinsics::i16_mul_with_overflow);
@@ -486,7 +486,7 @@ macro_rules! checkeddiv_int_impl {
     }
 }
 
-checkeddiv_int_impl!(int, int::MIN);
+checkeddiv_int_impl!(isize, isize::MIN);
 checkeddiv_int_impl!(i8, i8::MIN);
 checkeddiv_int_impl!(i16, i16::MIN);
 checkeddiv_int_impl!(i32, i32::MIN);
@@ -507,5 +507,4 @@ macro_rules! checkeddiv_uint_impl {
     )*)
 }
 
-checkeddiv_uint_impl!(uint u8 u16 u32 u64);
-
+checkeddiv_uint_impl!(usize u8 u16 u32 u64);

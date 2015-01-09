@@ -18,13 +18,14 @@
 //! approximate a square root to arbitrary precision:
 //!
 //! ```
+//! # #![allow(unstable)]
 //! extern crate num;
 //!
 //! use std::num::FromPrimitive;
 //! use num::bigint::BigInt;
 //! use num::rational::{Ratio, BigRational};
 //!
-//! fn approx_sqrt(number: u64, iterations: uint) -> BigRational {
+//! fn approx_sqrt(number: u64, iterations: usize) -> BigRational {
 //!     let start: Ratio<BigInt> = Ratio::from_integer(FromPrimitive::from_u64(number).unwrap());
 //!     let mut approx = start.clone();
 //!
@@ -50,6 +51,8 @@
        html_root_url = "http://doc.rust-lang.org/num/",
        html_playground_url = "http://play.rust-lang.org/")]
 
+#![allow(unstable)]
+
 extern crate "rustc-serialize" as rustc_serialize;
 
 pub use bigint::{BigInt, BigUint};
@@ -59,6 +62,8 @@ pub use integer::Integer;
 pub use iter::{range, range_inclusive, range_step, range_step_inclusive};
 pub use traits::{Num, Zero, One, Signed, Unsigned, Bounded,
                  Saturating, CheckedAdd, CheckedSub, CheckedMul, CheckedDiv};
+
+#[cfg(test)] use std::hash;
 
 use std::ops::{Mul};
 
@@ -119,7 +124,7 @@ pub fn abs_sub<T: Signed>(x: T, y: T) -> T {
 /// assert_eq!(num::pow(2i, 4), 16);
 /// ```
 #[inline]
-pub fn pow<T: Clone + One + Mul<T, Output = T>>(mut base: T, mut exp: uint) -> T {
+pub fn pow<T: Clone + One + Mul<T, Output = T>>(mut base: T, mut exp: usize) -> T {
     if exp == 1 { base }
     else {
         let mut acc = one::<T>();
@@ -132,4 +137,9 @@ pub fn pow<T: Clone + One + Mul<T, Output = T>>(mut base: T, mut exp: uint) -> T
         }
         acc
     }
+}
+
+#[cfg(test)]
+fn hash<T: hash::Hash<hash::SipHasher>>(x: &T) -> u64 {
+    hash::hash::<_, hash::SipHasher>(x)
 }

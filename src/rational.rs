@@ -30,7 +30,7 @@ pub struct Ratio<T> {
 }
 
 /// Alias for a `Ratio` of machine-sized integers.
-pub type Rational = Ratio<int>;
+pub type Rational = Ratio<isize>;
 pub type Rational32 = Ratio<i32>;
 pub type Rational64 = Ratio<i64>;
 
@@ -192,12 +192,12 @@ impl Ratio<BigInt> {
         let bigint_sign = if sign == 1 { Sign::Plus } else { Sign::Minus };
         if exponent < 0 {
             let one: BigInt = One::one();
-            let denom: BigInt = one << ((-exponent) as uint);
+            let denom: BigInt = one << ((-exponent) as usize);
             let numer: BigUint = FromPrimitive::from_u64(mantissa).unwrap();
             Some(Ratio::new(BigInt::from_biguint(bigint_sign, numer), denom))
         } else {
             let mut numer: BigUint = FromPrimitive::from_u64(mantissa).unwrap();
-            numer = numer << (exponent as uint);
+            numer = numer << (exponent as usize);
             Some(Ratio::from_integer(BigInt::from_biguint(bigint_sign, numer)))
         }
     }
@@ -410,6 +410,16 @@ impl<T: fmt::Show + Eq + One> fmt::Show for Ratio<T> {
     /// Renders as `numer/denom`. If denom=1, renders as numer.
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.denom == One::one() {
+            write!(f, "{:?}", self.numer)
+        } else {
+            write!(f, "{:?}/{:?}", self.numer, self.denom)
+        }
+    }
+}
+impl<T: fmt::String + Eq + One> fmt::String for Ratio<T> {
+    /// Renders as `numer/denom`. If denom=1, renders as numer.
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if self.denom == One::one() {
             write!(f, "{}", self.numer)
         } else {
             write!(f, "{}/{}", self.numer, self.denom)
@@ -436,7 +446,7 @@ impl<T: FromStr + Clone + Integer + PartialOrd>
 impl<T: FromStrRadix + Clone + Integer + PartialOrd>
     FromStrRadix for Ratio<T> {
     /// Parses `numer/denom` where the numbers are in base `radix`.
-    fn from_str_radix(s: &str, radix: uint) -> Option<Ratio<T>> {
+    fn from_str_radix(s: &str, radix: usize) -> Option<Ratio<T>> {
         let split: Vec<&str> = s.splitn(1, '/').collect();
         if split.len() < 2 {
             None
@@ -461,7 +471,6 @@ mod test {
     use super::{Ratio, Rational, BigRational};
     use std::num::{FromPrimitive, Float};
     use std::str::FromStr;
-    use std::hash::hash;
     use std::i32;
     use {Zero, One, Signed};
 
@@ -488,22 +497,22 @@ mod test {
         // check our constants are what Ratio::new etc. would make.
         assert_eq!(_0, Zero::zero());
         assert_eq!(_1, One::one());
-        assert_eq!(_2, Ratio::from_integer(2i));
-        assert_eq!(_1_2, Ratio::new(1i,2i));
-        assert_eq!(_3_2, Ratio::new(3i,2i));
-        assert_eq!(_NEG1_2, Ratio::new(-1i,2i));
+        assert_eq!(_2, Ratio::from_integer(2));
+        assert_eq!(_1_2, Ratio::new(1,2));
+        assert_eq!(_3_2, Ratio::new(3,2));
+        assert_eq!(_NEG1_2, Ratio::new(-1,2));
     }
 
     #[test]
     fn test_new_reduce() {
-        let one22 = Ratio::new(2i,2);
+        let one22 = Ratio::new(2,2);
 
         assert_eq!(one22, One::one());
     }
     #[test]
     #[should_fail]
     fn test_new_zero() {
-        let _a = Ratio::new(1i,0);
+        let _a = Ratio::new(1,0);
     }
 
 
@@ -568,7 +577,7 @@ mod test {
         assert_eq!(format!("{}", _2), "2".to_string());
         assert_eq!(format!("{}", _1_2), "1/2".to_string());
         assert_eq!(format!("{}", _0), "0".to_string());
-        assert_eq!(format!("{}", Ratio::from_integer(-2i)), "-2".to_string());
+        assert_eq!(format!("{}", Ratio::from_integer(-2)), "-2".to_string());
     }
 
     mod arith {
@@ -608,8 +617,8 @@ mod test {
             }
 
             test(_1, _1_2, _1_2);
-            test(_1_2, _3_2, Ratio::new(3i,4i));
-            test(_1_2, _NEG1_2, Ratio::new(-1i, 4i));
+            test(_1_2, _3_2, Ratio::new(3,4));
+            test(_1_2, _NEG1_2, Ratio::new(-1, 4));
         }
 
         #[test]
@@ -741,7 +750,7 @@ mod test {
     #[test]
     fn test_to_from_str() {
         fn test(r: Rational, s: String) {
-            assert_eq!(FromStr::from_str(s[]), Some(r));
+            assert_eq!(FromStr::from_str(&s[]), Some(r));
             assert_eq!(r.to_string(), s);
         }
         test(_1, "1".to_string());
@@ -808,7 +817,7 @@ mod test {
         assert_eq!(_3_2.abs_sub(&_1_2), _1);
         assert_eq!(_1_2.abs_sub(&_3_2), Zero::zero());
         assert_eq!(_1_2.signum(), One::one());
-        assert_eq!(_NEG1_2.signum(), - ::one::<Ratio<int>>());
+        assert_eq!(_NEG1_2.signum(), - ::one::<Ratio<isize>>());
         assert!(_NEG1_2.is_negative());
         assert!(! _NEG1_2.is_positive());
         assert!(! _1_2.is_negative());
@@ -816,7 +825,7 @@ mod test {
 
     #[test]
     fn test_hash() {
-        assert!(hash(&_0) != hash(&_1));
-        assert!(hash(&_0) != hash(&_3_2));
+        assert!(::hash(&_0) != ::hash(&_1));
+        assert!(::hash(&_0) != ::hash(&_3_2));
     }
 }

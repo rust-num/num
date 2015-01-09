@@ -244,6 +244,15 @@ impl<T: Clone + Num> One for Complex<T> {
 impl<T: fmt::Show + Num + PartialOrd + Clone> fmt::Show for Complex<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.im < Zero::zero() {
+            write!(f, "{:?}-{:?}i", self.re, -self.im.clone())
+        } else {
+            write!(f, "{:?}+{:?}i", self.re, self.im)
+        }
+    }
+}
+impl<T: fmt::String + Num + PartialOrd + Clone> fmt::String for Complex<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if self.im < Zero::zero() {
             write!(f, "{}-{}i", self.re, -self.im.clone())
         } else {
             write!(f, "{}+{}i", self.re, self.im)
@@ -258,7 +267,6 @@ mod test {
     use super::{Complex64, Complex};
     use std::f64;
     use std::num::Float;
-    use std::hash::hash;
 
     use {Zero, One};
 
@@ -327,7 +335,7 @@ mod test {
     #[test]
     #[should_fail]
     fn test_divide_by_zero_natural() {
-        let n = Complex::new(2i, 3i);
+        let n = Complex::new(2, 3);
         let d = Complex::new(0, 0);
         let _x = n / d;
     }
@@ -437,11 +445,13 @@ mod test {
 
     #[test]
     fn test_hash() {
+
+
         let a = Complex::new(0i32, 0i32);
         let b = Complex::new(1i32, 0i32);
         let c = Complex::new(0i32, 1i32);
-        assert!(hash(&a) != hash(&b));
-        assert!(hash(&b) != hash(&c));
-        assert!(hash(&c) != hash(&a));
+        assert!(::hash(&a) != ::hash(&b));
+        assert!(::hash(&b) != ::hash(&c));
+        assert!(::hash(&c) != ::hash(&a));
     }
 }
