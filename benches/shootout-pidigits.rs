@@ -95,7 +95,7 @@ fn pidigits(n: int) {
     let mut k = 0;
     let mut context = Context::new();
 
-    for i in range(1, n + 1) {
+    for i in (1..(n+1)) {
         let mut d;
         loop {
             k += 1;
@@ -112,7 +112,7 @@ fn pidigits(n: int) {
 
     let m = n % 10;
     if m != 0 {
-        for _ in range(m, 10) { print!(" "); }
+        for _ in (m..10) { print!(" "); }
         print!("\t:{}\n", n);
     }
 }
