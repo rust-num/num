@@ -63,35 +63,35 @@ impl Context {
         }
     }
 
-    fn from_int(i: int) -> BigInt {
-        FromPrimitive::from_int(i).unwrap()
+    fn from_i32(i: i32) -> BigInt {
+        FromPrimitive::from_i32(i).unwrap()
     }
 
-    fn extract_digit(&self) -> int {
+    fn extract_digit(&self) -> i32 {
         if self.numer > self.accum {return -1;}
         let (q, r) =
-            (&self.numer * Context::from_int(3) + &self.accum)
+            (&self.numer * Context::from_i32(3) + &self.accum)
             .div_rem(&self.denom);
         if r + &self.numer >= self.denom {return -1;}
-        q.to_int().unwrap()
+        q.to_i32().unwrap()
     }
 
-    fn next_term(&mut self, k: int) {
-        let y2 = Context::from_int(k * 2 + 1);
+    fn next_term(&mut self, k: i32) {
+        let y2 = Context::from_i32(k * 2 + 1);
         self.accum = (&self.accum + (&self.numer << 1)) * &y2;
-        self.numer = &self.numer * Context::from_int(k);
+        self.numer = &self.numer * Context::from_i32(k);
         self.denom = &self.denom * y2;
     }
 
-    fn eliminate_digit(&mut self, d: int) {
-        let d = Context::from_int(d);
-        let ten = Context::from_int(10);
+    fn eliminate_digit(&mut self, d: i32) {
+        let d = Context::from_i32(d);
+        let ten = Context::from_i32(10);
         self.accum = (&self.accum - &self.denom * d) * &ten;
         self.numer = &self.numer * ten;
     }
 }
 
-fn pidigits(n: int) {
+fn pidigits(n: isize) {
     let mut k = 0;
     let mut context = Context::new();
 
@@ -117,7 +117,7 @@ fn pidigits(n: int) {
     }
 }
 
-static DEFAULT_DIGITS: int = 512;
+static DEFAULT_DIGITS: isize = 512;
 
 #[bench]
 fn use_bencher(b: &mut Bencher) {
