@@ -29,7 +29,7 @@
 //!     let start: Ratio<BigInt> = Ratio::from_integer(FromPrimitive::from_u64(number).unwrap());
 //!     let mut approx = start.clone();
 //!
-//!     for _ in range(0, iterations) {
+//!     for _ in 0..iterations {
 //!         approx = (&approx + (&start / &approx)) /
 //!             Ratio::from_integer(FromPrimitive::from_u64(2).unwrap());
 //!     }
