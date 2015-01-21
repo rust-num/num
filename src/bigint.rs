@@ -56,19 +56,21 @@
 //! println!("{}", a * b);
 //! ```
 
+extern crate "rustc-serialize" as rustc_serialize;
+
 use Integer;
 
 use std::default::Default;
 use std::iter::repeat;
-use std::num::FromStrRadix;
-use std::num::{Int, ToPrimitive, FromPrimitive};
+use std::num::{Int, ToPrimitive, FromPrimitive, FromStrRadix};
 use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Rem, Shl, Shr, Sub};
 use std::rand::Rng;
 use std::str::{self, FromStr};
-use std::{cmp, fmt, hash};
-use std::cmp::Ordering;
-use std::cmp::Ordering::{Less, Greater, Equal};
+use std::{cmp, fmt, hash, mem};
+use std::cmp::Ordering::{self, Less, Greater, Equal};
 use std::{i64, u64};
+
+use rustc_serialize::hex::ToHex;
 
 use {Num, Unsigned, CheckedAdd, CheckedSub, CheckedMul, CheckedDiv, Signed, Zero, One};
 use self::Sign::{Minus, NoSign, Plus};
@@ -874,6 +876,75 @@ impl BigUint {
 
     /// Creates and initializes a `BigUint`.
     ///
+    /// The bytes are in big-endian byte order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use num::bigint::BigUint;
+    ///
+    /// assert_eq!(BigUint::from_bytes_be("A".as_bytes()),
+    ///            BigUint::parse_bytes("65".as_bytes(), 10).unwrap());
+    /// assert_eq!(BigUint::from_bytes_be("AA".as_bytes()),
+    ///            BigUint::parse_bytes("16705".as_bytes(), 10).unwrap());
+    /// assert_eq!(BigUint::from_bytes_be("AB".as_bytes()),
+    ///            BigUint::parse_bytes("16706".as_bytes(), 10).unwrap());
+    /// assert_eq!(BigUint::from_bytes_be("Hello world!".as_bytes()),
+    ///            BigUint::parse_bytes("22405534230753963835153736737".as_bytes(), 10).unwrap());
+    /// ```
+    #[inline]
+    pub fn from_bytes_be(bytes: &[u8]) -> BigUint {
+        if bytes.is_empty() {
+            Zero::zero()
+        } else {
+            BigUint::parse_bytes(bytes.to_hex().as_bytes(), 16).unwrap()
+        }
+    }
+
+    /// Creates and initializes a `BigUint`.
+    ///
+    /// The bytes are in little-endian byte order.
+    #[inline]
+    pub fn from_bytes_le(bytes: &[u8]) -> BigUint {
+        let mut v = bytes.to_vec();
+        v.reverse();
+        BigUint::from_bytes_be(&*v)
+    }
+
+    /// Returns the byte representation of the `BigUint` in little-endian byte order.
+    #[inline]
+    pub fn to_bytes_le(&self) -> Vec<u8> {
+        let mut result = Vec::new();
+        for word in self.data.iter() {
+            let mut w = *word;
+            for _ in 0..mem::size_of::<BigDigit>() {
+                let b = (w & 0xFF) as u8;
+                w = w >> 8;
+                result.push(b);
+            }
+        }
+
+        if let Some(index) = result.iter().rposition(|x| *x != 0) {
+            result.truncate(index + 1);
+        }
+
+        if result.is_empty() {
+            vec![0]
+        } else {
+            result
+        }
+    }
+
+    /// Returns the byte representation of the `BigUint` in big-endian byte order.
+    #[inline]
+    pub fn to_bytes_be(&self) -> Vec<u8> {
+        let mut v = self.to_bytes_le();
+        v.reverse();
+        v
+    }
+
+    /// Creates and initializes a `BigUint`.
+    ///
     /// # Examples
     ///
     /// ```
@@ -1578,6 +1649,49 @@ impl BigInt {
 
     /// Creates and initializes a `BigInt`.
     ///
+    /// The bytes are in big-endian byte order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use num::bigint::{BigInt, Sign};
+    ///
+    /// assert_eq!(BigInt::from_bytes_be(Sign::Plus, "A".as_bytes()),
+    ///            BigInt::parse_bytes("65".as_bytes(), 10).unwrap());
+    /// assert_eq!(BigInt::from_bytes_be(Sign::Plus, "AA".as_bytes()),
+    ///            BigInt::parse_bytes("16705".as_bytes(), 10).unwrap());
+    /// assert_eq!(BigInt::from_bytes_be(Sign::Plus, "AB".as_bytes()),
+    ///            BigInt::parse_bytes("16706".as_bytes(), 10).unwrap());
+    /// assert_eq!(BigInt::from_bytes_be(Sign::Plus, "Hello world!".as_bytes()),
+    ///            BigInt::parse_bytes("22405534230753963835153736737".as_bytes(), 10).unwrap());
+    /// ```
+    #[inline]
+    pub fn from_bytes_be(sign: Sign, bytes: &[u8]) -> BigInt {
+        BigInt::from_biguint(sign, BigUint::from_bytes_be(bytes))
+    }
+
+    /// Creates and initializes a `BigInt`.
+    ///
+    /// The bytes are in little-endian byte order.
+    #[inline]
+    pub fn from_bytes_le(sign: Sign, bytes: &[u8]) -> BigInt {
+        BigInt::from_biguint(sign, BigUint::from_bytes_le(bytes))
+    }
+
+    /// Returns the sign and the byte representation of the `BigInt` in little-endian byte order.
+    #[inline]
+    pub fn to_bytes_le(&self) -> (Sign, Vec<u8>) {
+        (self.sign, self.data.to_bytes_le())
+    }
+
+    /// Returns the sign and the byte representation of the `BigInt` in big-endian byte order.
+    #[inline]
+    pub fn to_bytes_be(&self) -> (Sign, Vec<u8>) {
+        (self.sign, self.data.to_bytes_be())
+    }
+
+    /// Creates and initializes a `BigInt`.
+    ///
     /// # Examples
     ///
     /// ```
@@ -1656,6 +1770,68 @@ mod biguint_tests {
         check(&[0, 0, 1, 2], &[0, 0, 1, 2]);
         check(&[0, 0, 1, 2, 0, 0], &[0, 0, 1, 2]);
         check(&[-1], &[-1]);
+    }
+
+    #[test]
+    fn test_from_bytes_be() {
+        fn check(s: &str, result: &str) {
+            assert_eq!(BigUint::from_bytes_be(s.as_bytes()),
+                       BigUint::parse_bytes(result.as_bytes(), 10).unwrap());
+        }
+        check("A", "65");
+        check("AA", "16705");
+        check("AB", "16706");
+        check("Hello world!", "22405534230753963835153736737");
+        assert_eq!(BigUint::from_bytes_be(&[]), Zero::zero());
+    }
+
+    #[test]
+    fn test_to_bytes_be() {
+        fn check(s: &str, result: &str) {
+            let b = BigUint::parse_bytes(result.as_bytes(), 10).unwrap();
+            assert_eq!(s.as_bytes(), b.to_bytes_be());
+        }
+        check("A", "65");
+        check("AA", "16705");
+        check("AB", "16706");
+        check("Hello world!", "22405534230753963835153736737");
+        let b: BigUint = Zero::zero();
+        assert_eq!(b.to_bytes_be(), [0]);
+
+        // Test with leading/trailing zero bytes and a full BigDigit of value 0
+        let b: BigUint = FromStrRadix::from_str_radix("00010000000000000200", 16).unwrap();
+        assert_eq!(b.to_bytes_be(), [1, 0, 0, 0, 0, 0, 0, 2, 0]);
+    }
+
+    #[test]
+    fn test_from_bytes_le() {
+        fn check(s: &str, result: &str) {
+            assert_eq!(BigUint::from_bytes_le(s.as_bytes()),
+                       BigUint::parse_bytes(result.as_bytes(), 10).unwrap());
+        }
+        check("A", "65");
+        check("AA", "16705");
+        check("BA", "16706");
+        check("!dlrow olleH", "22405534230753963835153736737");
+        assert_eq!(BigUint::from_bytes_le(&[]), Zero::zero());
+    }
+
+    #[test]
+    fn test_to_bytes_le() {
+        fn check(s: &str, result: &str) {
+            let b = BigUint::parse_bytes(result.as_bytes(), 10).unwrap();
+            assert_eq!(s.as_bytes(), b.to_bytes_le());
+        }
+        check("A", "65");
+        check("AA", "16705");
+        check("BA", "16706");
+        check("!dlrow olleH", "22405534230753963835153736737");
+        let b: BigUint = Zero::zero();
+        assert_eq!(b.to_bytes_le(), [0]);
+
+        // Test with leading/trailing zero bytes and a full BigDigit of value 0
+        let b: BigUint = FromStrRadix::from_str_radix("00010000000000000200", 16).unwrap();
+        assert_eq!(b.to_bytes_le(), [0, 2, 0, 0, 0, 0, 0, 0, 1]);
     }
 
     #[test]
@@ -2522,6 +2698,72 @@ mod bigint_tests {
         check(Plus, 0, NoSign, 0);
         check(Minus, 1, Minus, 1);
         check(NoSign, 1, NoSign, 0);
+    }
+
+    #[test]
+    fn test_from_bytes_be() {
+        fn check(s: &str, result: &str) {
+            assert_eq!(BigInt::from_bytes_be(Plus, s.as_bytes()),
+                       BigInt::parse_bytes(result.as_bytes(), 10).unwrap());
+        }
+        check("A", "65");
+        check("AA", "16705");
+        check("AB", "16706");
+        check("Hello world!", "22405534230753963835153736737");
+        assert_eq!(BigInt::from_bytes_be(Plus, &[]), Zero::zero());
+        assert_eq!(BigInt::from_bytes_be(Minus, &[]), Zero::zero());
+    }
+
+    #[test]
+    fn test_to_bytes_be() {
+        fn check(s: &str, result: &str) {
+            let b = BigInt::parse_bytes(result.as_bytes(), 10).unwrap();
+            let (sign, v) = b.to_bytes_be();
+            assert_eq!((Plus, s.as_bytes()), (sign, &*v));
+        }
+        check("A", "65");
+        check("AA", "16705");
+        check("AB", "16706");
+        check("Hello world!", "22405534230753963835153736737");
+        let b: BigInt = Zero::zero();
+        assert_eq!(b.to_bytes_be(), (NoSign, vec![0]));
+
+        // Test with leading/trailing zero bytes and a full BigDigit of value 0
+        let b: BigInt = FromStrRadix::from_str_radix("00010000000000000200", 16).unwrap();
+        assert_eq!(b.to_bytes_be(), (Plus, vec![1, 0, 0, 0, 0, 0, 0, 2, 0]));
+    }
+
+    #[test]
+    fn test_from_bytes_le() {
+        fn check(s: &str, result: &str) {
+            assert_eq!(BigInt::from_bytes_le(Plus, s.as_bytes()),
+                       BigInt::parse_bytes(result.as_bytes(), 10).unwrap());
+        }
+        check("A", "65");
+        check("AA", "16705");
+        check("BA", "16706");
+        check("!dlrow olleH", "22405534230753963835153736737");
+        assert_eq!(BigInt::from_bytes_le(Plus, &[]), Zero::zero());
+        assert_eq!(BigInt::from_bytes_le(Minus, &[]), Zero::zero());
+    }
+
+    #[test]
+    fn test_to_bytes_le() {
+        fn check(s: &str, result: &str) {
+            let b = BigInt::parse_bytes(result.as_bytes(), 10).unwrap();
+            let (sign, v) = b.to_bytes_le();
+            assert_eq!((Plus, s.as_bytes()), (sign, &*v));
+        }
+        check("A", "65");
+        check("AA", "16705");
+        check("BA", "16706");
+        check("!dlrow olleH", "22405534230753963835153736737");
+        let b: BigInt = Zero::zero();
+        assert_eq!(b.to_bytes_le(), (NoSign, vec![0]));
+
+        // Test with leading/trailing zero bytes and a full BigDigit of value 0
+        let b: BigInt = FromStrRadix::from_str_radix("00010000000000000200", 16).unwrap();
+        assert_eq!(b.to_bytes_le(), (Plus, vec![0, 2, 0, 0, 0, 0, 0, 0, 1]));
     }
 
     #[test]
