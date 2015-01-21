@@ -860,7 +860,7 @@ impl FromStrRadix for BigUint {
 impl BigUint {
     /// Creates and initializes a `BigUint`.
     ///
-    /// The digits are be in base 2^32.
+    /// The digits are in little-endian base 2^32.
     #[inline]
     pub fn new(mut digits: Vec<BigDigit>) -> BigUint {
         // omit trailing zeros
@@ -871,13 +871,23 @@ impl BigUint {
 
     /// Creates and initializes a `BigUint`.
     ///
-    /// The digits are be in base 2^32.
+    /// The digits are in little-endian base 2^32.
     #[inline]
     pub fn from_slice(slice: &[BigDigit]) -> BigUint {
         BigUint::new(slice.to_vec())
     }
 
     /// Creates and initializes a `BigUint`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use num::bigint::{BigUint, ToBigUint};
+    ///
+    /// assert_eq!(BigUint::parse_bytes("1234".as_bytes(), 10), ToBigUint::to_biguint(&1234));
+    /// assert_eq!(BigUint::parse_bytes("ABCD".as_bytes(), 16), ToBigUint::to_biguint(&0xABCD));
+    /// assert_eq!(BigUint::parse_bytes("G".as_bytes(), 16), None);
+    /// ```
     #[inline]
     pub fn parse_bytes(buf: &[u8], radix: usize) -> Option<BigUint> {
         str::from_utf8(buf).ok().and_then(|s| FromStrRadix::from_str_radix(s, radix))
@@ -1553,7 +1563,7 @@ impl<R: Rng> RandBigInt for R {
 impl BigInt {
     /// Creates and initializes a BigInt.
     ///
-    /// The digits are be in base 2^32.
+    /// The digits are in little-endian base 2^32.
     #[inline]
     pub fn new(sign: Sign, digits: Vec<BigDigit>) -> BigInt {
         BigInt::from_biguint(sign, BigUint::new(digits))
@@ -1561,7 +1571,7 @@ impl BigInt {
 
     /// Creates and initializes a `BigInt`.
     ///
-    /// The digits are be in base 2^32.
+    /// The digits are in little-endian base 2^32.
     #[inline]
     pub fn from_biguint(sign: Sign, data: BigUint) -> BigInt {
         if sign == NoSign || data.is_zero() {
@@ -1577,6 +1587,16 @@ impl BigInt {
     }
 
     /// Creates and initializes a `BigInt`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use num::bigint::{BigInt, ToBigInt};
+    ///
+    /// assert_eq!(BigInt::parse_bytes("1234".as_bytes(), 10), ToBigInt::to_bigint(&1234));
+    /// assert_eq!(BigInt::parse_bytes("ABCD".as_bytes(), 16), ToBigInt::to_bigint(&0xABCD));
+    /// assert_eq!(BigInt::parse_bytes("G".as_bytes(), 16), None);
+    /// ```
     #[inline]
     pub fn parse_bytes(buf: &[u8], radix: usize) -> Option<BigInt> {
         str::from_utf8(buf).ok().and_then(|s| FromStrRadix::from_str_radix(s, radix))
