@@ -116,7 +116,7 @@ pub mod big_digit {
 ///
 /// A `BigUint`-typed value `BigUint { data: vec!(a, b, c) }` represents a number
 /// `(a + b * big_digit::BASE + c * big_digit::BASE^2)`.
-#[derive(Clone, RustcEncodable, RustcDecodable)]
+#[derive(Clone, RustcEncodable, RustcDecodable, Debug)]
 pub struct BigUint {
     data: Vec<BigDigit>
 }
@@ -172,12 +172,7 @@ impl<S: hash::Hasher + hash::Writer> hash::Hash<S> for BigUint {
     }
 }
 
-impl fmt::Show for BigUint {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", to_str_radix(self, 10))
-    }
-}
-impl fmt::String for BigUint {
+impl fmt::Display for BigUint {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", to_str_radix(self, 10))
     }
@@ -989,7 +984,7 @@ impl Neg for Sign {
 }
 
 /// A big signed integer type.
-#[derive(Clone, RustcEncodable, RustcDecodable)]
+#[derive(Clone, RustcEncodable, RustcDecodable, Debug)]
 pub struct BigInt {
     sign: Sign,
     data: BigUint
@@ -1030,12 +1025,7 @@ impl Default for BigInt {
     fn default() -> BigInt { Zero::zero() }
 }
 
-impl fmt::Show for BigInt {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", to_str_radix_signed(self, 10))
-    }
-}
-impl fmt::String for BigInt {
+impl fmt::Display for BigInt {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", to_str_radix_signed(self, 10))
     }
@@ -1673,7 +1663,7 @@ mod biguint_tests {
         let data: [&[_]; 7] = [ &[], &[1], &[2], &[-1], &[0, 1], &[2, 1], &[1, 1, 1]  ];
         let data: Vec<BigUint> = data.iter().map(|v| BigUint::from_slice(*v)).collect();
         for (i, ni) in data.iter().enumerate() {
-            for (j0, nj) in data.slice(i, data.len()).iter().enumerate() {
+            for (j0, nj) in data[i..].iter().enumerate() {
                 let j = j0 + i;
                 if i == j {
                     assert_eq!(ni.cmp(nj), Equal);
@@ -2545,7 +2535,7 @@ mod bigint_tests {
         nums.extend(vs.iter().map(|s| BigInt::from_slice(Plus, *s)));
 
         for (i, ni) in nums.iter().enumerate() {
-            for (j0, nj) in nums.slice(i, nums.len()).iter().enumerate() {
+            for (j0, nj) in nums[i..].iter().enumerate() {
                 let j = i + j0;
                 if i == j {
                     assert_eq!(ni.cmp(nj), Equal);

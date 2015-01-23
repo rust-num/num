@@ -21,7 +21,7 @@ use {Zero, One, Num};
 // probably doesn't map to C's _Complex correctly.
 
 /// A complex number in Cartesian form.
-#[derive(PartialEq, Copy, Clone, Hash, RustcEncodable, RustcDecodable)]
+#[derive(PartialEq, Copy, Clone, Hash, RustcEncodable, RustcDecodable, Debug)]
 pub struct Complex<T> {
     /// Real portion of the complex number
     pub re: T,
@@ -241,16 +241,7 @@ impl<T: Clone + Num> One for Complex<T> {
 }
 
 /* string conversions */
-impl<T: fmt::Show + Num + PartialOrd + Clone> fmt::Show for Complex<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if self.im < Zero::zero() {
-            write!(f, "{:?}-{:?}i", self.re, -self.im.clone())
-        } else {
-            write!(f, "{:?}+{:?}i", self.re, self.im)
-        }
-    }
-}
-impl<T: fmt::String + Num + PartialOrd + Clone> fmt::String for Complex<T> {
+impl<T: fmt::Display + Num + PartialOrd + Clone> fmt::Display for Complex<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.im < Zero::zero() {
             write!(f, "{}-{}i", self.re, -self.im.clone())

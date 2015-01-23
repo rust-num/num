@@ -22,7 +22,7 @@ use bigint::{BigInt, BigUint, Sign};
 use {Num, Signed, Zero, One};
 
 /// Represents the ratio between 2 numbers.
-#[derive(Copy, Clone, Hash, RustcEncodable, RustcDecodable)]
+#[derive(Copy, Clone, Hash, RustcEncodable, RustcDecodable, Debug)]
 #[allow(missing_docs)]
 pub struct Ratio<T> {
     numer: T,
@@ -406,17 +406,7 @@ impl<T: Clone + Integer + PartialOrd>
 }
 
 /* String conversions */
-impl<T: fmt::Show + Eq + One> fmt::Show for Ratio<T> {
-    /// Renders as `numer/denom`. If denom=1, renders as numer.
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if self.denom == One::one() {
-            write!(f, "{:?}", self.numer)
-        } else {
-            write!(f, "{:?}/{:?}", self.numer, self.denom)
-        }
-    }
-}
-impl<T: fmt::String + Eq + One> fmt::String for Ratio<T> {
+impl<T: fmt::Display + Eq + One> fmt::Display for Ratio<T> {
     /// Renders as `numer/denom`. If denom=1, renders as numer.
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.denom == One::one() {
