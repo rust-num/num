@@ -1037,7 +1037,7 @@ fn get_radix_base(radix: usize) -> (DoubleBigDigit, usize) {
 }
 
 /// A Sign is a `BigInt`'s composing element.
-#[derive(PartialEq, PartialOrd, Eq, Ord, Copy, Clone, Show, RustcEncodable, RustcDecodable)]
+#[derive(PartialEq, PartialOrd, Eq, Ord, Copy, Clone, Debug, RustcEncodable, RustcDecodable)]
 pub enum Sign { Minus, NoSign, Plus }
 
 impl Neg for Sign {
