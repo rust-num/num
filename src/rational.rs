@@ -13,6 +13,7 @@
 use Integer;
 
 use std::cmp;
+use std::error::Error;
 use std::fmt;
 use std::ops::{Add, Div, Mul, Neg, Rem, Sub};
 use std::str::FromStr;
@@ -419,40 +420,58 @@ impl<T: fmt::Display + Eq + One> fmt::Display for Ratio<T> {
 
 impl<T: FromStr + Clone + Integer + PartialOrd>
     FromStr for Ratio<T> {
+    type Err = ParseRatioError;
+
     /// Parses `numer/denom` or just `numer`.
-    fn from_str(s: &str) -> Option<Ratio<T>> {
+    fn from_str(s: &str) -> Result<Ratio<T>, ParseRatioError> {
         let mut split = s.splitn(1, '/');
 
-        let num = split.next().and_then(|n| FromStr::from_str(n));
-        let den = split.next().or(Some("1")).and_then(|d| FromStr::from_str(d));
+        let n = try!(split.next().ok_or(ParseRatioError));
+        let num = try!(FromStr::from_str(n).map_err(|_| ParseRatioError));
 
-        match (num, den) {
-            (Some(n), Some(d)) => Some(Ratio::new(n, d)),
-            _ => None
-        }
+        let d = split.next().unwrap_or("1");
+        let den = try!(FromStr::from_str(d).map_err(|_| ParseRatioError));
+
+        Ok(Ratio::new(num, den))
     }
 }
 
 impl<T: FromStrRadix + Clone + Integer + PartialOrd>
     FromStrRadix for Ratio<T> {
+    type Err = ParseRatioError;
+
     /// Parses `numer/denom` where the numbers are in base `radix`.
-    fn from_str_radix(s: &str, radix: usize) -> Option<Ratio<T>> {
+    fn from_str_radix(s: &str, radix: usize) -> Result<Ratio<T>, ParseRatioError> {
         let split: Vec<&str> = s.splitn(1, '/').collect();
         if split.len() < 2 {
-            None
+            Err(ParseRatioError)
         } else {
-            let a_option: Option<T> = FromStrRadix::from_str_radix(
+            let a_result: Result<T, _> = FromStrRadix::from_str_radix(
                 split[0],
-                radix);
-            a_option.and_then(|a| {
-                let b_option: Option<T> =
-                    FromStrRadix::from_str_radix(split[1], radix);
-                b_option.and_then(|b| {
-                    Some(Ratio::new(a.clone(), b.clone()))
+                radix).map_err(|_| ParseRatioError);
+            a_result.and_then(|a| {
+                let b_result: Result<T, _>  =
+                    FromStrRadix::from_str_radix(split[1], radix).map_err(|_| ParseRatioError);
+                b_result.and_then(|b| {
+                    Ok(Ratio::new(a.clone(), b.clone()))
                 })
             })
         }
     }
+}
+
+// FIXME: Bubble up specific errors
+#[derive(Copy, Debug, PartialEq)]
+pub struct ParseRatioError;
+
+impl fmt::Display for ParseRatioError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        "failed to parse provided string".fmt(f)
+    }
+}
+
+impl Error for ParseRatioError {
+    fn description(&self) -> &str { "failed to parse bigint/biguint" }
 }
 
 #[cfg(test)]
@@ -740,7 +759,7 @@ mod test {
     #[test]
     fn test_to_from_str() {
         fn test(r: Rational, s: String) {
-            assert_eq!(FromStr::from_str(&s[]), Some(r));
+            assert_eq!(FromStr::from_str(&s[]), Ok(r));
             assert_eq!(r.to_string(), s);
         }
         test(_1, "1".to_string());
@@ -753,8 +772,8 @@ mod test {
     #[test]
     fn test_from_str_fail() {
         fn test(s: &str) {
-            let rational: Option<Rational> = FromStr::from_str(s);
-            assert_eq!(rational, None);
+            let rational: Result<Rational, _> = FromStr::from_str(s);
+            assert!(rational.is_err());
         }
 
         let xs = ["0 /1", "abc", "", "1/", "--1/2","3/2/1"];

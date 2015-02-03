@@ -60,7 +60,10 @@ extern crate "rustc-serialize" as rustc_serialize;
 
 use Integer;
 
+use core::num::ParseIntError;
+
 use std::default::Default;
+use std::error::{Error, FromError};
 use std::iter::repeat;
 use std::num::{Int, ToPrimitive, FromPrimitive, FromStrRadix};
 use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Rem, Shl, Shr, Sub};
@@ -181,8 +184,10 @@ impl fmt::Display for BigUint {
 }
 
 impl FromStr for BigUint {
+    type Err = ParseBigIntError;
+
     #[inline]
-    fn from_str(s: &str) -> Option<BigUint> {
+    fn from_str(s: &str) -> Result<BigUint, ParseBigIntError> {
         FromStrRadix::from_str_radix(s, 10)
     }
 }
@@ -815,13 +820,15 @@ fn to_str_radix_signed(me: &BigInt, radix: usize) -> String {
 }
 
 impl FromStrRadix for BigUint {
+    type Err = ParseBigIntError;
+
     /// Creates and initializes a `BigUint`.
     #[inline]
-    fn from_str_radix(s: &str, radix: usize) -> Option<BigUint> {
+    fn from_str_radix(s: &str, radix: usize) -> Result<BigUint, ParseBigIntError> {
         let (base, unit_len) = get_radix_base(radix);
         let base_num = match base.to_biguint() {
             Some(base_num) => base_num,
-            None => { return None; }
+            None => { return Err(ParseBigIntError::Other); }
         };
 
         let mut end            = s.len();
@@ -829,22 +836,18 @@ impl FromStrRadix for BigUint {
         let mut power: BigUint = One::one();
         loop {
             let start = cmp::max(end, unit_len) - unit_len;
-            match FromStrRadix::from_str_radix(&s[start .. end], radix) {
+            let d = try!(FromStrRadix::from_str_radix(&s[start .. end], radix));
+            let d: Option<BigUint> = FromPrimitive::from_uint(d);
+            match d {
                 Some(d) => {
-                    let d: Option<BigUint> = FromPrimitive::from_uint(d);
-                    match d {
-                        Some(d) => {
-                            // FIXME(#5992): assignment operator overloads
-                            // n += d * &power;
-                            n = n + d * &power;
-                        }
-                        None => { return None; }
-                    }
+                    // FIXME(#5992): assignment operator overloads
+                    // n += d * &power;
+                    n = n + d * &power;
                 }
-                None => { return None; }
+                None => { return Err(ParseBigIntError::Other); }
             }
             if end <= unit_len {
-                return Some(n);
+                return Ok(n);
             }
             end -= unit_len;
             // FIXME(#5992): assignment operator overloads
@@ -956,7 +959,7 @@ impl BigUint {
     /// ```
     #[inline]
     pub fn parse_bytes(buf: &[u8], radix: usize) -> Option<BigUint> {
-        str::from_utf8(buf).ok().and_then(|s| FromStrRadix::from_str_radix(s, radix))
+        str::from_utf8(buf).ok().and_then(|s| FromStrRadix::from_str_radix(s, radix).ok())
     }
 
     #[inline]
@@ -1110,8 +1113,10 @@ impl<S: hash::Hasher + hash::Writer> hash::Hash<S> for BigInt {
 }
 
 impl FromStr for BigInt {
+    type Err = ParseBigIntError;
+
     #[inline]
-    fn from_str(s: &str) -> Option<BigInt> {
+    fn from_str(s: &str) -> Result<BigInt, ParseBigIntError> {
         FromStrRadix::from_str_radix(s, 10)
     }
 }
@@ -1521,10 +1526,12 @@ impl_to_bigint!(u32,  FromPrimitive::from_u32);
 impl_to_bigint!(u64,  FromPrimitive::from_u64);
 
 impl FromStrRadix for BigInt {
+    type Err = ParseBigIntError;
+
     /// Creates and initializes a BigInt.
     #[inline]
-    fn from_str_radix(s: &str, radix: usize) -> Option<BigInt> {
-        if s.is_empty() { return None; }
+    fn from_str_radix(s: &str, radix: usize) -> Result<BigInt, ParseBigIntError> {
+        if s.is_empty() { return Err(ParseBigIntError::Other); }
         let mut sign  = Plus;
         let mut start = 0;
         if s.starts_with("-") {
@@ -1703,7 +1710,7 @@ impl BigInt {
     /// ```
     #[inline]
     pub fn parse_bytes(buf: &[u8], radix: usize) -> Option<BigInt> {
-        str::from_utf8(buf).ok().and_then(|s| FromStrRadix::from_str_radix(s, radix))
+        str::from_utf8(buf).ok().and_then(|s| FromStrRadix::from_str_radix(s, radix).ok())
     }
 
 
@@ -1738,6 +1745,31 @@ impl BigInt {
             return None;
         }
         return Some(self.div(v));
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub enum ParseBigIntError {
+    ParseInt(ParseIntError),
+    Other,
+}
+
+impl fmt::Display for ParseBigIntError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            &ParseBigIntError::ParseInt(ref e) => e.fmt(f),
+            &ParseBigIntError::Other => "failed to parse provided string".fmt(f)
+        }
+    }
+}
+
+impl Error for ParseBigIntError {
+    fn description(&self) -> &str { "failed to parse bigint/biguint" }
+}
+
+impl FromError<ParseIntError> for ParseBigIntError {
+    fn from_error(err: ParseIntError) -> ParseBigIntError {
+        ParseBigIntError::ParseInt(err)
     }
 }
 
@@ -1929,7 +1961,7 @@ mod biguint_tests {
     #[test]
     fn test_shl() {
         fn check(s: &str, shift: usize, ans: &str) {
-            let opt_biguint: Option<BigUint> = FromStrRadix::from_str_radix(s, 16);
+            let opt_biguint: Option<BigUint> = FromStrRadix::from_str_radix(s, 16).ok();
             let bu = to_str_radix(&(opt_biguint.unwrap() << shift), 16);
             assert_eq!(bu.as_slice(), ans);
         }
@@ -2051,7 +2083,7 @@ mod biguint_tests {
     fn test_shr() {
         fn check(s: &str, shift: usize, ans: &str) {
             let opt_biguint: Option<BigUint> =
-                FromStrRadix::from_str_radix(s, 16);
+                FromStrRadix::from_str_radix(s, 16).ok();
             let bu = to_str_radix(&(opt_biguint.unwrap() >> shift), 16);
             assert_eq!(bu.as_slice(), ans);
         }
@@ -2571,12 +2603,12 @@ mod biguint_tests {
             }
         }
 
-        let zed: Option<BigUint> = FromStrRadix::from_str_radix("Z", 10);
+        let zed: Option<BigUint> = FromStrRadix::from_str_radix("Z", 10).ok();
         assert_eq!(zed, None);
-        let blank: Option<BigUint> = FromStrRadix::from_str_radix("_", 2);
+        let blank: Option<BigUint> = FromStrRadix::from_str_radix("_", 2).ok();
         assert_eq!(blank, None);
         let minus_one: Option<BigUint> = FromStrRadix::from_str_radix("-1",
-                                                                      10);
+                                                                      10).ok();
         assert_eq!(minus_one, None);
     }
 
@@ -2596,7 +2628,7 @@ mod biguint_tests {
         fn check(n: usize, s: &str) {
             let n = factor(n);
             let ans = match FromStrRadix::from_str_radix(s, 10) {
-                Some(x) => x, None => panic!()
+                Ok(x) => x, Err(_) => panic!()
             };
             assert_eq!(n, ans);
         }
@@ -3256,7 +3288,7 @@ mod bigint_tests {
                 let x: BigInt = FromPrimitive::from_int(n).unwrap();
                 x
             });
-            assert_eq!(FromStrRadix::from_str_radix(s, 10), ans);
+            assert_eq!(FromStrRadix::from_str_radix(s, 10).ok(), ans);
         }
         check("10", Some(10));
         check("1", Some(1));
