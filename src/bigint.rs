@@ -41,9 +41,10 @@
 //! It's easy to generate large random numbers:
 //!
 //! ```rust
-//! # #![allow(unstable)]
+//! extern crate rand;
+//! extern crate num;
+//! # fn main() {
 //! use num::bigint::{ToBigInt, RandBigInt};
-//! use std::rand;
 //!
 //! let mut rng = rand::thread_rng();
 //! let a = rng.gen_bigint(1000);
@@ -54,6 +55,7 @@
 //!
 //! // Probably an even larger number.
 //! println!("{}", a * b);
+//! # }
 //! ```
 
 extern crate "rustc-serialize" as rustc_serialize;
@@ -67,12 +69,12 @@ use std::error::{Error, FromError};
 use std::iter::repeat;
 use std::num::{Int, ToPrimitive, FromPrimitive, FromStrRadix};
 use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Rem, Shl, Shr, Sub};
-use std::rand::Rng;
 use std::str::{self, FromStr};
 use std::{cmp, fmt, hash, mem};
 use std::cmp::Ordering::{self, Less, Greater, Equal};
 use std::{i64, u64};
 
+use rand::Rng;
 use rustc_serialize::hex::ToHex;
 
 use {Num, Unsigned, CheckedAdd, CheckedSub, CheckedMul, CheckedDiv, Signed, Zero, One};
@@ -1785,10 +1787,10 @@ mod biguint_tests {
     use std::iter::repeat;
     use std::num::FromStrRadix;
     use std::num::{ToPrimitive, FromPrimitive};
-    use std::rand::thread_rng;
     use std::str::FromStr;
     use std::u64;
 
+    use rand::thread_rng;
     use {Zero, One, CheckedAdd, CheckedSub, CheckedMul, CheckedDiv};
 
     #[test]
@@ -2713,9 +2715,10 @@ mod bigint_tests {
     use std::iter::repeat;
     use std::num::FromStrRadix;
     use std::num::{ToPrimitive, FromPrimitive};
-    use std::rand::thread_rng;
     use std::u64;
     use std::ops::{Neg};
+
+    use rand::thread_rng;
 
     use {Zero, One, Signed};
 

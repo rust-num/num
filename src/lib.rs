@@ -44,7 +44,7 @@
 //!
 //! [newt]: https://en.wikipedia.org/wiki/Methods_of_computing_square_roots#Babylonian_method
 
-#![feature(slicing_syntax, collections, core, hash, rand, std_misc)]
+#![feature(slicing_syntax, collections, core, hash, std_misc)]
 #![cfg_attr(test, deny(warnings))]
 #![cfg_attr(test, feature(test))]
 #![doc(html_logo_url = "http://www.rust-lang.org/logos/rust-logo-128x128-blk-v2.png",
@@ -54,6 +54,7 @@
 
 extern crate "rustc-serialize" as rustc_serialize;
 extern crate core;
+extern crate rand;
 
 pub use bigint::{BigInt, BigUint};
 pub use rational::{Rational, BigRational};
