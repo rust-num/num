@@ -776,7 +776,7 @@ impl_to_biguint!(u16,  FromPrimitive::from_u16);
 impl_to_biguint!(u32,  FromPrimitive::from_u32);
 impl_to_biguint!(u64,  FromPrimitive::from_u64);
 
-fn to_str_radix(me: &BigUint, radix: usize) -> String {
+fn to_str_radix(me: &BigUint, radix: u32) -> String {
     assert!(1 < radix && radix <= 16, "The radix must be within (1, 16]");
     let (base, max_len) = get_radix_base(radix);
     if base == big_digit::BASE {
@@ -799,7 +799,7 @@ fn to_str_radix(me: &BigUint, radix: usize) -> String {
         return result;
     }
 
-    fn fill_concat(v: &[BigDigit], radix: usize, l: usize) -> String {
+    fn fill_concat(v: &[BigDigit], radix: u32, l: usize) -> String {
         if v.is_empty() {
             return "0".to_string()
         }
@@ -813,7 +813,7 @@ fn to_str_radix(me: &BigUint, radix: usize) -> String {
     }
 }
 
-fn to_str_radix_signed(me: &BigInt, radix: usize) -> String {
+fn to_str_radix_signed(me: &BigInt, radix: u32) -> String {
     match me.sign {
         Plus => to_str_radix(&me.data, radix),
         NoSign => "0".to_string(),
@@ -826,7 +826,7 @@ impl FromStrRadix for BigUint {
 
     /// Creates and initializes a `BigUint`.
     #[inline]
-    fn from_str_radix(s: &str, radix: usize) -> Result<BigUint, ParseBigIntError> {
+    fn from_str_radix(s: &str, radix: u32) -> Result<BigUint, ParseBigIntError> {
         let (base, unit_len) = get_radix_base(radix);
         let base_num = match base.to_biguint() {
             Some(base_num) => base_num,
@@ -960,7 +960,7 @@ impl BigUint {
     /// assert_eq!(BigUint::parse_bytes("G".as_bytes(), 16), None);
     /// ```
     #[inline]
-    pub fn parse_bytes(buf: &[u8], radix: usize) -> Option<BigUint> {
+    pub fn parse_bytes(buf: &[u8], radix: u32) -> Option<BigUint> {
         str::from_utf8(buf).ok().and_then(|s| FromStrRadix::from_str_radix(s, radix).ok())
     }
 
@@ -1020,7 +1020,7 @@ impl BigUint {
 
 // `DoubleBigDigit` size dependent
 #[inline]
-fn get_radix_base(radix: usize) -> (DoubleBigDigit, usize) {
+fn get_radix_base(radix: u32) -> (DoubleBigDigit, usize) {
     match radix {
         2  => (4294967296, 32),
         3  => (3486784401, 20),
@@ -1532,7 +1532,7 @@ impl FromStrRadix for BigInt {
 
     /// Creates and initializes a BigInt.
     #[inline]
-    fn from_str_radix(s: &str, radix: usize) -> Result<BigInt, ParseBigIntError> {
+    fn from_str_radix(s: &str, radix: u32) -> Result<BigInt, ParseBigIntError> {
         if s.is_empty() { return Err(ParseBigIntError::Other); }
         let mut sign  = Plus;
         let mut start = 0;
@@ -1711,7 +1711,7 @@ impl BigInt {
     /// assert_eq!(BigInt::parse_bytes("G".as_bytes(), 16), None);
     /// ```
     #[inline]
-    pub fn parse_bytes(buf: &[u8], radix: usize) -> Option<BigInt> {
+    pub fn parse_bytes(buf: &[u8], radix: u32) -> Option<BigInt> {
         str::from_utf8(buf).ok().and_then(|s| FromStrRadix::from_str_radix(s, radix).ok())
     }
 

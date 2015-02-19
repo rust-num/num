@@ -441,7 +441,7 @@ impl<T: FromStrRadix + Clone + Integer + PartialOrd>
     type Err = ParseRatioError;
 
     /// Parses `numer/denom` where the numbers are in base `radix`.
-    fn from_str_radix(s: &str, radix: usize) -> Result<Ratio<T>, ParseRatioError> {
+    fn from_str_radix(s: &str, radix: u32) -> Result<Ratio<T>, ParseRatioError> {
         let split: Vec<&str> = s.splitn(1, '/').collect();
         if split.len() < 2 {
             Err(ParseRatioError)
