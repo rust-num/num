@@ -2522,7 +2522,7 @@ mod biguint_tests {
         assert!(((&one << 64) + one).is_odd());
     }
 
-    fn to_str_pairs() -> Vec<(BigUint, Vec<(usize, String)>)> {
+    fn to_str_pairs() -> Vec<(BigUint, Vec<(u32, String)>)> {
         let bits = big_digit::BITS;
         vec!(( Zero::zero(), vec!(
             (2, "0".to_string()), (3, "0".to_string())
