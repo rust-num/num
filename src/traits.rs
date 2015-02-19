@@ -283,8 +283,8 @@ bounded_impl!(i16, i16::MIN, i16::MAX);
 bounded_impl!(i32, i32::MIN, i32::MAX);
 bounded_impl!(i64, i64::MIN, i64::MAX);
 
-bounded_impl!(f32, f32::MIN_VALUE, f32::MAX_VALUE);
-bounded_impl!(f64, f64::MIN_VALUE, f64::MAX_VALUE);
+bounded_impl!(f32, f32::MIN, f32::MAX);
+bounded_impl!(f64, f64::MIN, f64::MAX);
 
 /// Saturating math operations
 pub trait Saturating {
