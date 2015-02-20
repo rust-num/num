@@ -43,10 +43,9 @@
 //! ```
 //!
 //! [newt]: https://en.wikipedia.org/wiki/Methods_of_computing_square_roots#Babylonian_method
-
-#![feature(collections, core, hash, std_misc)]
-#![cfg_attr(test, deny(warnings))]
-#![cfg_attr(test, feature(test))]
+#![feature(collections, core, std_misc)]
+//#![cfg_attr(test, deny(warnings))]
+#![cfg_attr(test, feature(hash, test))]
 #![doc(html_logo_url = "http://www.rust-lang.org/logos/rust-logo-128x128-blk-v2.png",
        html_favicon_url = "http://www.rust-lang.org/favicon.ico",
        html_root_url = "http://doc.rust-lang.org/num/",
@@ -141,6 +140,6 @@ pub fn pow<T: Clone + One + Mul<T, Output = T>>(mut base: T, mut exp: usize) -> 
 }
 
 #[cfg(test)]
-fn hash<T: hash::Hash<hash::SipHasher>>(x: &T) -> u64 {
-    hash::hash::<_, hash::SipHasher>(x)
+fn hash<T: hash::Hash>(x: &T) -> u64 {
+    hash::hash::<T, hash::SipHasher>(x)
 }

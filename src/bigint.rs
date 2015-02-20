@@ -163,8 +163,8 @@ impl Default for BigUint {
     fn default() -> BigUint { Zero::zero() }
 }
 
-impl<S: hash::Hasher + hash::Writer> hash::Hash<S> for BigUint {
-    fn hash(&self, state: &mut S) {
+impl hash::Hash for BigUint {
+    fn hash<H>(&self, state: &mut H) where H: hash::Hasher {
         // hash 0 in case it's all 0's
         0u32.hash(state);
 
@@ -366,7 +366,7 @@ impl<'a, 'b> Sub<&'b BigUint> for &'a BigUint {
         let zeros = ZERO_VEC.iter().cycle();
         let (a, b) = (self.data.iter().chain(zeros.clone()), other.data.iter().chain(zeros));
 
-        let mut borrow = 0is;
+        let mut borrow = 0isize;
         let diff: Vec<BigDigit> =  a.take(new_len).zip(b).map(|(ai, bi)| {
             let (hi, lo) = big_digit::from_doublebigdigit(
                 big_digit::BASE
@@ -780,9 +780,9 @@ fn to_str_radix(me: &BigUint, radix: u32) -> String {
     assert!(1 < radix && radix <= 16, "The radix must be within (1, 16]");
     let (base, max_len) = get_radix_base(radix);
     if base == big_digit::BASE {
-        return fill_concat(&me.data[], radix, max_len)
+        return fill_concat(&me.data, radix, max_len)
     }
-    return fill_concat(&convert_base(me, base)[], radix, max_len);
+    return fill_concat(&convert_base(me, base), radix, max_len);
 
     fn convert_base(n: &BigUint, base: DoubleBigDigit) -> Vec<BigDigit> {
         let divider    = base.to_biguint().unwrap();
@@ -807,7 +807,7 @@ fn to_str_radix(me: &BigUint, radix: u32) -> String {
         for n in v.iter().rev() {
             let ss = fmt::radix(*n as usize, radix as u8).to_string();
             s.extend(repeat("0").take(l - ss.len()));
-            s.push_str(&ss[]);
+            s.push_str(&ss);
         }
         s.trim_left_matches('0').to_string()
     }
@@ -969,7 +969,7 @@ impl BigUint {
         if n_unit == 0 || self.is_zero() { return (*self).clone(); }
 
         let mut v = repeat(ZERO_BIG_DIGIT).take(n_unit).collect::<Vec<_>>();
-        v.push_all(&self.data[]);
+        v.push_all(&self.data);
         BigUint::new(v)
     }
 
@@ -1107,8 +1107,8 @@ impl fmt::Display for BigInt {
     }
 }
 
-impl<S: hash::Hasher + hash::Writer> hash::Hash<S> for BigInt {
-    fn hash(&self, state: &mut S) {
+impl hash::Hash for BigInt {
+    fn hash<H>(&self, state: &mut H) where H: hash::Hasher {
         (self.sign == Plus).hash(state);
         self.data.hash(state);
     }
