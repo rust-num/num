@@ -1014,7 +1014,7 @@ impl BigUint {
     pub fn bits(&self) -> usize {
         if self.is_zero() { return 0; }
         let zeros = self.data.last().unwrap().leading_zeros();
-        return self.data.len()*big_digit::BITS - zeros;
+        return self.data.len()*big_digit::BITS - zeros as usize;
     }
 }
 
