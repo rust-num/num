@@ -496,8 +496,8 @@ mod test {
 
     pub fn to_big(n: Rational) -> BigRational {
         Ratio::new(
-            FromPrimitive::from_int(n.numer).unwrap(),
-            FromPrimitive::from_int(n.denom).unwrap()
+            FromPrimitive::from_isize(n.numer).unwrap(),
+            FromPrimitive::from_isize(n.denom).unwrap()
         )
     }
 

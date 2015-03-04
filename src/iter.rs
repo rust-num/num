@@ -70,7 +70,7 @@ impl<A> Iterator for Range<A>
             Some(a) => {
                 let sz = self.stop.to_i64().map(|b| b.checked_sub(a));
                 match sz {
-                    Some(Some(bound)) => bound.to_uint(),
+                    Some(Some(bound)) => bound.to_usize(),
                     _ => None,
                 }
             },
@@ -78,7 +78,7 @@ impl<A> Iterator for Range<A>
                 Some(a) => {
                     let sz = self.stop.to_u64().map(|b| b.checked_sub(a));
                     match sz {
-                        Some(Some(bound)) => bound.to_uint(),
+                        Some(Some(bound)) => bound.to_usize(),
                         _ => None
                     }
                 },

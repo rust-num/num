@@ -765,12 +765,12 @@ macro_rules! impl_to_biguint {
     }
 }
 
-impl_to_biguint!(isize,  FromPrimitive::from_int);
+impl_to_biguint!(isize,  FromPrimitive::from_isize);
 impl_to_biguint!(i8,   FromPrimitive::from_i8);
 impl_to_biguint!(i16,  FromPrimitive::from_i16);
 impl_to_biguint!(i32,  FromPrimitive::from_i32);
 impl_to_biguint!(i64,  FromPrimitive::from_i64);
-impl_to_biguint!(usize, FromPrimitive::from_uint);
+impl_to_biguint!(usize, FromPrimitive::from_usize);
 impl_to_biguint!(u8,   FromPrimitive::from_u8);
 impl_to_biguint!(u16,  FromPrimitive::from_u16);
 impl_to_biguint!(u32,  FromPrimitive::from_u32);
@@ -790,11 +790,11 @@ fn to_str_radix(me: &BigUint, radix: u32) -> String {
         let mut m      = n.clone();
         while m >= divider {
             let (d, m0) = m.div_mod_floor(&divider);
-            result.push(m0.to_uint().unwrap() as BigDigit);
+            result.push(m0.to_usize().unwrap() as BigDigit);
             m = d;
         }
         if !m.is_zero() {
-            result.push(m.to_uint().unwrap() as BigDigit);
+            result.push(m.to_usize().unwrap() as BigDigit);
         }
         return result;
     }
@@ -839,7 +839,7 @@ impl FromStrRadix for BigUint {
         loop {
             let start = cmp::max(end, unit_len) - unit_len;
             let d = try!(FromStrRadix::from_str_radix(&s[start .. end], radix));
-            let d: Option<BigUint> = FromPrimitive::from_uint(d);
+            let d: Option<BigUint> = FromPrimitive::from_usize(d);
             match d {
                 Some(d) => {
                     // FIXME(#5992): assignment operator overloads
@@ -1516,12 +1516,12 @@ macro_rules! impl_to_bigint {
     }
 }
 
-impl_to_bigint!(isize,  FromPrimitive::from_int);
+impl_to_bigint!(isize,  FromPrimitive::from_isize);
 impl_to_bigint!(i8,   FromPrimitive::from_i8);
 impl_to_bigint!(i16,  FromPrimitive::from_i16);
 impl_to_bigint!(i32,  FromPrimitive::from_i32);
 impl_to_bigint!(i64,  FromPrimitive::from_i64);
-impl_to_bigint!(usize, FromPrimitive::from_uint);
+impl_to_bigint!(usize, FromPrimitive::from_usize);
 impl_to_bigint!(u8,   FromPrimitive::from_u8);
 impl_to_bigint!(u16,  FromPrimitive::from_u16);
 impl_to_bigint!(u32,  FromPrimitive::from_u32);
@@ -2474,9 +2474,9 @@ mod biguint_tests {
     #[test]
     fn test_gcd() {
         fn check(a: usize, b: usize, c: usize) {
-            let big_a: BigUint = FromPrimitive::from_uint(a).unwrap();
-            let big_b: BigUint = FromPrimitive::from_uint(b).unwrap();
-            let big_c: BigUint = FromPrimitive::from_uint(c).unwrap();
+            let big_a: BigUint = FromPrimitive::from_usize(a).unwrap();
+            let big_b: BigUint = FromPrimitive::from_usize(b).unwrap();
+            let big_c: BigUint = FromPrimitive::from_usize(c).unwrap();
 
             assert_eq!(big_a.gcd(&big_b), big_c);
         }
@@ -2491,9 +2491,9 @@ mod biguint_tests {
     #[test]
     fn test_lcm() {
         fn check(a: usize, b: usize, c: usize) {
-            let big_a: BigUint = FromPrimitive::from_uint(a).unwrap();
-            let big_b: BigUint = FromPrimitive::from_uint(b).unwrap();
-            let big_c: BigUint = FromPrimitive::from_uint(c).unwrap();
+            let big_a: BigUint = FromPrimitive::from_usize(a).unwrap();
+            let big_b: BigUint = FromPrimitive::from_usize(b).unwrap();
+            let big_c: BigUint = FromPrimitive::from_usize(c).unwrap();
 
             assert_eq!(big_a.lcm(&big_b), big_c);
         }
@@ -2620,8 +2620,8 @@ mod biguint_tests {
             let mut f: BigUint = One::one();
             for i in range(2, n + 1) {
                 // FIXME(#5992): assignment operator overloads
-                // f *= FromPrimitive::from_uint(i);
-                let bu: BigUint = FromPrimitive::from_uint(i).unwrap();
+                // f *= FromPrimitive::from_usize(i);
+                let bu: BigUint = FromPrimitive::from_usize(i).unwrap();
                 f = f * bu;
             }
             return f;
@@ -2644,11 +2644,11 @@ mod biguint_tests {
     #[test]
     fn test_bits() {
         assert_eq!(BigUint::new(vec!(0,0,0,0)).bits(), 0);
-        let n: BigUint = FromPrimitive::from_uint(0).unwrap();
+        let n: BigUint = FromPrimitive::from_usize(0).unwrap();
         assert_eq!(n.bits(), 0);
-        let n: BigUint = FromPrimitive::from_uint(1).unwrap();
+        let n: BigUint = FromPrimitive::from_usize(1).unwrap();
         assert_eq!(n.bits(), 1);
-        let n: BigUint = FromPrimitive::from_uint(3).unwrap();
+        let n: BigUint = FromPrimitive::from_usize(3).unwrap();
         assert_eq!(n.bits(), 2);
         let n: BigUint = FromStrRadix::from_str_radix("4000000000", 16).unwrap();
         assert_eq!(n.bits(), 39);
@@ -2668,13 +2668,13 @@ mod biguint_tests {
         let mut rng = thread_rng();
 
         for _ in range(0, 10) {
-            assert_eq!(rng.gen_bigint_range(&FromPrimitive::from_uint(236).unwrap(),
-                                            &FromPrimitive::from_uint(237).unwrap()),
-                       FromPrimitive::from_uint(236).unwrap());
+            assert_eq!(rng.gen_bigint_range(&FromPrimitive::from_usize(236).unwrap(),
+                                            &FromPrimitive::from_usize(237).unwrap()),
+                       FromPrimitive::from_usize(236).unwrap());
         }
 
-        let l = FromPrimitive::from_uint(403469000 + 2352).unwrap();
-        let u = FromPrimitive::from_uint(403469000 + 3513).unwrap();
+        let l = FromPrimitive::from_usize(403469000 + 2352).unwrap();
+        let u = FromPrimitive::from_usize(403469000 + 3513).unwrap();
         for _ in range(0, 1000) {
             let n: BigUint = rng.gen_biguint_below(&u);
             assert!(n < u);
@@ -2688,16 +2688,16 @@ mod biguint_tests {
     #[test]
     #[should_fail]
     fn test_zero_rand_range() {
-        thread_rng().gen_biguint_range(&FromPrimitive::from_uint(54).unwrap(),
-                                     &FromPrimitive::from_uint(54).unwrap());
+        thread_rng().gen_biguint_range(&FromPrimitive::from_usize(54).unwrap(),
+                                     &FromPrimitive::from_usize(54).unwrap());
     }
 
     #[test]
     #[should_fail]
     fn test_negative_rand_range() {
         let mut rng = thread_rng();
-        let l = FromPrimitive::from_uint(2352).unwrap();
-        let u = FromPrimitive::from_uint(3513).unwrap();
+        let l = FromPrimitive::from_usize(2352).unwrap();
+        let u = FromPrimitive::from_usize(3513).unwrap();
         // Switching u and l should fail:
         let _n: BigUint = rng.gen_biguint_range(&u, &l);
     }
@@ -2725,8 +2725,8 @@ mod bigint_tests {
     #[test]
     fn test_from_biguint() {
         fn check(inp_s: Sign, inp_n: usize, ans_s: Sign, ans_n: usize) {
-            let inp = BigInt::from_biguint(inp_s, FromPrimitive::from_uint(inp_n).unwrap());
-            let ans = BigInt { sign: ans_s, data: FromPrimitive::from_uint(ans_n).unwrap()};
+            let inp = BigInt::from_biguint(inp_s, FromPrimitive::from_usize(inp_n).unwrap());
+            let ans = BigInt { sign: ans_s, data: FromPrimitive::from_usize(ans_n).unwrap()};
             assert_eq!(inp, ans);
         }
         check(Plus, 1, Plus, 1);
@@ -3231,9 +3231,9 @@ mod bigint_tests {
     #[test]
     fn test_gcd() {
         fn check(a: isize, b: isize, c: isize) {
-            let big_a: BigInt = FromPrimitive::from_int(a).unwrap();
-            let big_b: BigInt = FromPrimitive::from_int(b).unwrap();
-            let big_c: BigInt = FromPrimitive::from_int(c).unwrap();
+            let big_a: BigInt = FromPrimitive::from_isize(a).unwrap();
+            let big_b: BigInt = FromPrimitive::from_isize(b).unwrap();
+            let big_c: BigInt = FromPrimitive::from_isize(c).unwrap();
 
             assert_eq!(big_a.gcd(&big_b), big_c);
         }
@@ -3251,9 +3251,9 @@ mod bigint_tests {
     #[test]
     fn test_lcm() {
         fn check(a: isize, b: isize, c: isize) {
-            let big_a: BigInt = FromPrimitive::from_int(a).unwrap();
-            let big_b: BigInt = FromPrimitive::from_int(b).unwrap();
-            let big_c: BigInt = FromPrimitive::from_int(c).unwrap();
+            let big_a: BigInt = FromPrimitive::from_isize(a).unwrap();
+            let big_b: BigInt = FromPrimitive::from_isize(b).unwrap();
+            let big_c: BigInt = FromPrimitive::from_isize(c).unwrap();
 
             assert_eq!(big_a.lcm(&big_b), big_c);
         }
@@ -3280,7 +3280,7 @@ mod bigint_tests {
         let zero: BigInt = Zero::zero();
         assert_eq!(one.abs_sub(&zero), one);
         let one: BigInt = One::one();
-        let two: BigInt = FromPrimitive::from_int(2).unwrap();
+        let two: BigInt = FromPrimitive::from_isize(2).unwrap();
         assert_eq!(one.abs_sub(&-&one), two);
     }
 
@@ -3288,7 +3288,7 @@ mod bigint_tests {
     fn test_from_str_radix() {
         fn check(s: &str, ans: Option<isize>) {
             let ans = ans.map(|n| {
-                let x: BigInt = FromPrimitive::from_int(n).unwrap();
+                let x: BigInt = FromPrimitive::from_isize(n).unwrap();
                 x
             });
             assert_eq!(FromStrRadix::from_str_radix(s, 10).ok(), ans);
@@ -3330,9 +3330,9 @@ mod bigint_tests {
         let mut rng = thread_rng();
 
         for _ in range(0, 10) {
-            assert_eq!(rng.gen_bigint_range(&FromPrimitive::from_uint(236).unwrap(),
-                                            &FromPrimitive::from_uint(237).unwrap()),
-                       FromPrimitive::from_uint(236).unwrap());
+            assert_eq!(rng.gen_bigint_range(&FromPrimitive::from_usize(236).unwrap(),
+                                            &FromPrimitive::from_usize(237).unwrap()),
+                       FromPrimitive::from_usize(236).unwrap());
         }
 
         fn check(l: BigInt, u: BigInt) {
@@ -3343,8 +3343,8 @@ mod bigint_tests {
                 assert!(n < u);
             }
         }
-        let l: BigInt = FromPrimitive::from_uint(403469000 + 2352).unwrap();
-        let u: BigInt = FromPrimitive::from_uint(403469000 + 3513).unwrap();
+        let l: BigInt = FromPrimitive::from_usize(403469000 + 2352).unwrap();
+        let u: BigInt = FromPrimitive::from_usize(403469000 + 3513).unwrap();
         check( l.clone(),  u.clone());
         check(-l.clone(),  u.clone());
         check(-u.clone(), -l.clone());
@@ -3353,16 +3353,16 @@ mod bigint_tests {
     #[test]
     #[should_fail]
     fn test_zero_rand_range() {
-        thread_rng().gen_bigint_range(&FromPrimitive::from_int(54).unwrap(),
-                                    &FromPrimitive::from_int(54).unwrap());
+        thread_rng().gen_bigint_range(&FromPrimitive::from_isize(54).unwrap(),
+                                    &FromPrimitive::from_isize(54).unwrap());
     }
 
     #[test]
     #[should_fail]
     fn test_negative_rand_range() {
         let mut rng = thread_rng();
-        let l = FromPrimitive::from_uint(2352).unwrap();
-        let u = FromPrimitive::from_uint(3513).unwrap();
+        let l = FromPrimitive::from_usize(2352).unwrap();
+        let u = FromPrimitive::from_usize(3513).unwrap();
         // Switching u and l should fail:
         let _n: BigInt = rng.gen_bigint_range(&u, &l);
     }
@@ -3382,7 +3382,7 @@ mod bench {
     fn factorial(n: usize) -> BigUint {
         let mut f: BigUint = One::one();
         for i in iter::range_inclusive(1, n) {
-            let bu: BigUint = FromPrimitive::from_uint(i).unwrap();
+            let bu: BigUint = FromPrimitive::from_usize(i).unwrap();
             f = f * bu;
         }
         f
