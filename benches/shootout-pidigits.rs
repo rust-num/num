@@ -38,6 +38,9 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 // OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#![feature(core)]
+#![feature(test)]
+
 extern crate num;
 extern crate test;
 
@@ -124,9 +127,9 @@ fn use_bencher(b: &mut Bencher) {
     b.iter(|| pidigits(DEFAULT_DIGITS))
 }
 
+#[allow(dead_code)]
 fn main() {
-    let args = std::os::args();
-    let args = args.as_slice();
+    let args = std::env::args().collect::<Vec<_>>();
     let n = if args.len() < 2 {
         DEFAULT_DIGITS
     } else {
