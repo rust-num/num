@@ -519,7 +519,7 @@ mod test {
         assert_eq!(one22, One::one());
     }
     #[test]
-    #[should_fail]
+    #[should_panic]
     fn test_new_zero() {
         let _a = Ratio::new(1,0);
     }
@@ -674,7 +674,7 @@ mod test {
             assert_eq!(_0 - _0, _0);
         }
         #[test]
-        #[should_fail]
+        #[should_panic]
         fn test_div_0() {
             let _a =  _1 / _0;
         }
