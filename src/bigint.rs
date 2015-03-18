@@ -2300,7 +2300,7 @@ mod biguint_tests {
     }
 
     #[test]
-    #[should_fail]
+    #[should_panic]
     fn test_sub_fail_on_underflow() {
         let (a, b) : (BigUint, BigUint) = (Zero::zero(), One::one());
         a - b;
@@ -2686,14 +2686,14 @@ mod biguint_tests {
     }
 
     #[test]
-    #[should_fail]
+    #[should_panic]
     fn test_zero_rand_range() {
         thread_rng().gen_biguint_range(&FromPrimitive::from_usize(54).unwrap(),
                                      &FromPrimitive::from_usize(54).unwrap());
     }
 
     #[test]
-    #[should_fail]
+    #[should_panic]
     fn test_negative_rand_range() {
         let mut rng = thread_rng();
         let l = FromPrimitive::from_usize(2352).unwrap();
@@ -3351,14 +3351,14 @@ mod bigint_tests {
     }
 
     #[test]
-    #[should_fail]
+    #[should_panic]
     fn test_zero_rand_range() {
         thread_rng().gen_bigint_range(&FromPrimitive::from_isize(54).unwrap(),
                                     &FromPrimitive::from_isize(54).unwrap());
     }
 
     #[test]
-    #[should_fail]
+    #[should_panic]
     fn test_negative_rand_range() {
         let mut rng = thread_rng();
         let l = FromPrimitive::from_usize(2352).unwrap();
