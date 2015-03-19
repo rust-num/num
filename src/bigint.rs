@@ -1571,7 +1571,7 @@ impl<R: Rng> RandBigInt for R {
     fn gen_biguint(&mut self, bit_size: usize) -> BigUint {
         let (digits, rem) = bit_size.div_rem(&big_digit::BITS);
         let mut data = Vec::with_capacity(digits+1);
-        for _ in range(0, digits) {
+        for _ in (0 .. digits) {
             data.push(self.gen());
         }
         if rem > 0 {
