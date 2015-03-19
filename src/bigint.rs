@@ -2618,7 +2618,7 @@ mod biguint_tests {
     fn test_factor() {
         fn factor(n: usize) -> BigUint {
             let mut f: BigUint = One::one();
-            for i in range(2, n + 1) {
+            for i in 2..n + 1 {
                 // FIXME(#5992): assignment operator overloads
                 // f *= FromPrimitive::from_usize(i);
                 let bu: BigUint = FromPrimitive::from_usize(i).unwrap();
@@ -2667,7 +2667,7 @@ mod biguint_tests {
     fn test_rand_range() {
         let mut rng = thread_rng();
 
-        for _ in range(0, 10) {
+        for _ in 0..10 {
             assert_eq!(rng.gen_bigint_range(&FromPrimitive::from_usize(236).unwrap(),
                                             &FromPrimitive::from_usize(237).unwrap()),
                        FromPrimitive::from_usize(236).unwrap());
@@ -2675,7 +2675,7 @@ mod biguint_tests {
 
         let l = FromPrimitive::from_usize(403469000 + 2352).unwrap();
         let u = FromPrimitive::from_usize(403469000 + 3513).unwrap();
-        for _ in range(0, 1000) {
+        for _ in 0..1000 {
             let n: BigUint = rng.gen_biguint_below(&u);
             assert!(n < u);
 
@@ -3329,7 +3329,7 @@ mod bigint_tests {
     fn test_rand_range() {
         let mut rng = thread_rng();
 
-        for _ in range(0, 10) {
+        for _ in 0..10 {
             assert_eq!(rng.gen_bigint_range(&FromPrimitive::from_usize(236).unwrap(),
                                             &FromPrimitive::from_usize(237).unwrap()),
                        FromPrimitive::from_usize(236).unwrap());
@@ -3337,7 +3337,7 @@ mod bigint_tests {
 
         fn check(l: BigInt, u: BigInt) {
             let mut rng = thread_rng();
-            for _ in range(0, 1000) {
+            for _ in 0..1000 {
                 let n: BigInt = rng.gen_bigint_range(&l, &u);
                 assert!(n >= l);
                 assert!(n < u);
@@ -3391,7 +3391,7 @@ mod bench {
     fn fib(n: usize) -> BigUint {
         let mut f0: BigUint = Zero::zero();
         let mut f1: BigUint = One::one();
-        for _ in range(0, n) {
+        for _ in 0..n {
             let f2 = f0 + &f1;
             f0 = replace(&mut f1, f2);
         }
@@ -3429,7 +3429,7 @@ mod bench {
         let n = { let one : BigUint = One::one(); one << 1000 };
         b.iter(|| {
             let mut m = n.clone();
-            for _ in range(0, 10) {
+            for _ in 0..10 {
                 m = m >> 1;
             }
         })

@@ -323,17 +323,11 @@ impl<T: CheckedAdd + CheckedSub + Zero + PartialOrd + Bounded> Saturating for T 
     }
 }
 
-/// Performs addition that returns `None` instead of wrapping around on overflow.
+/// Performs addition that returns `None` instead of wrapping around on
+/// overflow.
 pub trait CheckedAdd: Add<Self, Output = Self> {
-    /// Adds two numbers, checking for overflow. If overflow happens, `None` is returned.
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// use num::CheckedAdd;
-    /// assert_eq!(5u16.checked_add(&65530), Some(65535));
-    /// assert_eq!(6u16.checked_add(&65530), None);
-    /// ```
+    /// Adds two numbers, checking for overflow. If overflow happens, `None` is
+    /// returned.
     fn checked_add(&self, v: &Self) -> Option<Self>;
 }
 
@@ -386,15 +380,8 @@ checked_impl!(CheckedAdd, checked_add, i64, intrinsics::i64_add_with_overflow);
 
 /// Performs subtraction that returns `None` instead of wrapping around on underflow.
 pub trait CheckedSub: Sub<Self, Output = Self> {
-    /// Subtracts two numbers, checking for underflow. If underflow happens, `None` is returned.
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// use num::CheckedSub;
-    /// assert_eq!((-127i8).checked_sub(&1), Some(-128));
-    /// assert_eq!((-128i8).checked_sub(&1), None);
-    /// ```
+    /// Subtracts two numbers, checking for underflow. If underflow happens,
+    /// `None` is returned.
     fn checked_sub(&self, v: &Self) -> Option<Self>;
 }
 
@@ -421,16 +408,8 @@ checked_impl!(CheckedSub, checked_sub, i64, intrinsics::i64_sub_with_overflow);
 /// Performs multiplication that returns `None` instead of wrapping around on underflow or
 /// overflow.
 pub trait CheckedMul: Mul<Self, Output = Self> {
-    /// Multiplies two numbers, checking for underflow or overflow. If underflow or overflow
-    /// happens, `None` is returned.
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// use num::CheckedMul;
-    /// assert_eq!(5u8.checked_mul(&51), Some(255));
-    /// assert_eq!(5u8.checked_mul(&52), None);
-    /// ```
+    /// Multiplies two numbers, checking for underflow or overflow. If underflow
+    /// or overflow happens, `None` is returned.
     fn checked_mul(&self, v: &Self) -> Option<Self>;
 }
 
@@ -457,17 +436,8 @@ checked_impl!(CheckedMul, checked_mul, i64, intrinsics::i64_mul_with_overflow);
 /// Performs division that returns `None` instead of panicking on division by zero and instead of
 /// wrapping around on underflow and overflow.
 pub trait CheckedDiv: Div<Self, Output = Self> {
-    /// Divides two numbers, checking for underflow, overflow and division by zero. If any of that
-    /// happens, `None` is returned.
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// use num::CheckedDiv;
-    /// assert_eq!((-127i8).checked_div(&-1), Some(127));
-    /// assert_eq!((-128i8).checked_div(&-1), None);
-    /// assert_eq!((1i8).checked_div(&0), None);
-    /// ```
+    /// Divides two numbers, checking for underflow, overflow and division by
+    /// zero. If any of that happens, `None` is returned.
     fn checked_div(&self, v: &Self) -> Option<Self>;
 }
 
