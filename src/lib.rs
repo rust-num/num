@@ -18,7 +18,7 @@
 //! approximate a square root to arbitrary precision:
 //!
 //! ```
-//! # #![allow(unstable)]
+//! # #![feature(core)]
 //! extern crate num;
 //!
 //! use std::num::FromPrimitive;
