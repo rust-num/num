@@ -15,4 +15,4 @@ rational, and complex types.
 
 [dependencies]
 rustc-serialize = "0.3.5"
-rand = "0.2.0"
+rand = "0.3.3"
