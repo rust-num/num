@@ -51,7 +51,7 @@
        html_root_url = "http://doc.rust-lang.org/num/",
        html_playground_url = "http://play.rust-lang.org/")]
 
-extern crate "rustc-serialize" as rustc_serialize;
+extern crate rustc_serialize;
 extern crate core;
 extern crate rand;
 
