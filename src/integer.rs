@@ -22,15 +22,15 @@ pub trait Integer: Sized + Num + PartialOrd
     ///
     /// ~~~
     /// # use num::Integer;
-    /// assert!(( 8i).div_floor(& 3) ==  2);
-    /// assert!(( 8i).div_floor(&-3) == -3);
-    /// assert!((-8i).div_floor(& 3) == -3);
-    /// assert!((-8i).div_floor(&-3) ==  2);
+    /// assert!(( 8).div_floor(& 3) ==  2);
+    /// assert!(( 8).div_floor(&-3) == -3);
+    /// assert!((-8).div_floor(& 3) == -3);
+    /// assert!((-8).div_floor(&-3) ==  2);
     ///
-    /// assert!(( 1i).div_floor(& 2) ==  0);
-    /// assert!(( 1i).div_floor(&-2) == -1);
-    /// assert!((-1i).div_floor(& 2) == -1);
-    /// assert!((-1i).div_floor(&-2) ==  0);
+    /// assert!(( 1).div_floor(& 2) ==  0);
+    /// assert!(( 1).div_floor(&-2) == -1);
+    /// assert!((-1).div_floor(& 2) == -1);
+    /// assert!((-1).div_floor(&-2) ==  0);
     /// ~~~
     fn div_floor(&self, other: &Self) -> Self;
 
@@ -38,7 +38,7 @@ pub trait Integer: Sized + Num + PartialOrd
     ///
     /// ~~~
     /// # use num::Integer;
-    /// # let n = 1i; let d = 1i;
+    /// # let n = 1; let d = 1;
     /// assert!(n.div_floor(&d) * d + n.mod_floor(&d) == n)
     /// ~~~
     ///
@@ -46,15 +46,15 @@ pub trait Integer: Sized + Num + PartialOrd
     ///
     /// ~~~
     /// # use num::Integer;
-    /// assert!(( 8i).mod_floor(& 3) ==  2);
-    /// assert!(( 8i).mod_floor(&-3) == -1);
-    /// assert!((-8i).mod_floor(& 3) ==  1);
-    /// assert!((-8i).mod_floor(&-3) == -2);
+    /// assert!(( 8).mod_floor(& 3) ==  2);
+    /// assert!(( 8).mod_floor(&-3) == -1);
+    /// assert!((-8).mod_floor(& 3) ==  1);
+    /// assert!((-8).mod_floor(&-3) == -2);
     ///
-    /// assert!(( 1i).mod_floor(& 2) ==  1);
-    /// assert!(( 1i).mod_floor(&-2) == -1);
-    /// assert!((-1i).mod_floor(& 2) ==  1);
-    /// assert!((-1i).mod_floor(&-2) == -1);
+    /// assert!(( 1).mod_floor(& 2) ==  1);
+    /// assert!(( 1).mod_floor(&-2) == -1);
+    /// assert!((-1).mod_floor(& 2) ==  1);
+    /// assert!((-1).mod_floor(&-2) == -1);
     /// ~~~
     fn mod_floor(&self, other: &Self) -> Self;
 
@@ -64,8 +64,8 @@ pub trait Integer: Sized + Num + PartialOrd
     ///
     /// ~~~
     /// # use num::Integer;
-    /// assert_eq!(6i.gcd(&8), 2);
-    /// assert_eq!(7i.gcd(&3), 1);
+    /// assert_eq!(6.gcd(&8), 2);
+    /// assert_eq!(7.gcd(&3), 1);
     /// ~~~
     fn gcd(&self, other: &Self) -> Self;
 
@@ -75,8 +75,8 @@ pub trait Integer: Sized + Num + PartialOrd
     ///
     /// ~~~
     /// # use num::Integer;
-    /// assert_eq!(7i.lcm(&3), 21);
-    /// assert_eq!(2i.lcm(&4), 4);
+    /// assert_eq!(7.lcm(&3), 21);
+    /// assert_eq!(2.lcm(&4), 4);
     /// ~~~
     fn lcm(&self, other: &Self) -> Self;
 
@@ -90,8 +90,8 @@ pub trait Integer: Sized + Num + PartialOrd
     ///
     /// ~~~
     /// # use num::Integer;
-    /// assert_eq!(9i.is_multiple_of(&3), true);
-    /// assert_eq!(3i.is_multiple_of(&9), false);
+    /// assert_eq!(9.is_multiple_of(&3), true);
+    /// assert_eq!(3.is_multiple_of(&9), false);
     /// ~~~
     fn is_multiple_of(&self, other: &Self) -> bool;
 
@@ -101,8 +101,8 @@ pub trait Integer: Sized + Num + PartialOrd
     ///
     /// ~~~
     /// # use num::Integer;
-    /// assert_eq!(3i.is_even(), false);
-    /// assert_eq!(4i.is_even(), true);
+    /// assert_eq!(3.is_even(), false);
+    /// assert_eq!(4.is_even(), true);
     /// ~~~
     fn is_even(&self) -> bool;
 
@@ -112,8 +112,8 @@ pub trait Integer: Sized + Num + PartialOrd
     ///
     /// ~~~
     /// # use num::Integer;
-    /// assert_eq!(3i.is_odd(), true);
-    /// assert_eq!(4i.is_odd(), false);
+    /// assert_eq!(3.is_odd(), true);
+    /// assert_eq!(4.is_odd(), false);
     /// ~~~
     fn is_odd(&self) -> bool;
 
@@ -124,15 +124,15 @@ pub trait Integer: Sized + Num + PartialOrd
     ///
     /// ~~~
     /// # use num::Integer;
-    /// assert_eq!(( 8i).div_rem( &3), ( 2,  2));
-    /// assert_eq!(( 8i).div_rem(&-3), (-2,  2));
-    /// assert_eq!((-8i).div_rem( &3), (-2, -2));
-    /// assert_eq!((-8i).div_rem(&-3), ( 2, -2));
+    /// assert_eq!(( 8).div_rem( &3), ( 2,  2));
+    /// assert_eq!(( 8).div_rem(&-3), (-2,  2));
+    /// assert_eq!((-8).div_rem( &3), (-2, -2));
+    /// assert_eq!((-8).div_rem(&-3), ( 2, -2));
     ///
-    /// assert_eq!(( 1i).div_rem( &2), ( 0,  1));
-    /// assert_eq!(( 1i).div_rem(&-2), ( 0,  1));
-    /// assert_eq!((-1i).div_rem( &2), ( 0, -1));
-    /// assert_eq!((-1i).div_rem(&-2), ( 0, -1));
+    /// assert_eq!(( 1).div_rem( &2), ( 0,  1));
+    /// assert_eq!(( 1).div_rem(&-2), ( 0,  1));
+    /// assert_eq!((-1).div_rem( &2), ( 0, -1));
+    /// assert_eq!((-1).div_rem(&-2), ( 0, -1));
     /// ~~~
     #[inline]
     fn div_rem(&self, other: &Self) -> (Self, Self);
@@ -144,15 +144,15 @@ pub trait Integer: Sized + Num + PartialOrd
     ///
     /// ~~~
     /// # use num::Integer;
-    /// assert_eq!(( 8i).div_mod_floor( &3), ( 2,  2));
-    /// assert_eq!(( 8i).div_mod_floor(&-3), (-3, -1));
-    /// assert_eq!((-8i).div_mod_floor( &3), (-3,  1));
-    /// assert_eq!((-8i).div_mod_floor(&-3), ( 2, -2));
+    /// assert_eq!(( 8).div_mod_floor( &3), ( 2,  2));
+    /// assert_eq!(( 8).div_mod_floor(&-3), (-3, -1));
+    /// assert_eq!((-8).div_mod_floor( &3), (-3,  1));
+    /// assert_eq!((-8).div_mod_floor(&-3), ( 2, -2));
     ///
-    /// assert_eq!(( 1i).div_mod_floor( &2), ( 0,  1));
-    /// assert_eq!(( 1i).div_mod_floor(&-2), (-1, -1));
-    /// assert_eq!((-1i).div_mod_floor( &2), (-1,  1));
-    /// assert_eq!((-1i).div_mod_floor(&-2), ( 0, -1));
+    /// assert_eq!(( 1).div_mod_floor( &2), ( 0,  1));
+    /// assert_eq!(( 1).div_mod_floor(&-2), (-1, -1));
+    /// assert_eq!((-1).div_mod_floor( &2), (-1,  1));
+    /// assert_eq!((-1).div_mod_floor(&-2), ( 0, -1));
     /// ~~~
     fn div_mod_floor(&self, other: &Self) -> (Self, Self) {
         (self.div_floor(other), self.mod_floor(other))

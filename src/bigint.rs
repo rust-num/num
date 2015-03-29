@@ -1796,7 +1796,7 @@ mod biguint_tests {
     #[test]
     fn test_from_slice() {
         fn check(slice: &[BigDigit], data: &[BigDigit]) {
-            assert!(data == BigUint::from_slice(slice).data.as_slice());
+            assert!(data == BigUint::from_slice(slice).data);
         }
         check(&[1], &[1]);
         check(&[0, 0, 0], &[]);
@@ -1965,7 +1965,7 @@ mod biguint_tests {
         fn check(s: &str, shift: usize, ans: &str) {
             let opt_biguint: Option<BigUint> = FromStrRadix::from_str_radix(s, 16).ok();
             let bu = to_str_radix(&(opt_biguint.unwrap() << shift), 16);
-            assert_eq!(bu.as_slice(), ans);
+            assert_eq!(bu, ans);
         }
 
         check("0", 3, "0");
@@ -2087,7 +2087,7 @@ mod biguint_tests {
             let opt_biguint: Option<BigUint> =
                 FromStrRadix::from_str_radix(s, 16).ok();
             let bu = to_str_radix(&(opt_biguint.unwrap() >> shift), 16);
-            assert_eq!(bu.as_slice(), ans);
+            assert_eq!(bu, ans);
         }
 
         check("0", 3, "0");
@@ -2586,8 +2586,7 @@ mod biguint_tests {
             let &(ref n, ref rs) = num_pair;
             for str_pair in rs.iter() {
                 let &(ref radix, ref str) = str_pair;
-                assert_eq!(to_str_radix(n, *radix).as_slice(),
-                           str.as_slice());
+                assert_eq!(to_str_radix(n, *radix), *str);
             }
         }
     }
@@ -2600,7 +2599,7 @@ mod biguint_tests {
             for str_pair in rs.iter() {
                 let &(ref radix, ref str) = str_pair;
                 assert_eq!(n,
-                           &FromStrRadix::from_str_radix(str.as_slice(),
+                           &FromStrRadix::from_str_radix(str,
                                                          *radix).unwrap());
             }
         }
