@@ -424,7 +424,7 @@ impl<T: FromStr + Clone + Integer + PartialOrd>
 
     /// Parses `numer/denom` or just `numer`.
     fn from_str(s: &str) -> Result<Ratio<T>, ParseRatioError> {
-        let mut split = s.splitn(1, '/');
+        let mut split = s.splitn(2, '/');
 
         let n = try!(split.next().ok_or(ParseRatioError));
         let num = try!(FromStr::from_str(n).map_err(|_| ParseRatioError));
@@ -442,7 +442,7 @@ impl<T: FromStrRadix + Clone + Integer + PartialOrd>
 
     /// Parses `numer/denom` where the numbers are in base `radix`.
     fn from_str_radix(s: &str, radix: u32) -> Result<Ratio<T>, ParseRatioError> {
-        let split: Vec<&str> = s.splitn(1, '/').collect();
+        let split: Vec<&str> = s.splitn(2, '/').collect();
         if split.len() < 2 {
             Err(ParseRatioError)
         } else {

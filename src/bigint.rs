@@ -1796,7 +1796,7 @@ mod biguint_tests {
     #[test]
     fn test_from_slice() {
         fn check(slice: &[BigDigit], data: &[BigDigit]) {
-            assert!(data == BigUint::from_slice(slice).data);
+            assert!(BigUint::from_slice(slice).data == data);
         }
         check(&[1], &[1]);
         check(&[0, 0, 0], &[]);
@@ -1823,7 +1823,7 @@ mod biguint_tests {
     fn test_to_bytes_be() {
         fn check(s: &str, result: &str) {
             let b = BigUint::parse_bytes(result.as_bytes(), 10).unwrap();
-            assert_eq!(s.as_bytes(), b.to_bytes_be());
+            assert_eq!(b.to_bytes_be(), s.as_bytes());
         }
         check("A", "65");
         check("AA", "16705");
@@ -1854,7 +1854,7 @@ mod biguint_tests {
     fn test_to_bytes_le() {
         fn check(s: &str, result: &str) {
             let b = BigUint::parse_bytes(result.as_bytes(), 10).unwrap();
-            assert_eq!(s.as_bytes(), b.to_bytes_le());
+            assert_eq!(b.to_bytes_le(), s.as_bytes());
         }
         check("A", "65");
         check("AA", "16705");
@@ -2306,6 +2306,7 @@ mod biguint_tests {
         a - b;
     }
 
+    const M: u32 = ::std::u32::MAX;
     const MUL_TRIPLES: &'static [(&'static [BigDigit],
                                   &'static [BigDigit],
                                   &'static [BigDigit])] = &[
@@ -2323,8 +2324,8 @@ mod biguint_tests {
         (&[-1, -1],         &[-1],             &[ 1, -1, -2]),
         (&[-1, -1, -1],     &[-1],             &[ 1, -1, -1, -2]),
         (&[-1, -1, -1, -1], &[-1],             &[ 1, -1, -1, -1, -2]),
-        (&[-1/2 + 1],       &[ 2],             &[ 0,  1]),
-        (&[0, -1/2 + 1],    &[ 2],             &[ 0,  0,  1]),
+        (&[ M/2 + 1],       &[ 2],             &[ 0,  1]),
+        (&[0,  M/2 + 1],    &[ 2],             &[ 0,  0,  1]),
         (&[ 1,  2],         &[ 1,  2,  3],     &[1, 4,  7,  6]),
         (&[-1, -1],         &[-1, -1, -1],     &[1, 0, -1, -2, -1]),
         (&[-1, -1, -1],     &[-1, -1, -1, -1], &[1, 0,  0, -1, -2, -1, -1]),
@@ -2338,8 +2339,8 @@ mod biguint_tests {
                                          &'static [BigDigit])]
         = &[
             (&[ 1],        &[ 2], &[],               &[1]),
-            (&[ 1,  1],    &[ 2], &[-1/2+1],         &[1]),
-            (&[ 1,  1, 1], &[ 2], &[-1/2+1, -1/2+1], &[1]),
+            (&[ 1,  1],    &[ 2], &[ M/2+1],         &[1]),
+            (&[ 1,  1, 1], &[ 2], &[ M/2+1,  M/2+1], &[1]),
             (&[ 0,  1],    &[-1], &[1],              &[1]),
             (&[-1, -1],    &[-2], &[2, 1],           &[3])
         ];
@@ -2980,6 +2981,7 @@ mod bigint_tests {
         }
     }
 
+    const M: u32 = ::std::u32::MAX;
     static MUL_TRIPLES: &'static [(&'static [BigDigit],
                                    &'static [BigDigit],
                                    &'static [BigDigit])] = &[
@@ -2997,8 +2999,8 @@ mod bigint_tests {
         (&[-1, -1],         &[-1],             &[ 1, -1, -2]),
         (&[-1, -1, -1],     &[-1],             &[ 1, -1, -1, -2]),
         (&[-1, -1, -1, -1], &[-1],             &[ 1, -1, -1, -1, -2]),
-        (&[-1/2 + 1],       &[ 2],             &[ 0,  1]),
-        (&[0, -1/2 + 1],    &[ 2],             &[ 0,  0,  1]),
+        (&[ M/2 + 1],       &[ 2],             &[ 0,  1]),
+        (&[0,  M/2 + 1],    &[ 2],             &[ 0,  0,  1]),
         (&[ 1,  2],         &[ 1,  2,  3],     &[1, 4,  7,  6]),
         (&[-1, -1],         &[-1, -1, -1],     &[1, 0, -1, -2, -1]),
         (&[-1, -1, -1],     &[-1, -1, -1, -1], &[1, 0,  0, -1, -2, -1, -1]),
@@ -3012,8 +3014,8 @@ mod bigint_tests {
                                           &'static [BigDigit])]
         = &[
             (&[ 1],        &[ 2], &[],               &[1]),
-            (&[ 1,  1],    &[ 2], &[-1/2+1],         &[1]),
-            (&[ 1,  1, 1], &[ 2], &[-1/2+1, -1/2+1], &[1]),
+            (&[ 1,  1],    &[ 2], &[ M/2+1],         &[1]),
+            (&[ 1,  1, 1], &[ 2], &[ M/2+1,  M/2+1], &[1]),
             (&[ 0,  1],    &[-1], &[1],              &[1]),
             (&[-1, -1],    &[-2], &[2, 1],           &[3])
         ];
