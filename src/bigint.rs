@@ -65,7 +65,7 @@ use Integer;
 use core::num::ParseIntError;
 
 use std::default::Default;
-use std::error::{Error, FromError};
+use std::error::Error;
 use std::iter::repeat;
 use std::num::{Int, ToPrimitive, FromPrimitive, FromStrRadix};
 use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Rem, Shl, Shr, Sub};
@@ -1769,8 +1769,8 @@ impl Error for ParseBigIntError {
     fn description(&self) -> &str { "failed to parse bigint/biguint" }
 }
 
-impl FromError<ParseIntError> for ParseBigIntError {
-    fn from_error(err: ParseIntError) -> ParseBigIntError {
+impl From<ParseIntError> for ParseBigIntError {
+    fn from(err: ParseIntError) -> ParseBigIntError {
         ParseBigIntError::ParseInt(err)
     }
 }
