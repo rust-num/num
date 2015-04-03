@@ -56,11 +56,13 @@ impl<T: Clone + Num> Complex<T> {
     pub fn unscale(&self, t: T) -> Complex<T> {
         Complex::new(self.re.clone() / t.clone(), self.im.clone() / t)
     }
+}
 
+impl<T: Clone + Num + Neg<Output = T>> Complex<T> {
     /// Returns the complex conjugate. i.e. `re - i im`
     #[inline]
     pub fn conj(&self) -> Complex<T> {
-        Complex::new(self.re.clone(), T::zero() - self.im.clone())
+        Complex::new(self.re.clone(), -self.im.clone())
     }
 
     /// Returns `1/self`
@@ -68,7 +70,7 @@ impl<T: Clone + Num> Complex<T> {
     pub fn inv(&self) -> Complex<T> {
         let norm_sqr = self.norm_sqr();
         Complex::new(self.re.clone() / norm_sqr.clone(),
-                    T::zero() - self.im.clone() / norm_sqr)
+                     -self.im.clone() / norm_sqr)
     }
 }
 
