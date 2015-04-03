@@ -493,7 +493,7 @@ pub trait PrimInt
     /// # Examples
     ///
     /// ```
-    /// use num::traits::Int;
+    /// use num::traits::PrimInt;
     ///
     /// let n = 0b01001100u8;
     ///
@@ -506,7 +506,7 @@ pub trait PrimInt
     /// # Examples
     ///
     /// ```
-    /// use num::traits::Int;
+    /// use num::traits::PrimInt;
     ///
     /// let n = 0b01001100u8;
     ///
@@ -520,7 +520,7 @@ pub trait PrimInt
     /// # Examples
     ///
     /// ```
-    /// use num::traits::Int;
+    /// use num::traits::PrimInt;
     ///
     /// let n = 0b0101000u16;
     ///
@@ -534,7 +534,7 @@ pub trait PrimInt
     /// # Examples
     ///
     /// ```
-    /// use num::traits::Int;
+    /// use num::traits::PrimInt;
     ///
     /// let n = 0b0101000u16;
     ///
@@ -548,7 +548,7 @@ pub trait PrimInt
     /// # Examples
     ///
     /// ```
-    /// use num::traits::Int;
+    /// use num::traits::PrimInt;
     ///
     /// let n = 0x0123456789ABCDEFu64;
     /// let m = 0x3456789ABCDEF012u64;
@@ -563,7 +563,7 @@ pub trait PrimInt
     /// # Examples
     ///
     /// ```
-    /// use num::traits::Int;
+    /// use num::traits::PrimInt;
     ///
     /// let n = 0x0123456789ABCDEFu64;
     /// let m = 0xDEF0123456789ABCu64;
@@ -577,7 +577,7 @@ pub trait PrimInt
     /// # Examples
     ///
     /// ```
-    /// use num::traits::Int;
+    /// use num::traits::PrimInt;
     ///
     /// let n = 0x0123456789ABCDEFu64;
     /// let m = 0xEFCDAB8967452301u64;
@@ -593,14 +593,14 @@ pub trait PrimInt
     /// # Examples
     ///
     /// ```
-    /// use num::traits::Int;
+    /// use num::traits::PrimInt;
     ///
     /// let n = 0x0123456789ABCDEFu64;
     ///
     /// if cfg!(target_endian = "big") {
-    ///     assert_eq!(Int::from_be(n), n)
+    ///     assert_eq!(u64::from_be(n), n)
     /// } else {
-    ///     assert_eq!(Int::from_be(n), n.swap_bytes())
+    ///     assert_eq!(u64::from_be(n), n.swap_bytes())
     /// }
     /// ```
     fn from_be(x: Self) -> Self;
@@ -612,14 +612,14 @@ pub trait PrimInt
     /// # Examples
     ///
     /// ```
-    /// use num::traits::Int;
+    /// use num::traits::PrimInt;
     ///
     /// let n = 0x0123456789ABCDEFu64;
     ///
     /// if cfg!(target_endian = "little") {
-    ///     assert_eq!(Int::from_le(n), n)
+    ///     assert_eq!(u64::from_le(n), n)
     /// } else {
-    ///     assert_eq!(Int::from_le(n), n.swap_bytes())
+    ///     assert_eq!(u64::from_le(n), n.swap_bytes())
     /// }
     /// ```
     fn from_le(x: Self) -> Self;
@@ -631,7 +631,7 @@ pub trait PrimInt
     /// # Examples
     ///
     /// ```
-    /// use num::traits::Int;
+    /// use num::traits::PrimInt;
     ///
     /// let n = 0x0123456789ABCDEFu64;
     ///
@@ -650,7 +650,7 @@ pub trait PrimInt
     /// # Examples
     ///
     /// ```
-    /// use num::traits::Int;
+    /// use num::traits::PrimInt;
     ///
     /// let n = 0x0123456789ABCDEFu64;
     ///
@@ -667,9 +667,9 @@ pub trait PrimInt
     /// # Examples
     ///
     /// ```
-    /// use num::traits::Int;
+    /// use num::traits::PrimInt;
     ///
-    /// assert_eq!(2.pow(4), 16);
+    /// assert_eq!(2i32.pow(4), 16);
     /// ```
     fn pow(self, mut exp: u32) -> Self;
 }
@@ -1996,12 +1996,12 @@ pub trait Float
     /// The floating point encoding is documented in the [Reference][floating-point].
     ///
     /// ```
-    /// use num::Float;
+    /// use num::traits::Float;
     ///
     /// let num = 2.0f32;
     ///
     /// // (8388608, -22, 1)
-    /// let (mantissa, exponent, sign) = num.integer_decode();
+    /// let (mantissa, exponent, sign) = Float::integer_decode(num);
     /// let sign_f = sign as f32;
     /// let mantissa_f = mantissa as f32;
     /// let exponent_f = num.powf(exponent as f32);
