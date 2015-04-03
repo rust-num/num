@@ -43,7 +43,6 @@
 //! ```
 //!
 //! [newt]: https://en.wikipedia.org/wiki/Methods_of_computing_square_roots#Babylonian_method
-#![feature(collections, core, std_misc)]
 //#![cfg_attr(test, deny(warnings))]
 #![cfg_attr(test, feature(hash, test))]
 #![doc(html_logo_url = "http://www.rust-lang.org/logos/rust-logo-128x128-blk-v2.png",
@@ -52,7 +51,6 @@
        html_playground_url = "http://play.rust-lang.org/")]
 
 extern crate rustc_serialize;
-extern crate core;
 extern crate rand;
 
 pub use bigint::{BigInt, BigUint};
@@ -61,7 +59,8 @@ pub use complex::Complex;
 pub use integer::Integer;
 pub use iter::{range, range_inclusive, range_step, range_step_inclusive};
 pub use traits::{Num, Zero, One, Signed, Unsigned, Bounded,
-                 Saturating, CheckedAdd, CheckedSub, CheckedMul, CheckedDiv};
+                 Saturating, CheckedAdd, CheckedSub, CheckedMul, CheckedDiv,
+                 PrimInt, Float, ToPrimitive, FromPrimitive, NumCast};
 
 #[cfg(test)] use std::hash;
 

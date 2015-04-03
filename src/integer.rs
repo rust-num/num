@@ -10,12 +10,13 @@
 
 //! Integer trait and functions.
 
-use std::ops::{Div, Rem};
-
 use {Num, Signed};
 
-pub trait Integer: Sized + Num + PartialOrd
-                 + Div<Self, Output = Self> + Rem<Self, Output = Self> {
+pub trait Integer
+    : Sized
+    + Num
+    + PartialOrd + Ord + Eq
+{
     /// Floored integer division.
     ///
     /// # Examples

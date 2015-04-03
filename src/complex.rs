@@ -12,10 +12,9 @@
 //! Complex numbers.
 
 use std::fmt;
-use std::num::Float;
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
-use {Zero, One, Num};
+use {Zero, One, Num, Float};
 
 // FIXME #1284: handle complex NaN & infinity etc. This
 // probably doesn't map to C's _Complex correctly.
@@ -46,14 +45,6 @@ impl<T: Clone + Num> Complex<T> {
         self.re.clone() * self.re.clone() + self.im.clone() * self.im.clone()
     }
 
-
-    /// Returns the complex conjugate. i.e. `re - i im`
-    #[inline]
-    pub fn conj(&self) -> Complex<T> {
-        Complex::new(self.re.clone(), -self.im.clone())
-    }
-
-
     /// Multiplies `self` by the scalar `t`.
     #[inline]
     pub fn scale(&self, t: T) -> Complex<T> {
@@ -66,12 +57,18 @@ impl<T: Clone + Num> Complex<T> {
         Complex::new(self.re.clone() / t.clone(), self.im.clone() / t)
     }
 
+    /// Returns the complex conjugate. i.e. `re - i im`
+    #[inline]
+    pub fn conj(&self) -> Complex<T> {
+        Complex::new(self.re.clone(), T::zero() - self.im.clone())
+    }
+
     /// Returns `1/self`
     #[inline]
     pub fn inv(&self) -> Complex<T> {
         let norm_sqr = self.norm_sqr();
         Complex::new(self.re.clone() / norm_sqr.clone(),
-                    -self.im.clone() / norm_sqr)
+                    T::zero() - self.im.clone() / norm_sqr)
     }
 }
 
@@ -204,14 +201,14 @@ impl<'a, 'b, T: Clone + Num> Div<&'b Complex<T>> for &'a Complex<T> {
     }
 }
 
-impl<T: Clone + Num> Neg for Complex<T> {
+impl<T: Clone + Num + Neg<Output = T>> Neg for Complex<T> {
     type Output = Complex<T>;
 
     #[inline]
     fn neg(self) -> Complex<T> { -&self }
 }
 
-impl<'a, T: Clone + Num> Neg for &'a Complex<T> {
+impl<'a, T: Clone + Num + Neg<Output = T>> Neg for &'a Complex<T> {
     type Output = Complex<T>;
 
     #[inline]
@@ -241,10 +238,12 @@ impl<T: Clone + Num> One for Complex<T> {
 }
 
 /* string conversions */
-impl<T: fmt::Display + Num + PartialOrd + Clone> fmt::Display for Complex<T> {
+impl<T> fmt::Display for Complex<T> where
+    T: fmt::Display + Num + PartialOrd + Clone
+{
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.im < Zero::zero() {
-            write!(f, "{}-{}i", self.re, -self.im.clone())
+            write!(f, "{}-{}i", self.re, T::zero() - self.im.clone())
         } else {
             write!(f, "{}+{}i", self.re, self.im)
         }
@@ -257,9 +256,8 @@ mod test {
 
     use super::{Complex64, Complex};
     use std::f64;
-    use std::num::Float;
 
-    use {Zero, One};
+    use {Zero, One, Float};
 
     pub const _0_0i : Complex64 = Complex { re: 0.0, im: 0.0 };
     pub const _1_0i : Complex64 = Complex { re: 1.0, im: 0.0 };
