@@ -10,9 +10,8 @@
 
 //! External iterators for generic mathematics
 
-use {Integer, Zero, One, CheckedAdd};
+use {Integer, Zero, One, CheckedAdd, ToPrimitive};
 use std::ops::{Add, Sub};
-use std::num::{ToPrimitive, Int};
 
 /// An iterator over the range [start, stop)
 #[derive(Clone)]
@@ -260,10 +259,9 @@ impl<A> Iterator for RangeStepInclusive<A>
 #[cfg(test)]
 mod tests {
     use std::usize;
-    use std::num::ToPrimitive;
     use std::ops::{Add, Mul};
     use std::cmp::Ordering;
-    use One;
+    use {One, ToPrimitive};
 
     #[test]
     fn test_range() {
@@ -328,7 +326,6 @@ mod tests {
         // this test is only meaningful when sizeof usize < sizeof u64
         assert_eq!(super::range(usize::MAX - 1, usize::MAX).size_hint(), (1, Some(1)));
         assert_eq!(super::range(-10, -1).size_hint(), (9, Some(9)));
-        assert_eq!(super::range(Foo, Foo).size_hint(), (0, None));
     }
 
     #[test]

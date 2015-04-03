@@ -17,8 +17,8 @@ use std::error::Error;
 use std::fmt;
 use std::ops::{Add, Div, Mul, Neg, Rem, Sub};
 use std::str::FromStr;
-use std::num::{FromPrimitive, FromStrRadix, Float};
 
+use traits::{FromPrimitive, Float};
 use bigint::{BigInt, BigUint, Sign};
 use {Num, Signed, Zero, One};
 
@@ -38,8 +38,7 @@ pub type Rational64 = Ratio<i64>;
 /// Alias for arbitrary precision rationals.
 pub type BigRational = Ratio<BigInt>;
 
-impl<T: Clone + Integer + PartialOrd>
-    Ratio<T> {
+impl<T: Clone + Integer + PartialOrd> Ratio<T> {
     /// Creates a ratio representing the integer `t`.
     #[inline]
     pub fn from_integer(t: T) -> Ratio<T> {
@@ -99,9 +98,9 @@ impl<T: Clone + Integer + PartialOrd>
         self.denom = self.denom.clone() / g;
 
         // keep denom positive!
-        if self.denom < Zero::zero() {
-            self.numer = -self.numer.clone();
-            self.denom = -self.denom.clone();
+        if self.denom < T::zero() {
+            self.numer = T::zero() - self.numer.clone();
+            self.denom = T::zero() - self.denom.clone();
         }
     }
 
@@ -143,11 +142,13 @@ impl<T: Clone + Integer + PartialOrd>
     /// Rounds to the nearest integer. Rounds half-way cases away from zero.
     #[inline]
     pub fn round(&self) -> Ratio<T> {
+        let zero: Ratio<T> = Zero::zero();
         let one: T = One::one();
         let two: T = one.clone() + one.clone();
 
         // Find unsigned fractional part of rational number
-        let fractional = self.fract().abs();
+        let mut fractional = self.fract();
+        if fractional < zero { fractional = zero - fractional };
 
         // The algorithm compares the unsigned fractional part with 1/2, that
         // is, a/b >= 1/2, or a >= b/2. For odd denominators, we use
@@ -216,7 +217,9 @@ macro_rules! cmp_impl {
     };
     // return something other than a Ratio<T>
     (impl $imp:ident, $($method:ident -> $res:ty),*) => {
-        impl<T: Clone + Mul<T, Output = T> + $imp> $imp for Ratio<T> {
+        impl<T> $imp for Ratio<T> where
+            T: Clone + Mul<T, Output = T> + $imp
+        {
             $(
                 #[inline]
                 fn $method(&self, other: &Ratio<T>) -> $res {
@@ -247,7 +250,9 @@ macro_rules! forward_val_val_binop {
 
 macro_rules! forward_ref_val_binop {
     (impl $imp:ident, $method:ident) => {
-        impl<'a, T: Clone + Integer + PartialOrd> $imp<Ratio<T>> for &'a Ratio<T> {
+        impl<'a, T> $imp<Ratio<T>> for &'a Ratio<T> where
+            T: Clone + Integer + PartialOrd
+        {
             type Output = Ratio<T>;
 
             #[inline]
@@ -260,7 +265,9 @@ macro_rules! forward_ref_val_binop {
 
 macro_rules! forward_val_ref_binop {
     (impl $imp:ident, $method:ident) => {
-        impl<'a, T: Clone + Integer + PartialOrd> $imp<&'a Ratio<T>> for Ratio<T> {
+        impl<'a, T> $imp<&'a Ratio<T>> for Ratio<T> where
+            T: Clone + Integer + PartialOrd
+        {
             type Output = Ratio<T>;
 
             #[inline]
@@ -332,7 +339,7 @@ arith_impl!(impl Sub, sub);
 arith_impl!(impl Rem, rem);
 
 impl<T> Neg for Ratio<T>
-    where T: Clone + Integer + PartialOrd
+    where T: Clone + Integer + PartialOrd + Neg<Output = T>
 {
     type Output = Ratio<T>;
 
@@ -341,7 +348,7 @@ impl<T> Neg for Ratio<T>
 }
 
 impl<'a, T> Neg for &'a Ratio<T>
-    where T: Clone + Integer + PartialOrd
+    where T: Clone + Integer + PartialOrd + Neg<Output = T>
 {
     type Output = Ratio<T>;
 
@@ -373,11 +380,30 @@ impl<T: Clone + Integer + PartialOrd>
     }
 }
 
-impl<T: Clone + Integer + PartialOrd>
-    Num for Ratio<T> {}
+impl<T: Clone + Integer + PartialOrd> Num for Ratio<T> {
+    type FromStrRadixErr = ParseRatioError;
 
-impl<T: Clone + Integer + PartialOrd>
-    Signed for Ratio<T> {
+    /// Parses `numer/denom` where the numbers are in base `radix`.
+    fn from_str_radix(s: &str, radix: u32) -> Result<Ratio<T>, ParseRatioError> {
+        let split: Vec<&str> = s.splitn(2, '/').collect();
+        if split.len() < 2 {
+            Err(ParseRatioError)
+        } else {
+            let a_result: Result<T, _> = T::from_str_radix(
+                split[0],
+                radix).map_err(|_| ParseRatioError);
+            a_result.and_then(|a| {
+                let b_result: Result<T, _>  =
+                    T::from_str_radix(split[1], radix).map_err(|_| ParseRatioError);
+                b_result.and_then(|b| {
+                    Ok(Ratio::new(a.clone(), b.clone()))
+                })
+            })
+        }
+    }
+}
+
+impl<T: Clone + Integer + PartialOrd + Signed> Signed for Ratio<T> {
     #[inline]
     fn abs(&self) -> Ratio<T> {
         if self.is_negative() { -self.clone() } else { self.clone() }
@@ -407,7 +433,9 @@ impl<T: Clone + Integer + PartialOrd>
 }
 
 /* String conversions */
-impl<T: fmt::Display + Eq + One> fmt::Display for Ratio<T> {
+impl<T> fmt::Display for Ratio<T> where
+    T: fmt::Display + Eq + One
+{
     /// Renders as `numer/denom`. If denom=1, renders as numer.
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.denom == One::one() {
@@ -418,8 +446,7 @@ impl<T: fmt::Display + Eq + One> fmt::Display for Ratio<T> {
     }
 }
 
-impl<T: FromStr + Clone + Integer + PartialOrd>
-    FromStr for Ratio<T> {
+impl<T: FromStr + Clone + Integer + PartialOrd> FromStr for Ratio<T> {
     type Err = ParseRatioError;
 
     /// Parses `numer/denom` or just `numer`.
@@ -436,32 +463,8 @@ impl<T: FromStr + Clone + Integer + PartialOrd>
     }
 }
 
-impl<T: FromStrRadix + Clone + Integer + PartialOrd>
-    FromStrRadix for Ratio<T> {
-    type Err = ParseRatioError;
-
-    /// Parses `numer/denom` where the numbers are in base `radix`.
-    fn from_str_radix(s: &str, radix: u32) -> Result<Ratio<T>, ParseRatioError> {
-        let split: Vec<&str> = s.splitn(2, '/').collect();
-        if split.len() < 2 {
-            Err(ParseRatioError)
-        } else {
-            let a_result: Result<T, _> = FromStrRadix::from_str_radix(
-                split[0],
-                radix).map_err(|_| ParseRatioError);
-            a_result.and_then(|a| {
-                let b_result: Result<T, _>  =
-                    FromStrRadix::from_str_radix(split[1], radix).map_err(|_| ParseRatioError);
-                b_result.and_then(|b| {
-                    Ok(Ratio::new(a.clone(), b.clone()))
-                })
-            })
-        }
-    }
-}
-
 // FIXME: Bubble up specific errors
-#[derive(Copy, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct ParseRatioError;
 
 impl fmt::Display for ParseRatioError {
@@ -478,10 +481,9 @@ impl Error for ParseRatioError {
 mod test {
 
     use super::{Ratio, Rational, BigRational};
-    use std::num::{FromPrimitive, Float};
     use std::str::FromStr;
     use std::i32;
-    use {Zero, One, Signed};
+    use {Zero, One, Signed, FromPrimitive, Float};
 
     pub const _0 : Rational = Ratio { numer: 0, denom: 1};
     pub const _1 : Rational = Ratio { numer: 1, denom: 1};

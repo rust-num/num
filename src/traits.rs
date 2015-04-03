@@ -10,27 +10,54 @@
 
 //! Numeric traits for generic mathematics
 
-use std::intrinsics;
 use std::ops::{Add, Sub, Mul, Div, Rem, Neg};
 use std::ops::{Not, BitAnd, BitOr, BitXor, Shl, Shr};
 use std::{usize, u8, u16, u32, u64};
 use std::{isize, i8, i16, i32, i64};
 use std::{f32, f64};
-use std::mem::size_of;
+use std::mem::{self, size_of};
 use std::num::FpCategory;
 
 /// The base trait for numeric types
 pub trait Num: PartialEq + Zero + One
-    + Neg<Output = Self> + Add<Output = Self> + Sub<Output = Self>
-    + Mul<Output = Self> + Div<Output = Self> + Rem<Output = Self> {}
+    + Add<Output = Self> + Sub<Output = Self>
+    + Mul<Output = Self> + Div<Output = Self> + Rem<Output = Self>
+{
+    /// Parse error for `from_str_radix`
+    type FromStrRadixErr;
 
-macro_rules! trait_impl {
+    /// Convert from a string and radix <= 36.
+    fn from_str_radix(str: &str, radix: u32) -> Result<Self, Self::FromStrRadixErr>;
+}
+
+macro_rules! int_trait_impl {
     ($name:ident for $($t:ty)*) => ($(
-        impl $name for $t {}
+        impl $name for $t {
+            type FromStrRadixErr = ::std::num::ParseIntError;
+            fn from_str_radix(s: &str, radix: u32)
+                              -> Result<Self, ::std::num::ParseIntError>
+            {
+                <$t>::from_str_radix(s, radix)
+            }
+        }
     )*)
 }
 
-trait_impl!(Num for usize u8 u16 u32 u64 isize i8 i16 i32 i64 f32 f64);
+macro_rules! float_trait_impl {
+    ($name:ident for $($t:ty)*) => ($(
+        impl $name for $t {
+            type FromStrRadixErr = ::std::num::ParseFloatError;
+            fn from_str_radix(s: &str, radix: u32)
+                              -> Result<Self, ::std::num::ParseFloatError>
+            {
+                <$t>::from_str_radix(s, radix)
+            }
+        }
+    )*)
+}
+
+int_trait_impl!(Num for usize u8 u16 u32 u64 isize i8 i16 i32 i64);
+float_trait_impl!(Num for f32 f64);
 
 /// Defines an additive identity element for `Self`.
 ///
@@ -132,7 +159,6 @@ one_impl!(i64, 1i64);
 one_impl!(f32, 1.0f32);
 one_impl!(f64, 1.0f64);
 
-
 /// Useful functions for signed numbers (i.e. numbers that can be negative).
 pub trait Signed: Num + Neg<Output = Self> {
     /// Computes the absolute value.
@@ -204,12 +230,12 @@ macro_rules! signed_impl {
 signed_impl!(isize i8 i16 i32 i64);
 
 macro_rules! signed_float_impl {
-    ($t:ty, $nan:expr, $inf:expr, $neg_inf:expr, $fabs:path, $fcopysign:path, $fdim:ident) => {
+    ($t:ty, $nan:expr, $inf:expr, $neg_inf:expr) => {
         impl Signed for $t {
             /// Computes the absolute value. Returns `NAN` if the number is `NAN`.
             #[inline]
             fn abs(&self) -> $t {
-                unsafe { $fabs(*self) }
+                <$t>::abs(*self)
             }
 
             /// The positive difference of two numbers. Returns `0.0` if the number is
@@ -217,8 +243,7 @@ macro_rules! signed_float_impl {
             /// and `other` is returned.
             #[inline]
             fn abs_sub(&self, other: &$t) -> $t {
-                extern { fn $fdim(a: $t, b: $t) -> $t; }
-                unsafe { $fdim(*self, *other) }
+                <$t>::abs_sub(*self, *other)
             }
 
             /// # Returns
@@ -228,9 +253,7 @@ macro_rules! signed_float_impl {
             /// - `NAN` if the number is NaN
             #[inline]
             fn signum(&self) -> $t {
-                if self != self { $nan } else {
-                    unsafe { $fcopysign(1.0, *self) }
-                }
+                <$t>::signum(*self)
             }
 
             /// Returns `true` if the number is positive, including `+0.0` and `INFINITY`
@@ -244,15 +267,19 @@ macro_rules! signed_float_impl {
     }
 }
 
-signed_float_impl!(f32, f32::NAN, f32::INFINITY, f32::NEG_INFINITY,
-                   intrinsics::fabsf32, intrinsics::copysignf32, fdimf);
-signed_float_impl!(f64, f64::NAN, f64::INFINITY, f64::NEG_INFINITY,
-                   intrinsics::fabsf64, intrinsics::copysignf64, fdim);
+signed_float_impl!(f32, f32::NAN, f32::INFINITY, f32::NEG_INFINITY);
+signed_float_impl!(f64, f64::NAN, f64::INFINITY, f64::NEG_INFINITY);
 
 /// A trait for values which cannot be negative
 pub trait Unsigned: Num {}
 
-trait_impl!(Unsigned for usize u8 u16 u32 u64);
+macro_rules! empty_trait_impl {
+    ($name:ident for $($t:ty)*) => ($(
+        impl $name for $t {}
+    )*)
+}
+
+empty_trait_impl!(Unsigned for usize u8 u16 u32 u64);
 
 /// Numbers which have upper and lower bounds
 pub trait Bounded {
@@ -336,51 +363,27 @@ pub trait CheckedAdd: Add<Self, Output = Self> {
 }
 
 macro_rules! checked_impl {
-    ($trait_name:ident, $method:ident, $t:ty, $op:path) => {
+    ($trait_name:ident, $method:ident, $t:ty) => {
         impl $trait_name for $t {
             #[inline]
             fn $method(&self, v: &$t) -> Option<$t> {
-                unsafe {
-                    let (x, y) = $op(*self, *v);
-                    if y { None } else { Some(x) }
-                }
-            }
-        }
-    }
-}
-macro_rules! checked_cast_impl {
-    ($trait_name:ident, $method:ident, $t:ty, $cast:ty, $op:path) => {
-        impl $trait_name for $t {
-            #[inline]
-            fn $method(&self, v: &$t) -> Option<$t> {
-                unsafe {
-                    let (x, y) = $op(*self as $cast, *v as $cast);
-                    if y { None } else { Some(x as $t) }
-                }
+                <$t>::$method(*self, *v)
             }
         }
     }
 }
 
-#[cfg(target_pointer_width = "32")]
-checked_cast_impl!(CheckedAdd, checked_add, usize, u32, intrinsics::u32_add_with_overflow);
-#[cfg(target_pointer_width = "64")]
-checked_cast_impl!(CheckedAdd, checked_add, usize, u64, intrinsics::u64_add_with_overflow);
+checked_impl!(CheckedAdd, checked_add, u8);
+checked_impl!(CheckedAdd, checked_add, u16);
+checked_impl!(CheckedAdd, checked_add, u32);
+checked_impl!(CheckedAdd, checked_add, u64);
+checked_impl!(CheckedAdd, checked_add, usize);
 
-checked_impl!(CheckedAdd, checked_add, u8,  intrinsics::u8_add_with_overflow);
-checked_impl!(CheckedAdd, checked_add, u16, intrinsics::u16_add_with_overflow);
-checked_impl!(CheckedAdd, checked_add, u32, intrinsics::u32_add_with_overflow);
-checked_impl!(CheckedAdd, checked_add, u64, intrinsics::u64_add_with_overflow);
-
-#[cfg(target_pointer_width = "32")]
-checked_cast_impl!(CheckedAdd, checked_add, isize, i32, intrinsics::i32_add_with_overflow);
-#[cfg(target_pointer_width = "64")]
-checked_cast_impl!(CheckedAdd, checked_add, isize, i64, intrinsics::i64_add_with_overflow);
-
-checked_impl!(CheckedAdd, checked_add, i8,  intrinsics::i8_add_with_overflow);
-checked_impl!(CheckedAdd, checked_add, i16, intrinsics::i16_add_with_overflow);
-checked_impl!(CheckedAdd, checked_add, i32, intrinsics::i32_add_with_overflow);
-checked_impl!(CheckedAdd, checked_add, i64, intrinsics::i64_add_with_overflow);
+checked_impl!(CheckedAdd, checked_add, i8);
+checked_impl!(CheckedAdd, checked_add, i16);
+checked_impl!(CheckedAdd, checked_add, i32);
+checked_impl!(CheckedAdd, checked_add, i64);
+checked_impl!(CheckedAdd, checked_add, isize);
 
 /// Performs subtraction that returns `None` instead of wrapping around on underflow.
 pub trait CheckedSub: Sub<Self, Output = Self> {
@@ -389,25 +392,17 @@ pub trait CheckedSub: Sub<Self, Output = Self> {
     fn checked_sub(&self, v: &Self) -> Option<Self>;
 }
 
-#[cfg(target_pointer_width = "32")]
-checked_cast_impl!(CheckedSub, checked_sub, usize, u32, intrinsics::u32_sub_with_overflow);
-#[cfg(target_pointer_width = "64")]
-checked_cast_impl!(CheckedSub, checked_sub, usize, u64, intrinsics::u64_sub_with_overflow);
+checked_impl!(CheckedSub, checked_sub, u8);
+checked_impl!(CheckedSub, checked_sub, u16);
+checked_impl!(CheckedSub, checked_sub, u32);
+checked_impl!(CheckedSub, checked_sub, u64);
+checked_impl!(CheckedSub, checked_sub, usize);
 
-checked_impl!(CheckedSub, checked_sub, u8,  intrinsics::u8_sub_with_overflow);
-checked_impl!(CheckedSub, checked_sub, u16, intrinsics::u16_sub_with_overflow);
-checked_impl!(CheckedSub, checked_sub, u32, intrinsics::u32_sub_with_overflow);
-checked_impl!(CheckedSub, checked_sub, u64, intrinsics::u64_sub_with_overflow);
-
-#[cfg(target_pointer_width = "32")]
-checked_cast_impl!(CheckedSub, checked_sub, isize, i32, intrinsics::i32_sub_with_overflow);
-#[cfg(target_pointer_width = "64")]
-checked_cast_impl!(CheckedSub, checked_sub, isize, i64, intrinsics::i64_sub_with_overflow);
-
-checked_impl!(CheckedSub, checked_sub, i8,  intrinsics::i8_sub_with_overflow);
-checked_impl!(CheckedSub, checked_sub, i16, intrinsics::i16_sub_with_overflow);
-checked_impl!(CheckedSub, checked_sub, i32, intrinsics::i32_sub_with_overflow);
-checked_impl!(CheckedSub, checked_sub, i64, intrinsics::i64_sub_with_overflow);
+checked_impl!(CheckedSub, checked_sub, i8);
+checked_impl!(CheckedSub, checked_sub, i16);
+checked_impl!(CheckedSub, checked_sub, i32);
+checked_impl!(CheckedSub, checked_sub, i64);
+checked_impl!(CheckedSub, checked_sub, isize);
 
 /// Performs multiplication that returns `None` instead of wrapping around on underflow or
 /// overflow.
@@ -417,25 +412,17 @@ pub trait CheckedMul: Mul<Self, Output = Self> {
     fn checked_mul(&self, v: &Self) -> Option<Self>;
 }
 
-#[cfg(target_pointer_width = "32")]
-checked_cast_impl!(CheckedMul, checked_mul, usize, u32, intrinsics::u32_mul_with_overflow);
-#[cfg(target_pointer_width = "64")]
-checked_cast_impl!(CheckedMul, checked_mul, usize, u64, intrinsics::u64_mul_with_overflow);
+checked_impl!(CheckedMul, checked_mul, u8);
+checked_impl!(CheckedMul, checked_mul, u16);
+checked_impl!(CheckedMul, checked_mul, u32);
+checked_impl!(CheckedMul, checked_mul, u64);
+checked_impl!(CheckedMul, checked_mul, usize);
 
-checked_impl!(CheckedMul, checked_mul, u8,  intrinsics::u8_mul_with_overflow);
-checked_impl!(CheckedMul, checked_mul, u16, intrinsics::u16_mul_with_overflow);
-checked_impl!(CheckedMul, checked_mul, u32, intrinsics::u32_mul_with_overflow);
-checked_impl!(CheckedMul, checked_mul, u64, intrinsics::u64_mul_with_overflow);
-
-#[cfg(target_pointer_width = "32")]
-checked_cast_impl!(CheckedMul, checked_mul, isize, i32, intrinsics::i32_mul_with_overflow);
-#[cfg(target_pointer_width = "64")]
-checked_cast_impl!(CheckedMul, checked_mul, isize, i64, intrinsics::i64_mul_with_overflow);
-
-checked_impl!(CheckedMul, checked_mul, i8,  intrinsics::i8_mul_with_overflow);
-checked_impl!(CheckedMul, checked_mul, i16, intrinsics::i16_mul_with_overflow);
-checked_impl!(CheckedMul, checked_mul, i32, intrinsics::i32_mul_with_overflow);
-checked_impl!(CheckedMul, checked_mul, i64, intrinsics::i64_mul_with_overflow);
+checked_impl!(CheckedMul, checked_mul, i8);
+checked_impl!(CheckedMul, checked_mul, i16);
+checked_impl!(CheckedMul, checked_mul, i32);
+checked_impl!(CheckedMul, checked_mul, i64);
+checked_impl!(CheckedMul, checked_mul, isize);
 
 /// Performs division that returns `None` instead of panicking on division by zero and instead of
 /// wrapping around on underflow and overflow.
@@ -483,12 +470,12 @@ macro_rules! checkeddiv_uint_impl {
 
 checkeddiv_uint_impl!(usize u8 u16 u32 u64);
 
-pub trait Int
-    : Num
-    + Clone
-    + NumCast
-    + PartialOrd + Ord
-    + Eq
+pub trait PrimInt
+    : Sized
+    + Copy
+    + Num + NumCast
+    + Bounded
+    + PartialOrd + Ord + Eq
     + Not<Output=Self>
     + BitAnd<Output=Self>
     + BitOr<Output=Self>
@@ -501,12 +488,6 @@ pub trait Int
     + CheckedDiv<Output=Self>
     + Saturating
 {
-    /// Returns the smallest value that can be represented by this integer type.
-    fn min_value() -> Self;
-
-    /// Returns the largest value that can be represented by this integer type.
-    fn max_value() -> Self;
-
     /// Returns the number of ones in the binary representation of `self`.
     ///
     /// # Examples
@@ -693,9 +674,9 @@ pub trait Int
     fn pow(self, mut exp: u32) -> Self;
 }
 
-macro_rules! int_impl {
+macro_rules! prim_int_impl {
     ($($T:ty)*) => ($(
-        impl Int for $T {
+        impl PrimInt for $T {
             fn min_value() -> Self {
                 <$T>::min_value()
             }
@@ -754,8 +735,6 @@ macro_rules! int_impl {
         }
     )*)
 }
-
-int_impl!(u8 u16 u32 u64 usize i8 i16 i32 i64 isize);
 
 /// A generic trait for converting a value to a number.
 pub trait ToPrimitive {
@@ -834,8 +813,8 @@ macro_rules! impl_to_primitive_int_to_int {
                 Some($slf as $DstT)
             } else {
                 let n = $slf as i64;
-                let min_value: $DstT = Int::min_value();
-                let max_value: $DstT = Int::max_value();
+                let min_value: $DstT = Bounded::min_value();
+                let max_value: $DstT = Bounded::max_value();
                 if min_value as i64 <= n && n <= max_value as i64 {
                     Some($slf as $DstT)
                 } else {
@@ -850,7 +829,7 @@ macro_rules! impl_to_primitive_int_to_uint {
     ($SrcT:ty, $DstT:ty, $slf:expr) => (
         {
             let zero: $SrcT = Zero::zero();
-            let max_value: $DstT = Int::max_value();
+            let max_value: $DstT = Bounded::max_value();
             if zero <= $slf && $slf as u64 <= max_value as u64 {
                 Some($slf as $DstT)
             } else {
@@ -902,7 +881,7 @@ impl_to_primitive_int! { i64 }
 macro_rules! impl_to_primitive_uint_to_int {
     ($DstT:ty, $slf:expr) => (
         {
-            let max_value: $DstT = Int::max_value();
+            let max_value: $DstT = Bounded::max_value();
             if $slf as u64 <= max_value as u64 {
                 Some($slf as $DstT)
             } else {
@@ -919,7 +898,7 @@ macro_rules! impl_to_primitive_uint_to_uint {
                 Some($slf as $DstT)
             } else {
                 let zero: $SrcT = Zero::zero();
-                let max_value: $DstT = Int::max_value();
+                let max_value: $DstT = Bounded::max_value();
                 if zero <= $slf && $slf as u64 <= max_value as u64 {
                     Some($slf as $DstT)
                 } else {
@@ -1189,9 +1168,10 @@ impl_num_cast! { f64,   to_f64 }
 
 pub trait Float
     : Num
-    + Clone
+    + Copy
     + NumCast
     + PartialOrd
+    + Neg<Output = Self>
 {
     /// Returns the `NaN` value.
     ///
@@ -1671,36 +1651,6 @@ pub trait Float
     /// ```
     fn log10(self) -> Self;
 
-    /// Convert radians to degrees.
-    ///
-    /// ```
-    /// # #![feature(std_misc, core)]
-    /// use num::traits::Float;
-    /// use std::f64::consts;
-    ///
-    /// let angle = consts::PI;
-    ///
-    /// let abs_difference = (angle.to_degrees() - 180.0).abs();
-    ///
-    /// assert!(abs_difference < 1e-10);
-    /// ```
-    fn to_degrees(self) -> Self;
-
-    /// Convert degrees to radians.
-    ///
-    /// ```
-    /// # #![feature(std_misc, core)]
-    /// use num::traits::Float;
-    /// use std::f64::consts;
-    ///
-    /// let angle = 180.0;
-    ///
-    /// let abs_difference = (angle.to_radians() - consts::PI).abs();
-    ///
-    /// assert!(abs_difference < 1e-10);
-    /// ```
-    fn to_radians(self) -> Self;
-
     /// Returns the maximum of the two numbers.
     ///
     /// ```
@@ -2039,10 +1989,34 @@ pub trait Float
     /// assert!(abs_difference < 1.0e-10);
     /// ```
     fn atanh(self) -> Self;
+
+
+    /// Returns the mantissa, base 2 exponent, and sign as integers, respectively.
+    /// The original number can be recovered by `sign * mantissa * 2 ^ exponent`.
+    /// The floating point encoding is documented in the [Reference][floating-point].
+    ///
+    /// ```
+    /// use num::Float;
+    ///
+    /// let num = 2.0f32;
+    ///
+    /// // (8388608, -22, 1)
+    /// let (mantissa, exponent, sign) = num.integer_decode();
+    /// let sign_f = sign as f32;
+    /// let mantissa_f = mantissa as f32;
+    /// let exponent_f = num.powf(exponent as f32);
+    ///
+    /// // 1 * 8388608 * 2^(-22) == 2
+    /// let abs_difference = (sign_f * mantissa_f * exponent_f - num).abs();
+    ///
+    /// assert!(abs_difference < 1e-10);
+    /// ```
+    /// [floating-point]: ../../../../../reference.html#machine-types
+    fn integer_decode(self) -> (u64, i16, i8);
 }
 
 macro_rules! float_impl {
-    ($($T:ident)*) => ($(
+    ($T:ident $decode:ident) => (
         impl Float for $T {
             fn nan() -> Self {
                 ::std::$T::NAN
@@ -2168,14 +2142,6 @@ macro_rules! float_impl {
                 <$T>::log10(self)
             }
 
-            fn to_degrees(self) -> Self {
-                <$T>::to_degrees(self)
-            }
-
-            fn to_radians(self) -> Self {
-                <$T>::to_radians(self)
-            }
-
             fn max(self, other: Self) -> Self {
                 <$T>::max(self, other)
             }
@@ -2260,8 +2226,40 @@ macro_rules! float_impl {
                 <$T>::atanh(self)
             }
 
+            fn integer_decode(self) -> (u64, i16, i8) {
+                $decode(self)
+            }
         }
-    )*)
+    )
 }
 
-float_impl!(f32 f64);
+fn integer_decode_f32(f: f32) -> (u64, i16, i8) {
+    let bits: u32 = unsafe { mem::transmute(f) };
+    let sign: i8 = if bits >> 31 == 0 { 1 } else { -1 };
+    let mut exponent: i16 = ((bits >> 23) & 0xff) as i16;
+    let mantissa = if exponent == 0 {
+        (bits & 0x7fffff) << 1
+    } else {
+        (bits & 0x7fffff) | 0x800000
+    };
+    // Exponent bias + mantissa shift
+    exponent -= 127 + 23;
+    (mantissa as u64, exponent, sign)
+}
+
+fn integer_decode_f64(f: f64) -> (u64, i16, i8) {
+    let bits: u64 = unsafe { mem::transmute(f) };
+    let sign: i8 = if bits >> 63 == 0 { 1 } else { -1 };
+    let mut exponent: i16 = ((bits >> 52) & 0x7ff) as i16;
+    let mantissa = if exponent == 0 {
+        (bits & 0xfffffffffffff) << 1
+    } else {
+        (bits & 0xfffffffffffff) | 0x10000000000000
+    };
+    // Exponent bias + mantissa shift
+    exponent -= 1023 + 52;
+    (mantissa, exponent, sign)
+}
+
+float_impl!(f32 integer_decode_f32);
+float_impl!(f64 integer_decode_f64);
