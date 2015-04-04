@@ -1329,8 +1329,8 @@ pub trait Float
     /// predicate instead.
     ///
     /// ```
-    /// # #![feature(core)]
-    /// use std::num::{Float, FpCategory};
+    /// use num::traits::Float;
+    /// use std::num::FpCategory;
     /// use std::f32;
     ///
     /// let num = 12.4f32;
@@ -1880,7 +1880,6 @@ pub trait Float
     /// the operations were performed separately.
     ///
     /// ```
-    /// # #![feature(std_misc, core)]
     /// use num::traits::Float;
     /// use std::f64;
     ///
