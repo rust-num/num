@@ -677,14 +677,6 @@ pub trait PrimInt
 macro_rules! prim_int_impl {
     ($($T:ty)*) => ($(
         impl PrimInt for $T {
-            fn min_value() -> Self {
-                <$T>::min_value()
-            }
-
-            fn max_value() -> Self {
-                <$T>::max_value()
-            }
-
             fn count_ones(self) -> u32 {
                 <$T>::count_ones(self)
             }
@@ -735,6 +727,8 @@ macro_rules! prim_int_impl {
         }
     )*)
 }
+
+prim_int_impl!(u8 u16 u32 u64 usize i8 i16 i32 i64 isize);
 
 /// A generic trait for converting a value to a number.
 pub trait ToPrimitive {
