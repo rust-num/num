@@ -38,14 +38,13 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 // OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#![feature(core)]
 #![feature(test)]
 
 extern crate num;
 extern crate test;
 
 use std::str::FromStr;
-use std::num::{FromPrimitive, ToPrimitive};
+use num::traits::{FromPrimitive, ToPrimitive};
 
 use test::Bencher;
 
@@ -133,7 +132,7 @@ fn main() {
     let n = if args.len() < 2 {
         DEFAULT_DIGITS
     } else {
-        FromStr::from_str(args[1].as_slice()).unwrap()
+        FromStr::from_str(&args[1]).unwrap()
     };
     pidigits(n);
 }
