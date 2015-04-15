@@ -10,7 +10,7 @@
 
 //! A Big integer (signed version: `BigInt`, unsigned version: `BigUint`).
 //!
-//! A `BigUint` is represented as an array of `BigDigit`s.
+//! A `BigUint` is represented as a vector of `BigDigit`s.
 //! A `BigInt` is a combination of `BigUint` and `Sign`.
 //!
 //! Common numerical operations are overloaded, so we can treat them
@@ -938,14 +938,14 @@ impl BigUint {
     /// ```
     /// use num::bigint::BigUint;
     ///
-    /// assert_eq!(BigUint::from_bytes_be("A".as_bytes()),
-    ///            BigUint::parse_bytes("65".as_bytes(), 10).unwrap());
-    /// assert_eq!(BigUint::from_bytes_be("AA".as_bytes()),
-    ///            BigUint::parse_bytes("16705".as_bytes(), 10).unwrap());
-    /// assert_eq!(BigUint::from_bytes_be("AB".as_bytes()),
-    ///            BigUint::parse_bytes("16706".as_bytes(), 10).unwrap());
-    /// assert_eq!(BigUint::from_bytes_be("Hello world!".as_bytes()),
-    ///            BigUint::parse_bytes("22405534230753963835153736737".as_bytes(), 10).unwrap());
+    /// assert_eq!(BigUint::from_bytes_be(b"A"),
+    ///            BigUint::parse_bytes(b"65", 10).unwrap());
+    /// assert_eq!(BigUint::from_bytes_be(b"AA"),
+    ///            BigUint::parse_bytes(b"16705", 10).unwrap());
+    /// assert_eq!(BigUint::from_bytes_be(b"AB"),
+    ///            BigUint::parse_bytes(b"16706", 10).unwrap());
+    /// assert_eq!(BigUint::from_bytes_be(b"Hello world!"),
+    ///            BigUint::parse_bytes(b"22405534230753963835153736737", 10).unwrap());
     /// ```
     #[inline]
     pub fn from_bytes_be(bytes: &[u8]) -> BigUint {
@@ -967,6 +967,15 @@ impl BigUint {
     }
 
     /// Returns the byte representation of the `BigUint` in little-endian byte order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use num::bigint::BigUint;
+    ///
+    /// let i = BigUint::parse_bytes(b"1125", 10).unwrap();
+    /// assert_eq!(i.to_bytes_le(), vec![101, 4]);
+    /// ```
     #[inline]
     pub fn to_bytes_le(&self) -> Vec<u8> {
         let mut result = Vec::new();
@@ -991,6 +1000,15 @@ impl BigUint {
     }
 
     /// Returns the byte representation of the `BigUint` in big-endian byte order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use num::bigint::BigUint;
+    ///
+    /// let i = BigUint::parse_bytes(b"1125", 10).unwrap();
+    /// assert_eq!(i.to_bytes_be(), vec![4, 101]);
+    /// ```
     #[inline]
     pub fn to_bytes_be(&self) -> Vec<u8> {
         let mut v = self.to_bytes_le();
@@ -1005,9 +1023,9 @@ impl BigUint {
     /// ```
     /// use num::bigint::{BigUint, ToBigUint};
     ///
-    /// assert_eq!(BigUint::parse_bytes("1234".as_bytes(), 10), ToBigUint::to_biguint(&1234));
-    /// assert_eq!(BigUint::parse_bytes("ABCD".as_bytes(), 16), ToBigUint::to_biguint(&0xABCD));
-    /// assert_eq!(BigUint::parse_bytes("G".as_bytes(), 16), None);
+    /// assert_eq!(BigUint::parse_bytes(b"1234", 10), ToBigUint::to_biguint(&1234));
+    /// assert_eq!(BigUint::parse_bytes(b"ABCD", 16), ToBigUint::to_biguint(&0xABCD));
+    /// assert_eq!(BigUint::parse_bytes(b"G", 16), None);
     /// ```
     #[inline]
     pub fn parse_bytes(buf: &[u8], radix: u32) -> Option<BigUint> {
@@ -1713,14 +1731,14 @@ impl BigInt {
     /// ```
     /// use num::bigint::{BigInt, Sign};
     ///
-    /// assert_eq!(BigInt::from_bytes_be(Sign::Plus, "A".as_bytes()),
-    ///            BigInt::parse_bytes("65".as_bytes(), 10).unwrap());
-    /// assert_eq!(BigInt::from_bytes_be(Sign::Plus, "AA".as_bytes()),
-    ///            BigInt::parse_bytes("16705".as_bytes(), 10).unwrap());
-    /// assert_eq!(BigInt::from_bytes_be(Sign::Plus, "AB".as_bytes()),
-    ///            BigInt::parse_bytes("16706".as_bytes(), 10).unwrap());
-    /// assert_eq!(BigInt::from_bytes_be(Sign::Plus, "Hello world!".as_bytes()),
-    ///            BigInt::parse_bytes("22405534230753963835153736737".as_bytes(), 10).unwrap());
+    /// assert_eq!(BigInt::from_bytes_be(Sign::Plus, b"A"),
+    ///            BigInt::parse_bytes(b"65", 10).unwrap());
+    /// assert_eq!(BigInt::from_bytes_be(Sign::Plus, b"AA"),
+    ///            BigInt::parse_bytes(b"16705", 10).unwrap());
+    /// assert_eq!(BigInt::from_bytes_be(Sign::Plus, b"AB"),
+    ///            BigInt::parse_bytes(b"16706", 10).unwrap());
+    /// assert_eq!(BigInt::from_bytes_be(Sign::Plus, b"Hello world!"),
+    ///            BigInt::parse_bytes(b"22405534230753963835153736737", 10).unwrap());
     /// ```
     #[inline]
     pub fn from_bytes_be(sign: Sign, bytes: &[u8]) -> BigInt {
@@ -1736,12 +1754,30 @@ impl BigInt {
     }
 
     /// Returns the sign and the byte representation of the `BigInt` in little-endian byte order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use num::bigint::{ToBigInt, Sign};
+    ///
+    /// let i = -1125.to_bigint().unwrap();
+    /// assert_eq!(i.to_bytes_le(), (Sign::Minus, vec![101, 4]));
+    /// ```
     #[inline]
     pub fn to_bytes_le(&self) -> (Sign, Vec<u8>) {
         (self.sign, self.data.to_bytes_le())
     }
 
     /// Returns the sign and the byte representation of the `BigInt` in big-endian byte order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use num::bigint::{ToBigInt, Sign};
+    ///
+    /// let i = -1125.to_bigint().unwrap();
+    /// assert_eq!(i.to_bytes_be(), (Sign::Minus, vec![4, 101]));
+    /// ```
     #[inline]
     pub fn to_bytes_be(&self) -> (Sign, Vec<u8>) {
         (self.sign, self.data.to_bytes_be())
@@ -1754,9 +1790,9 @@ impl BigInt {
     /// ```
     /// use num::bigint::{BigInt, ToBigInt};
     ///
-    /// assert_eq!(BigInt::parse_bytes("1234".as_bytes(), 10), ToBigInt::to_bigint(&1234));
-    /// assert_eq!(BigInt::parse_bytes("ABCD".as_bytes(), 16), ToBigInt::to_bigint(&0xABCD));
-    /// assert_eq!(BigInt::parse_bytes("G".as_bytes(), 16), None);
+    /// assert_eq!(BigInt::parse_bytes(b"1234", 10), ToBigInt::to_bigint(&1234));
+    /// assert_eq!(BigInt::parse_bytes(b"ABCD", 16), ToBigInt::to_bigint(&0xABCD));
+    /// assert_eq!(BigInt::parse_bytes(b"G", 16), None);
     /// ```
     #[inline]
     pub fn parse_bytes(buf: &[u8], radix: u32) -> Option<BigInt> {
