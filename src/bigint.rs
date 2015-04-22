@@ -691,7 +691,6 @@ impl Integer for BigUint {
     fn lcm(&self, other: &BigUint) -> BigUint { ((self * other) / self.gcd(other)) }
 
     /// Deprecated, use `is_multiple_of` instead.
-    #[deprecated = "function renamed to `is_multiple_of`"]
     #[inline]
     fn divides(&self, other: &BigUint) -> bool { self.is_multiple_of(other) }
 
@@ -1488,7 +1487,6 @@ impl Integer for BigInt {
     }
 
     /// Deprecated, use `is_multiple_of` instead.
-    #[deprecated = "function renamed to `is_multiple_of`"]
     #[inline]
     fn divides(&self, other: &BigInt) -> bool { return self.is_multiple_of(other); }
 
