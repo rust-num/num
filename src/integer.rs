@@ -82,7 +82,6 @@ pub trait Integer
     fn lcm(&self, other: &Self) -> Self;
 
     /// Deprecated, use `is_multiple_of` instead.
-    #[deprecated = "function renamed to `is_multiple_of`"]
     fn divides(&self, other: &Self) -> bool;
 
     /// Returns `true` if `other` is a multiple of `self`.
@@ -238,7 +237,6 @@ macro_rules! impl_integer_for_isize {
             }
 
             /// Deprecated, use `is_multiple_of` instead.
-            #[deprecated = "function renamed to `is_multiple_of`"]
             #[inline]
             fn divides(&self, other: &$T) -> bool { return self.is_multiple_of(other); }
 
@@ -416,7 +414,6 @@ macro_rules! impl_integer_for_usize {
             }
 
             /// Deprecated, use `is_multiple_of` instead.
-            #[deprecated = "function renamed to `is_multiple_of`"]
             #[inline]
             fn divides(&self, other: &$T) -> bool { return self.is_multiple_of(other); }
 
