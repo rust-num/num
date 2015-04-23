@@ -50,7 +50,7 @@ macro_rules! float_trait_impl {
             fn from_str_radix(s: &str, radix: u32)
                               -> Result<Self, ::std::num::ParseFloatError>
             {
-                <$t>::from_str_radix(s, radix)
+                Num::from_str_radix(s, radix)
             }
         }
     )*)
