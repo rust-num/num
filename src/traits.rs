@@ -43,14 +43,160 @@ macro_rules! int_trait_impl {
     )*)
 }
 
+// FIXME: Temporary replacements for unstable ::std::num::ParseFloatError and
+// ::std::num::FloatErrorKind. These can be removed once the std float implementation of
+// from_str_radix stabilises.
+pub enum FloatErrorKind { Empty, Invalid }
+pub struct ParseFloatError { pub kind: FloatErrorKind }
+
+// FIXME: This should be removed and replaced with the std implementation of from_str_radix once
+// it is stabilised.
 macro_rules! float_trait_impl {
     ($name:ident for $($t:ty)*) => ($(
         impl $name for $t {
-            type FromStrRadixErr = ::std::num::ParseFloatError;
-            fn from_str_radix(s: &str, radix: u32)
-                              -> Result<Self, ::std::num::ParseFloatError>
+            type FromStrRadixErr = ParseFloatError;
+            fn from_str_radix(src: &str, radix: u32)
+                              -> Result<Self, ParseFloatError>
             {
-                Num::from_str_radix(s, radix)
+                use self::FloatErrorKind::*;
+                use self::ParseFloatError as PFE;
+
+                // Special values
+                match src {
+                    "inf"   => return Ok(Float::infinity()),
+                    "-inf"  => return Ok(Float::neg_infinity()),
+                    "NaN"   => return Ok(Float::nan()),
+                    _       => {},
+                }
+
+                fn slice_shift_char(src: &str) -> Option<(char, &str)> {
+                    src.chars().nth(0).map(|ch| (ch, &src[1..]))
+                }
+
+                let (is_positive, src) =  match slice_shift_char(src) {
+                    None             => return Err(PFE { kind: Empty }),
+                    Some(('-', ""))  => return Err(PFE { kind: Empty }),
+                    Some(('-', src)) => (false, src),
+                    Some((_, _))     => (true,  src),
+                };
+
+                // The significand to accumulate
+                let mut sig = if is_positive { 0.0 } else { -0.0 };
+                // Necessary to detect overflow
+                let mut prev_sig = sig;
+                let mut cs = src.chars().enumerate();
+                // Exponent prefix and exponent index offset
+                let mut exp_info = None::<(char, usize)>;
+
+                // Parse the integer part of the significand
+                for (i, c) in cs.by_ref() {
+                    match c.to_digit(radix) {
+                        Some(digit) => {
+                            // shift significand one digit left
+                            sig = sig * (radix as $t);
+
+                            // add/subtract current digit depending on sign
+                            if is_positive {
+                                sig = sig + ((digit as isize) as $t);
+                            } else {
+                                sig = sig - ((digit as isize) as $t);
+                            }
+
+                            // Detect overflow by comparing to last value, except
+                            // if we've not seen any non-zero digits.
+                            if prev_sig != 0.0 {
+                                if is_positive && sig <= prev_sig
+                                    { return Ok(Float::infinity()); }
+                                if !is_positive && sig >= prev_sig
+                                    { return Ok(Float::neg_infinity()); }
+
+                                // Detect overflow by reversing the shift-and-add process
+                                if is_positive && (prev_sig != (sig - digit as $t) / radix as $t)
+                                    { return Ok(Float::infinity()); }
+                                if !is_positive && (prev_sig != (sig + digit as $t) / radix as $t)
+                                    { return Ok(Float::neg_infinity()); }
+                            }
+                            prev_sig = sig;
+                        },
+                        None => match c {
+                            'e' | 'E' | 'p' | 'P' => {
+                                exp_info = Some((c, i + 1));
+                                break;  // start of exponent
+                            },
+                            '.' => {
+                                break;  // start of fractional part
+                            },
+                            _ => {
+                                return Err(PFE { kind: Invalid });
+                            },
+                        },
+                    }
+                }
+
+                // If we are not yet at the exponent parse the fractional
+                // part of the significand
+                if exp_info.is_none() {
+                    let mut power = 1.0;
+                    for (i, c) in cs.by_ref() {
+                        match c.to_digit(radix) {
+                            Some(digit) => {
+                                // Decrease power one order of magnitude
+                                power = power / (radix as $t);
+                                // add/subtract current digit depending on sign
+                                sig = if is_positive {
+                                    sig + (digit as $t) * power
+                                } else {
+                                    sig - (digit as $t) * power
+                                };
+                                // Detect overflow by comparing to last value
+                                if is_positive && sig < prev_sig
+                                    { return Ok(Float::infinity()); }
+                                if !is_positive && sig > prev_sig
+                                    { return Ok(Float::neg_infinity()); }
+                                prev_sig = sig;
+                            },
+                            None => match c {
+                                'e' | 'E' | 'p' | 'P' => {
+                                    exp_info = Some((c, i + 1));
+                                    break; // start of exponent
+                                },
+                                _ => {
+                                    return Err(PFE { kind: Invalid });
+                                },
+                            },
+                        }
+                    }
+                }
+
+                // Parse and calculate the exponent
+                let exp = match exp_info {
+                    Some((c, offset)) => {
+                        let base = match c {
+                            'E' | 'e' if radix == 10 => 10.0,
+                            'P' | 'p' if radix == 16 => 2.0,
+                            _ => return Err(PFE { kind: Invalid }),
+                        };
+
+                        // Parse the exponent as decimal integer
+                        let src = &src[offset..];
+                        let (is_positive, exp) = match slice_shift_char(src) {
+                            Some(('-', src)) => (false, src.parse::<usize>()),
+                            Some(('+', src)) => (true,  src.parse::<usize>()),
+                            Some((_, _))     => (true,  src.parse::<usize>()),
+                            None             => return Err(PFE { kind: Invalid }),
+                        };
+
+                        match (is_positive, exp) {
+                            (true,  Ok(exp)) => base.powi(exp as i32),
+                            (false, Ok(exp)) => 1.0 / base.powi(exp as i32),
+                            (_, Err(_))      => return Err(PFE { kind: Invalid }),
+                        }
+                    },
+                    None => 1.0, // no exponent
+                };
+
+                Ok(sig * exp)
+
             }
         }
     )*)
