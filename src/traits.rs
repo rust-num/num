@@ -463,6 +463,30 @@ bounded_impl!(i64, i64::MIN, i64::MAX);
 bounded_impl!(f32, f32::MIN, f32::MAX);
 bounded_impl!(f64, f64::MIN, f64::MAX);
 
+macro_rules! bounded_tuple {
+    ( $($name:ident)* ) => (
+        impl<$($name: Bounded,)*> Bounded for ($($name,)*) {
+            fn min_value() -> Self {
+                ($($name::min_value(),)*)
+            }
+            fn max_value() -> Self {
+                ($($name::max_value(),)*)
+            }
+        }
+    );
+}
+macro_rules! bounded_tuples {
+    () => (
+        bounded_tuple! { }
+    );
+    ( $h:ident, $($t:ident,)* ) => (
+        bounded_tuple! { $h $($t)* }
+        bounded_tuples! { $($t,)* }
+    );
+}
+
+bounded_tuples! { A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, }
+
 /// Saturating math operations
 pub trait Saturating {
     /// Saturating addition operator.
