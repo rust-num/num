@@ -463,6 +463,21 @@ bounded_impl!(i64, i64::MIN, i64::MAX);
 bounded_impl!(f32, f32::MIN, f32::MAX);
 bounded_impl!(f64, f64::MIN, f64::MAX);
 
+macro_rules! for_each_tuple_ {
+    ( $m:ident !! ) => (
+        $m! { }
+    );
+    ( $m:ident !! $h:ident, $($t:ident,)* ) => (
+        $m! { $h $($t)* }
+        for_each_tuple_! { $m !! $($t,)* }
+    );
+}
+macro_rules! for_each_tuple {
+    ( $m:ident ) => (
+        for_each_tuple_! { $m !! A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, }
+    );
+}
+
 macro_rules! bounded_tuple {
     ( $($name:ident)* ) => (
         impl<$($name: Bounded,)*> Bounded for ($($name,)*) {
@@ -475,17 +490,8 @@ macro_rules! bounded_tuple {
         }
     );
 }
-macro_rules! bounded_tuples {
-    () => (
-        bounded_tuple! { }
-    );
-    ( $h:ident, $($t:ident,)* ) => (
-        bounded_tuple! { $h $($t)* }
-        bounded_tuples! { $($t,)* }
-    );
-}
 
-bounded_tuples! { A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, }
+for_each_tuple!(bounded_tuple);
 
 /// Saturating math operations
 pub trait Saturating {
