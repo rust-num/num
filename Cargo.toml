@@ -17,6 +17,5 @@ rational, and complex types.
 rustc-serialize = "0.3.13"
 rand = "0.3.8"
 
-[dev-dependencies.num_macros]
-path = "num_macros/"
-version = "0.1.22"
+[dev-dependencies]
+num-macros = { path = "num-macros", version = "0.1.22" }
