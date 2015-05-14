@@ -13,16 +13,16 @@
 extern crate syntax;
 extern crate rustc;
 
-use syntax::ast::{MetaItem, Item, Expr};
+use syntax::ast::{MetaItem, Expr};
 use syntax::ast;
 use syntax::codemap::Span;
-use syntax::ext::base::ExtCtxt;
+use syntax::ext::base::{ExtCtxt, Annotatable};
 use syntax::ext::build::AstBuilder;
 use syntax::ext::deriving::generic::*;
 use syntax::ext::deriving::generic::ty::*;
 use syntax::parse::token::InternedString;
 use syntax::ptr::P;
-use syntax::ext::base::Decorator;
+use syntax::ext::base::MultiDecorator;
 use syntax::parse::token;
 
 use rustc::plugin::Registry;
@@ -64,8 +64,8 @@ macro_rules! path_std {
 pub fn expand_deriving_from_primitive(cx: &mut ExtCtxt,
                                       span: Span,
                                       mitem: &MetaItem,
-                                      item: &Item,
-                                      push: &mut FnMut(P<Item>))
+                                      item: Annotatable,
+                                      push: &mut FnMut(Annotatable))
 {
     let inline = cx.meta_word(span, InternedString::new("inline"));
     let attrs = vec!(cx.attribute(span, inline));
@@ -110,7 +110,7 @@ pub fn expand_deriving_from_primitive(cx: &mut ExtCtxt,
         associated_types: Vec::new(),
     };
 
-    trait_def.expand(cx, mitem, item, push)
+    trait_def.expand(cx, mitem, &item, push)
 }
 
 fn cs_from(name: &str, cx: &mut ExtCtxt, trait_span: Span, substr: &Substructure) -> P<Expr> {
@@ -196,5 +196,5 @@ fn cs_from(name: &str, cx: &mut ExtCtxt, trait_span: Span, substr: &Substructure
 pub fn plugin_registrar(reg: &mut Registry) {
     reg.register_syntax_extension(
         token::intern("derive_NumFromPrimitive"),
-        Decorator(Box::new(expand_deriving_from_primitive)));
+        MultiDecorator(Box::new(expand_deriving_from_primitive)));
 }

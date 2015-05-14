@@ -1,4 +1,2 @@
-/Cargo.lock
-/num_macros/Cargo.lock
-/num_macros/target
-/target
+Cargo.lock
+target
