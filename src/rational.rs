@@ -18,7 +18,7 @@ use std::fmt;
 use std::ops::{Add, Div, Mul, Neg, Rem, Sub};
 use std::str::FromStr;
 
-use traits::{FromPrimitive, Float};
+use traits::{FromPrimitive, Float, PrimInt};
 use bigint::{BigInt, BigUint, Sign};
 use {Num, Signed, Zero, One};
 
@@ -181,6 +181,19 @@ impl<T: Clone + Integer + PartialOrd> Ratio<T> {
     #[inline]
     pub fn fract(&self) -> Ratio<T> {
         Ratio::new_raw(self.numer.clone() % self.denom.clone(), self.denom.clone())
+    }
+}
+
+impl<T: Clone + Integer + PartialOrd + PrimInt> Ratio<T> {
+    /// Raises the ratio to the power of an exponent
+    #[inline]
+    pub fn pow(&self, expon: i32) -> Ratio<T> {
+        match expon.cmp(&0) {
+            cmp::Ordering::Equal => One::one(),
+            cmp::Ordering::Less => self.recip().pow(-expon),
+            cmp::Ordering::Greater => Ratio::new_raw(self.numer.pow(expon as u32),
+                                                     self.denom.pow(expon as u32)),
+        }
     }
 }
 
@@ -756,6 +769,18 @@ mod test {
         assert_eq!(_1_2 * _1_2.recip(), _1);
         assert_eq!(_3_2 * _3_2.recip(), _1);
         assert_eq!(_NEG1_2 * _NEG1_2.recip(), _1);
+    }
+
+    #[test]
+    fn test_pow() {
+        assert_eq!(_1_2.pow(2), Ratio::new(1, 4));
+        assert_eq!(_1_2.pow(-2), Ratio::new(4, 1));
+        assert_eq!(_1.pow(1), _1);
+        assert_eq!(_NEG1_2.pow(2), _1_2.pow(2));
+        assert_eq!(_NEG1_2.pow(3), -_1_2.pow(3));
+        assert_eq!(_3_2.pow(0), _1);
+        assert_eq!(_3_2.pow(-1), _3_2.recip());
+        assert_eq!(_3_2.pow(3), Ratio::new(27, 8));
     }
 
     #[test]
