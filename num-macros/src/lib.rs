@@ -78,6 +78,7 @@ pub fn expand_deriving_from_primitive(cx: &mut ExtCtxt,
         methods: vec!(
             MethodDef {
                 name: "from_i64",
+                is_unsafe: false,
                 generics: LifetimeBounds::empty(),
                 explicit_self: None,
                 args: vec!(Literal(path_local!(i64))),
@@ -93,6 +94,7 @@ pub fn expand_deriving_from_primitive(cx: &mut ExtCtxt,
             },
             MethodDef {
                 name: "from_u64",
+                is_unsafe: false,
                 generics: LifetimeBounds::empty(),
                 explicit_self: None,
                 args: vec!(Literal(path_local!(u64))),
