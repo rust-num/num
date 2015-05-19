@@ -14,3 +14,6 @@ Numeric syntax extensions.
 [lib]
 name = "num_macros"
 plugin = true
+
+[dev-dependencies]
+num = { path = "..", version = "*" }
