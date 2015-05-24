@@ -64,7 +64,7 @@ macro_rules! path_std {
 pub fn expand_deriving_from_primitive(cx: &mut ExtCtxt,
                                       span: Span,
                                       mitem: &MetaItem,
-                                      item: Annotatable,
+                                      item: &Annotatable,
                                       push: &mut FnMut(Annotatable))
 {
     let inline = cx.meta_word(span, InternedString::new("inline"));
