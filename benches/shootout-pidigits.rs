@@ -38,16 +38,12 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 // OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#![feature(test)]
-
 extern crate num;
-extern crate test;
 
 use std::str::FromStr;
+use std::io;
+
 use num::traits::{FromPrimitive, ToPrimitive};
-
-use test::Bencher;
-
 use num::{BigInt, Integer, One, Zero};
 
 struct Context {
@@ -93,7 +89,7 @@ impl Context {
     }
 }
 
-fn pidigits(n: isize) {
+fn pidigits(n: isize, out: &mut io::Write) -> io::Result<()> {
     let mut k = 0;
     let mut context = Context::new();
 
@@ -106,33 +102,30 @@ fn pidigits(n: isize) {
             if d != -1 {break;}
         }
 
-        print!("{}", d);
-        if i % 10 == 0 {print!("\t:{}\n", i);}
+        try!(write!(out, "{}", d));
+        if i % 10 == 0 { try!(write!(out, "\t:{}\n", i)); }
 
         context.eliminate_digit(d);
     }
 
     let m = n % 10;
     if m != 0 {
-        for _ in (m..10) { print!(" "); }
-        print!("\t:{}\n", n);
+        for _ in (m..10) { try!(write!(out, " ")); }
+        try!(write!(out, "\t:{}\n", n));
     }
+    Ok(())
 }
 
-static DEFAULT_DIGITS: isize = 512;
+const DEFAULT_DIGITS: isize = 512;
 
-#[bench]
-fn use_bencher(b: &mut Bencher) {
-    b.iter(|| pidigits(DEFAULT_DIGITS))
-}
-
-#[allow(dead_code)]
 fn main() {
     let args = std::env::args().collect::<Vec<_>>();
     let n = if args.len() < 2 {
         DEFAULT_DIGITS
+    } else if args[1] == "--bench" {
+        return pidigits(DEFAULT_DIGITS, &mut std::io::sink()).unwrap()
     } else {
         FromStr::from_str(&args[1]).unwrap()
     };
-    pidigits(n);
+    pidigits(n, &mut std::io::stdout()).unwrap();
 }

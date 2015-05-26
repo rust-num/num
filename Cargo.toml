@@ -16,3 +16,7 @@ rational, and complex types.
 [dependencies]
 rustc-serialize = "0.3.13"
 rand = "0.3.8"
+
+[[bench]]
+name = "shootout-pidigits"
+harness = false
