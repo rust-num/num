@@ -57,7 +57,7 @@ pub use integer::Integer;
 pub use iter::{range, range_inclusive, range_step, range_step_inclusive};
 pub use traits::{Num, Zero, One, Signed, Unsigned, Bounded,
                  Saturating, CheckedAdd, CheckedSub, CheckedMul, CheckedDiv,
-                 PrimInt, Float, ToPrimitive, FromPrimitive, NumCast};
+                 PrimInt, Float, ToPrimitive, FromPrimitive, NumCast, cast};
 
 #[cfg(test)] use std::hash;
 

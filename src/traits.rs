@@ -1293,7 +1293,7 @@ impl_from_primitive! { f64, to_f64 }
 /// ```
 /// use num;
 ///
-/// let twenty: f32 = num::traits::cast(0x14).unwrap();
+/// let twenty: f32 = num::cast(0x14).unwrap();
 /// assert_eq!(twenty, 20f32);
 /// ```
 ///
