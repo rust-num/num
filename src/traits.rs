@@ -1406,6 +1406,18 @@ pub trait Float
     /// ```
     fn min_value() -> Self;
 
+    /// Returns the smallest positive, normalized value that this type can represent.
+    ///
+    /// ```
+    /// use num::traits::Float;
+    /// use std::f64;
+    ///
+    /// let x: f64 = Float::min_positive_value();
+    ///
+    /// assert_eq!(x, f64::MIN_POSITIVE);
+    /// ```
+    fn min_positive_value() -> Self;
+
     /// Returns the largest finite value that this type can represent.
     ///
     /// ```
@@ -2205,6 +2217,10 @@ macro_rules! float_impl {
 
             fn min_value() -> Self {
                 ::std::$T::MIN
+            }
+
+            fn min_positive_value() -> Self {
+                ::std::$T::MIN_POSITIVE
             }
 
             fn max_value() -> Self {
