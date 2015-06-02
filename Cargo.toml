@@ -14,8 +14,15 @@ rational, and complex types.
 """
 
 [dependencies]
-rustc-serialize = "0.3.13"
-rand = "0.3.8"
+rustc-serialize = { version = "0.3.13", optional = true }
+rand = { version = "0.3.8", optional = true }
+
+[features]
+
+complex = []
+rational = []
+bigint = ["rustc-serialize", "rand"]
+default = ["complex", "rational", "bigint"]
 
 [[bench]]
 name = "shootout-pidigits"

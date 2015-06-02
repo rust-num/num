@@ -58,8 +58,6 @@
 //! # }
 //! ```
 
-extern crate rustc_serialize;
-
 use Integer;
 
 use std::default::Default;
