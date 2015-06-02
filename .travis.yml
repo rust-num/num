@@ -8,6 +8,10 @@ script:
   - cargo build --verbose
   - cargo test --verbose
   - |
+    (for feature in '' bigint rational complex; do
+      cargo test --verbose --no-default-features --features="$feature" || exit 1
+    done)
+  - |
     [ $TRAVIS_RUST_VERSION != nightly ] || (
       cargo bench &&
       cargo test --verbose --manifest-path=num-macros/Cargo.toml

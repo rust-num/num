@@ -19,6 +19,8 @@
 //!
 //! ```
 //! extern crate num;
+//! # #[cfg(all(feature = "bigint", feature="rational"))]
+//! # pub mod test {
 //!
 //! use num::FromPrimitive;
 //! use num::bigint::BigInt;
@@ -35,10 +37,14 @@
 //!
 //!     approx
 //! }
+//! # }
+//! # #[cfg(not(all(feature = "bigint", feature="rational")))]
+//! # fn approx_sqrt(n: u64, _: usize) -> u64 { n }
 //!
 //! fn main() {
 //!     println!("{}", approx_sqrt(10, 4)); // prints 4057691201/1283082416
 //! }
+//!
 //! ```
 //!
 //! [newt]: https://en.wikipedia.org/wiki/Methods_of_computing_square_roots#Babylonian_method
@@ -47,11 +53,18 @@
        html_root_url = "http://doc.rust-lang.org/num/",
        html_playground_url = "http://play.rust-lang.org/")]
 
+#[cfg(feature = "rustc-serialize")]
 extern crate rustc_serialize;
+#[cfg(feature = "rand")]
 extern crate rand;
 
+#[cfg(feature = "bigint")]
 pub use bigint::{BigInt, BigUint};
-pub use rational::{Rational, BigRational};
+#[cfg(feature = "rational")]
+pub use rational::Rational;
+#[cfg(all(feature = "rational", feature="bigint"))]
+pub use rational::BigRational;
+#[cfg(feature = "complex")]
 pub use complex::Complex;
 pub use integer::Integer;
 pub use iter::{range, range_inclusive, range_step, range_step_inclusive};
@@ -63,11 +76,13 @@ pub use traits::{Num, Zero, One, Signed, Unsigned, Bounded,
 
 use std::ops::{Mul};
 
+#[cfg(feature = "bigint")]
 pub mod bigint;
 pub mod complex;
 pub mod integer;
 pub mod iter;
 pub mod traits;
+#[cfg(feature = "rational")]
 pub mod rational;
 
 /// Returns the additive identity, `0`.

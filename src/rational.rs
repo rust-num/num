@@ -18,12 +18,14 @@ use std::fmt;
 use std::ops::{Add, Div, Mul, Neg, Rem, Sub};
 use std::str::FromStr;
 
-use traits::{FromPrimitive, Float, PrimInt};
+#[cfg(feature = "bigint")]
 use bigint::{BigInt, BigUint, Sign};
+use traits::{FromPrimitive, Float, PrimInt};
 use {Num, Signed, Zero, One};
 
 /// Represents the ratio between 2 numbers.
-#[derive(Copy, Clone, Hash, RustcEncodable, RustcDecodable, Debug)]
+#[derive(Copy, Clone, Hash, Debug)]
+#[cfg_attr(feature = "rustc-serialize", derive(RustcEncodable, RustcDecodable))]
 #[allow(missing_docs)]
 pub struct Ratio<T> {
     numer: T,
@@ -35,6 +37,7 @@ pub type Rational = Ratio<isize>;
 pub type Rational32 = Ratio<i32>;
 pub type Rational64 = Ratio<i64>;
 
+#[cfg(feature = "bigint")]
 /// Alias for arbitrary precision rationals.
 pub type BigRational = Ratio<BigInt>;
 
@@ -197,6 +200,7 @@ impl<T: Clone + Integer + PartialOrd + PrimInt> Ratio<T> {
     }
 }
 
+#[cfg(feature = "bigint")]
 impl Ratio<BigInt> {
     /// Converts a float into a rational number.
     pub fn from_float<T: Float>(f: T) -> Option<BigRational> {
@@ -493,7 +497,9 @@ impl Error for ParseRatioError {
 #[cfg(test)]
 mod test {
 
-    use super::{Ratio, Rational, BigRational};
+    use super::{Ratio, Rational};
+    #[cfg(feature = "bigint")]
+    use super::BigRational;
     use std::str::FromStr;
     use std::i32;
     use {Zero, One, Signed, FromPrimitive, Float};
@@ -509,7 +515,15 @@ mod test {
     pub const _2_3: Rational = Ratio { numer: 2, denom: 3};
     pub const _NEG2_3: Rational = Ratio { numer: -2, denom: 3};
 
+    #[cfg(feature = "bigint")]
     pub fn to_big(n: Rational) -> BigRational {
+        Ratio::new(
+            FromPrimitive::from_isize(n.numer).unwrap(),
+            FromPrimitive::from_isize(n.denom).unwrap()
+        )
+    }
+    #[cfg(not(feature = "bigint"))]
+    pub fn to_big(n: Rational) -> Rational {
         Ratio::new(
             FromPrimitive::from_isize(n.numer).unwrap(),
             FromPrimitive::from_isize(n.denom).unwrap()
@@ -809,6 +823,7 @@ mod test {
         }
     }
 
+    #[cfg(feature = "bigint")]
     #[test]
     fn test_from_float() {
         fn test<T: Float>(given: T, (numer, denom): (&str, &str)) {
@@ -835,6 +850,7 @@ mod test {
         test(1.0 / 2f64.powf(100.), ("1", "1267650600228229401496703205376"));
     }
 
+    #[cfg(feature = "bigint")]
     #[test]
     fn test_from_float_fail() {
         use std::{f32, f64};
