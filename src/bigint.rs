@@ -1855,6 +1855,58 @@ impl From<ParseIntError> for ParseBigIntError {
     }
 }
 
+const TABLE_BASE: usize = 5;
+
+pub trait ModPow<T> {
+    fn mod_pow(&self, exp: &T, m: &T) -> T;
+}
+
+impl ModPow<BigInt> for BigInt {
+
+    // Left-to-right k-ary exponentiation
+    fn mod_pow(&self, exp: &BigInt, m: &BigInt) -> BigInt {
+
+        let base = 2 << (TABLE_BASE - 1);
+
+        let mut table = Vec::with_capacity(base);
+        table.push(BigInt::one());
+
+        for i in 1..base {
+            let last = table.get_mut(i-1).unwrap().clone();
+
+            table.push((last * self) % m);
+        }
+
+        let mut r = BigInt::one();
+
+        for i in digits_of_n(exp, base).iter().rev() {
+            for _ in 0..TABLE_BASE {
+                r = &r * &r % m
+            }
+
+            if *i != 0 {
+                r = &r * table.get(*i).unwrap() % m;
+            }
+        }
+
+        r
+    }
+}
+
+fn digits_of_n(e: &BigInt, b: usize) -> Vec<usize> {
+    let mut digits = Vec::new();
+
+    let mut n = (*e).clone();
+    let base = BigInt::from_usize(b).unwrap();
+
+    while n > BigInt::zero() {
+        digits.push((&n % &base).to_usize().unwrap());
+        n = &n / &base;
+    }
+
+    digits
+}
+
 #[cfg(test)]
 mod biguint_tests {
     use Integer;
@@ -2787,6 +2839,7 @@ mod bigint_tests {
     use Integer;
     use super::{BigDigit, BigUint, ToBigUint};
     use super::{Sign, BigInt, RandBigInt, ToBigInt, big_digit};
+    use super::{ModPow};
     use super::Sign::{Minus, NoSign, Plus};
 
     use std::cmp::Ordering::{Less, Equal, Greater};
@@ -3447,4 +3500,39 @@ mod bigint_tests {
         // Switching u and l should fail:
         let _n: BigInt = rng.gen_bigint_range(&u, &l);
     }
+
+    #[test]
+    fn test_mod_pow() {
+        fn check(b: &BigInt, e: &BigInt, m: &BigInt, r: &BigInt) {
+            assert_eq!(b.mod_pow(&e, &m), *r);
+        }
+
+        fn check_i64(b: i64, e: i64, m: i64, r: i64) {
+            let big_b = BigInt::from_i64(b).unwrap();
+            let big_e = BigInt::from_i64(e).unwrap();
+            let big_m = BigInt::from_i64(m).unwrap();
+            let big_r = BigInt::from_i64(r).unwrap();
+
+            check(&big_b, &big_e, &big_m, &big_r);
+        }
+
+
+        check_i64(-2, 5, 33, -32);
+        check_i64(-2, 5, 32, 0);
+        check_i64(-1, 3, 10, -1);
+        check_i64(-1, 4, 10, 1);
+        check_i64(0, 2352, 21, 0);
+        check_i64(1, 26, 21, 1);
+        check_i64(2, 5, 33, 32);
+        check_i64(2, 5, 32, 0);
+        // check_i64(std::i64::MAX, std::i64::MAX, 2, 1);
+
+        let big_b = BigInt::new(Plus, vec![12,234,234,556,34]);
+        let big_e = BigInt::new(Plus, vec![12,234,234,556,34]);
+        let big_m = BigInt::new(Plus, vec![234,556,34]);
+        let big_r = BigInt::new(Plus, vec![2689017340, 2002504038, 5]);
+
+        check(&big_b, &big_e, &big_m, &big_r);
+    }
+
 }
