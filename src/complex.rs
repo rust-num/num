@@ -100,6 +100,18 @@ impl<T: Clone + Float + Num> Complex<T> {
     pub fn from_polar(r: &T, theta: &T) -> Complex<T> {
         Complex::new(*r * theta.cos(), *r * theta.sin())
     }
+
+    /// Raises self to a complex power `exp`
+    #[inline]
+    pub fn powc(&self, exp: &Complex<T>) -> Complex<T> {
+      // Formula: (r e^(ti))^(a+bi) = (r^a e^(-bt)) e^((ln(r)b+at)i)
+      let (r, t) = exp.to_polar();
+
+      let r2 = r.powf(exp.re) * (-exp.im * t).exp();
+      let t2 = r.ln() * self.im + self.re * t;
+
+      Self::from_polar(&r2, &t2)
+    }
 }
 
 macro_rules! forward_val_val_binop {
@@ -402,6 +414,7 @@ mod test {
                 assert_eq!(_1_0i * c, c);
             }
         }
+
         #[test]
         fn test_div() {
             assert_eq!(_neg1_1i / _0_1i, _1_1i);
@@ -411,6 +424,7 @@ mod test {
                 }
             }
         }
+
         #[test]
         fn test_neg() {
             assert_eq!(-_1_0i + _0_1i, _neg1_1i);
