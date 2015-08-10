@@ -1949,7 +1949,7 @@ mod biguint_tests {
 
     #[test]
     fn test_cmp() {
-        let data: [&[_]; 7] = [ &[], &[1], &[2], &[-1], &[0, 1], &[2, 1], &[1, 1, 1]  ];
+        let data: [&[_]; 7] = [ &[], &[1], &[2], &[!0], &[0, 1], &[2, 1], &[1, 1, 1]  ];
         let data: Vec<BigUint> = data.iter().map(|v| BigUint::from_slice(*v)).collect();
         for (i, ni) in data.iter().enumerate() {
             for (j0, nj) in data[i..].iter().enumerate() {
