@@ -212,7 +212,7 @@ float_trait_impl!(Num for f32 f64);
 /// This trait can be automatically be derived using `#[deriving(Zero)]`
 /// attribute. If you choose to use this, make sure that the laws outlined in
 /// the documentation for `Zero::zero` still hold.
-pub trait Zero: Add<Self, Output = Self> {
+pub trait Zero: Sized + Add<Self, Output = Self> {
     /// Returns the additive identity element of `Self`, `0`.
     ///
     /// # Laws
@@ -262,7 +262,7 @@ zero_impl!(f32, 0.0f32);
 zero_impl!(f64, 0.0f64);
 
 /// Defines a multiplicative identity element for `Self`.
-pub trait One: Mul<Self, Output = Self> {
+pub trait One: Sized + Mul<Self, Output = Self> {
     /// Returns the multiplicative identity element of `Self`, `1`.
     ///
     /// # Laws
@@ -306,7 +306,7 @@ one_impl!(f32, 1.0f32);
 one_impl!(f64, 1.0f64);
 
 /// Useful functions for signed numbers (i.e. numbers that can be negative).
-pub trait Signed: Num + Neg<Output = Self> {
+pub trait Signed: Sized + Num + Neg<Output = Self> {
     /// Computes the absolute value.
     ///
     /// For `f32` and `f64`, `NaN` will be returned if the number is `NaN`.
@@ -532,7 +532,7 @@ impl<T: CheckedAdd + CheckedSub + Zero + PartialOrd + Bounded> Saturating for T 
 
 /// Performs addition that returns `None` instead of wrapping around on
 /// overflow.
-pub trait CheckedAdd: Add<Self, Output = Self> {
+pub trait CheckedAdd: Sized + Add<Self, Output = Self> {
     /// Adds two numbers, checking for overflow. If overflow happens, `None` is
     /// returned.
     fn checked_add(&self, v: &Self) -> Option<Self>;
@@ -562,7 +562,7 @@ checked_impl!(CheckedAdd, checked_add, i64);
 checked_impl!(CheckedAdd, checked_add, isize);
 
 /// Performs subtraction that returns `None` instead of wrapping around on underflow.
-pub trait CheckedSub: Sub<Self, Output = Self> {
+pub trait CheckedSub: Sized + Sub<Self, Output = Self> {
     /// Subtracts two numbers, checking for underflow. If underflow happens,
     /// `None` is returned.
     fn checked_sub(&self, v: &Self) -> Option<Self>;
@@ -582,7 +582,7 @@ checked_impl!(CheckedSub, checked_sub, isize);
 
 /// Performs multiplication that returns `None` instead of wrapping around on underflow or
 /// overflow.
-pub trait CheckedMul: Mul<Self, Output = Self> {
+pub trait CheckedMul: Sized + Mul<Self, Output = Self> {
     /// Multiplies two numbers, checking for underflow or overflow. If underflow
     /// or overflow happens, `None` is returned.
     fn checked_mul(&self, v: &Self) -> Option<Self>;
@@ -602,7 +602,7 @@ checked_impl!(CheckedMul, checked_mul, isize);
 
 /// Performs division that returns `None` instead of panicking on division by zero and instead of
 /// wrapping around on underflow and overflow.
-pub trait CheckedDiv: Div<Self, Output = Self> {
+pub trait CheckedDiv: Sized + Div<Self, Output = Self> {
     /// Divides two numbers, checking for underflow, overflow and division by
     /// zero. If any of that happens, `None` is returned.
     fn checked_div(&self, v: &Self) -> Option<Self>;
@@ -1303,7 +1303,7 @@ pub fn cast<T: NumCast,U: NumCast>(n: T) -> Option<U> {
 }
 
 /// An interface for casting between machine scalars.
-pub trait NumCast: ToPrimitive {
+pub trait NumCast: Sized + ToPrimitive {
     /// Creates a number from another value that can be converted into
     /// a primitive via the `ToPrimitive` trait.
     fn from<T: ToPrimitive>(n: T) -> Option<Self>;
