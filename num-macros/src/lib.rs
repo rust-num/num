@@ -64,6 +64,7 @@ pub fn expand_deriving_from_primitive(cx: &mut ExtCtxt,
     let inline = cx.meta_word(span, InternedString::new("inline"));
     let attrs = vec!(cx.attribute(span, inline));
     let trait_def = TraitDef {
+        is_unsafe: false,
         span: span,
         attributes: Vec::new(),
         path: path!(num::FromPrimitive),
