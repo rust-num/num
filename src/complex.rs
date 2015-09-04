@@ -81,9 +81,6 @@ impl<T: Clone + Float> Complex<T> {
     pub fn norm(&self) -> T {
         self.re.clone().hypot(self.im.clone())
     }
-}
-
-impl<T: Clone + Float + Num> Complex<T> {
     /// Calculate the principal Arg of self.
     #[inline]
     pub fn arg(&self) -> T {
