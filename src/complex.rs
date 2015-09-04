@@ -81,6 +81,22 @@ impl<T: Clone + Float> Complex<T> {
     pub fn norm(&self) -> T {
         self.re.clone().hypot(self.im.clone())
     }
+    /// Calculate the principal Arg of self.
+    #[inline]
+    pub fn arg(&self) -> T {
+        self.im.clone().atan2(self.re.clone())
+    }
+    /// Convert to polar form (r, theta), such that `self = r * exp(i
+    /// * theta)`
+    #[inline]
+    pub fn to_polar(&self) -> (T, T) {
+        (self.norm(), self.arg())
+    }
+    /// Convert a polar representation into a complex number.
+    #[inline]
+    pub fn from_polar(r: &T, theta: &T) -> Complex<T> {
+        Complex::new(*r * theta.cos(), *r * theta.sin())
+    }
 
     /// Computes e^(self), where e is the base of the natural logarithm.
     #[inline]
@@ -150,25 +166,6 @@ impl<T: Clone + Float> Complex<T> {
         let e_z = self.exp();
         let e_neg_z = e_z.inv();
         (e_z - e_neg_z) / (e_z + e_neg_z)
-    }
-}
-
-impl<T: Clone + Float + Num> Complex<T> {
-    /// Calculate the principal Arg of self.
-    #[inline]
-    pub fn arg(&self) -> T {
-        self.im.clone().atan2(self.re.clone())
-    }
-    /// Convert to polar form (r, theta), such that `self = r * exp(i
-    /// * theta)`
-    #[inline]
-    pub fn to_polar(&self) -> (T, T) {
-        (self.norm(), self.arg())
-    }
-    /// Convert a polar representation into a complex number.
-    #[inline]
-    pub fn from_polar(r: &T, theta: &T) -> Complex<T> {
-        Complex::new(*r * theta.cos(), *r * theta.sin())
     }
 }
 
