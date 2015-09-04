@@ -81,6 +81,76 @@ impl<T: Clone + Float> Complex<T> {
     pub fn norm(&self) -> T {
         self.re.clone().hypot(self.im.clone())
     }
+
+    /// Computes e^(self), where e is the base of the natural logarithm.
+    #[inline]
+    pub fn exp(&self) -> Complex<T> {
+        // formula: e^(a + bi) = e^a * (cos(b) + isin(b))
+        let exp = self.re.exp();
+        Complex::new(exp * self.im.cos(), exp * self.im.sin())
+    }
+
+    /// Computes the sine of self.
+    #[inline]
+    pub fn sin(&self) -> Complex<T> {
+        // formula: sin(z) = (e^(iz) - e^(-iz)) / 2i
+        //let one = One::one();
+        let i = Complex::new(Zero::zero(), One::one());
+        let two_i = i + i;
+        let e_iz = (self*i).exp();
+        let e_neg_iz = e_iz.inv();
+        (e_iz - e_neg_iz) / two_i
+    }
+
+    /// Computes the cosine of self.
+    #[inline]
+    pub fn cos(&self) -> Complex<T> {
+        // formula: cos(z) = (e^(iz) + e^(-iz)) / 2
+        let i = Complex::new(Zero::zero(), One::one());
+        let two = Complex::one() + Complex::one();
+        let e_iz = (self*i).exp();
+        let e_neg_iz = e_iz.inv();
+        (e_iz + e_neg_iz) / two
+    }
+
+    /// Computes the tangent of self.
+    #[inline]
+    pub fn tan(&self) -> Complex<T> {
+        // formula: tan(z) = i (e^(-iz) - e^(iz)) / (e^(-iz) + e^(iz))
+        let i = Complex::new(Zero::zero(), One::one());
+        let e_iz = (self*i).exp();
+        let e_neg_iz = e_iz.inv();
+        i * (e_neg_iz - e_iz) / (e_neg_iz + e_iz)
+    }
+
+    /// Computes the hyperbolic sine of self.
+    #[inline]
+    pub fn sinh(&self) -> Complex<T> {
+        // formula: sinh(z) = (e^(z) - e^(-z)) / 2
+        let two = Complex::one() + Complex::one();
+        let e_z = self.exp();
+        let e_neg_z = e_z.inv();
+        (e_z - e_neg_z) / two
+    }
+
+    /// Computes the hyperbolic cosine of self.
+    #[inline]
+    pub fn cosh(&self) -> Complex<T> {
+        // formula: sinh(z) = (e^(z) + e^(-z)) / 2
+        let two = Complex::one() + Complex::one();
+        let e_z = self.exp();
+        let e_neg_z = e_z.inv();
+        (e_z + e_neg_z) / two
+    }
+
+    /// Computes the hyperbolic tangent of self.
+    #[inline]
+    pub fn tanh(&self) -> Complex<T> {
+        // formula: tanh(z) = (e^(z) - e^(-z)) / (e^(z) + e^(-z))
+        let e_z = self.exp();
+        let e_neg_z = e_z.inv();
+        (e_z - e_neg_z) / (e_z + e_neg_z)
+    }
 }
 
 impl<T: Clone + Float + Num> Complex<T> {
@@ -358,6 +428,90 @@ mod test {
             assert!((c - Complex::from_polar(&r, &theta)).norm() < 1e-6);
         }
         for &c in all_consts.iter() { test(c); }
+    }
+
+    fn very_close(a: Complex64, b: Complex64) -> bool {
+        // returns true if a and b are reasonably close
+        (a-b).norm() < 1e-10
+    }
+
+    #[test]
+    fn test_exp() {
+        assert_eq!(_1_0i.exp(), Complex::new(f64::consts::E, 0.0));
+        assert_eq!(_0_0i.exp(), _1_0i);
+        assert_eq!(_0_1i.exp(), Complex::new(1.0.cos(), 1.0.sin()));
+        assert!(very_close(_05_05i.exp()*_05_05i.exp(), _1_1i.exp()));
+        assert!(very_close(Complex::new(0.0, -f64::consts::PI).exp(), _1_0i.scale(-1.0)));
+        for &c in all_consts.iter() {
+            assert!(very_close(c.exp(), (c + Complex::new(0.0, f64::consts::PI*2.0)).exp()));
+        }
+    }
+
+    #[test]
+    fn test_sin() {
+        assert_eq!(_0_0i.sin(), _0_0i);
+        assert!(very_close(_1_0i.scale(f64::consts::PI*2.0).sin(), _0_0i));
+        assert_eq!(_0_1i.sin(), _0_1i.scale(1.0.sinh()));
+        for &c in all_consts.iter() {
+            assert!(very_close(c.conj().sin(), c.sin().conj()));
+            assert!(very_close(c.scale(-1.0).sin(), c.sin().scale(-1.0)));
+        }
+    }
+
+    #[test]
+    fn test_cos() {
+        assert_eq!(_0_0i.cos(), _1_0i);
+        assert!(very_close(_1_0i.scale(f64::consts::PI*2.0).cos(), _1_0i));
+        assert_eq!(_0_1i.cos(), _1_0i.scale(1.0.cosh()));
+        for &c in all_consts.iter() {
+            assert!(very_close(c.conj().cos(), c.cos().conj()));
+            assert!(very_close(c.scale(-1.0).cos(), c.cos()));
+        }
+    }
+
+    #[test]
+    fn test_tan() {
+        assert_eq!(_0_0i.tan(), _0_0i);
+        assert!(very_close(_1_0i.scale(f64::consts::PI).tan(), _0_0i));
+        for &c in all_consts.iter() {
+            assert!(very_close(c.conj().tan(), c.tan().conj()));
+            assert!(very_close(c.scale(-1.0).tan(), c.tan().scale(-1.0)));
+            assert!(very_close(c.tan(), c.sin()/c.cos()));
+        }
+    }
+
+    #[test]
+    fn test_sinh() {
+        assert_eq!(_0_0i.sinh(), _0_0i);
+        assert_eq!(_1_0i.sinh(), _1_0i.scale((f64::consts::E - 1.0/f64::consts::E)/2.0));
+        assert_eq!(_0_1i.sinh(), _0_1i.scale(1.0.sin()));
+        for &c in all_consts.iter() {
+            assert!(very_close(c.conj().sinh(), c.sinh().conj()));
+            assert!(very_close(c.scale(-1.0).sinh(), c.sinh().scale(-1.0)));
+        }
+    }
+
+    #[test]
+    fn test_cosh() {
+        assert_eq!(_0_0i.cosh(), _1_0i);
+        assert_eq!(_1_0i.cosh(), _1_0i.scale((f64::consts::E + 1.0/f64::consts::E)/2.0));
+        assert_eq!(_0_1i.cosh(), _1_0i.scale(1.0.cos()));
+        for &c in all_consts.iter() {
+            assert!(very_close(c.conj().cosh(), c.cosh().conj()));
+            assert!(very_close(c.scale(-1.0).cosh(), c.cosh()));
+        }
+    }
+
+    #[test]
+    fn test_tanh() {
+        assert_eq!(_0_0i.tanh(), _0_0i);
+        assert!(very_close(_1_0i.tanh(), _1_0i.scale((f64::consts::E.powi(2) - 1.0)/(f64::consts::E.powi(2) + 1.0))));
+        assert!(very_close(_0_1i.tanh(), _0_1i.scale(1.0.tan())));
+        for &c in all_consts.iter() {
+            assert!(very_close(c.conj().tanh(), c.conj().tanh()));
+            assert!(very_close(c.scale(-1.0).tanh(), c.tanh().scale(-1.0)));
+            assert!(very_close(c.tanh(), c.sinh()/c.cosh()));
+        }
     }
 
     mod arith {
