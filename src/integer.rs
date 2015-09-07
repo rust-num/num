@@ -230,7 +230,7 @@ macro_rules! impl_integer_for_isize {
                 // trivially be calculated in that case by bitshifting
 
                 // The result is always positive in two's complement, unless
-                // a and b are the minimum value, then it's negative
+                // n and m are the minimum value, then it's negative
                 // no other way to represent that number
                 if m == <$T>::min_value() || n == <$T>::min_value() { return 1 << shift }
 
@@ -238,7 +238,7 @@ macro_rules! impl_integer_for_isize {
                 m = m.abs();
                 n = n.abs();
 
-                // divide a and b by 2 until odd
+                // divide n and m by 2 until odd
                 // m inside loop
                 n >>= n.trailing_zeros();
 
@@ -427,7 +427,7 @@ macro_rules! impl_integer_for_usize {
                 // find common factors of 2
                 let shift = (m | n).trailing_zeros();
 
-                // divide a and b by 2 until odd
+                // divide n and m by 2 until odd
                 // m inside loop
                 n >>= n.trailing_zeros();
 
