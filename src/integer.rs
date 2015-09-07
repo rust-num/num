@@ -217,15 +217,38 @@ macro_rules! impl_integer_for_isize {
             /// `other`. The result is always positive.
             #[inline]
             fn gcd(&self, other: &$T) -> $T {
-                // Use Euclid's algorithm
+                // Use Stein's algorithm
                 let mut m = *self;
                 let mut n = *other;
+                if m == 0 || n == 0 { return (m | n).abs() }
+
+                // find common factors of 2
+                let shift = (m | n).trailing_zeros();
+
+                // If one number is the minimum value, it cannot be represented as a
+                // positive number. It's also a power of two, so the gcd can
+                // trivially be calculated in that case by bitshifting
+
+                // The result is always positive in two's complement, unless
+                // a and b are the minimum value, then it's negative
+                // no other way to represent that number
+                if m == <$T>::min_value() || n == <$T>::min_value() { return 1 << shift }
+
+                // guaranteed to be positive now, rest like unsigned algorithm
+                m = m.abs();
+                n = n.abs();
+
+                // divide a and b by 2 until odd
+                // m inside loop
+                n >>= n.trailing_zeros();
+
                 while m != 0 {
-                    let temp = m;
-                    m = n % temp;
-                    n = temp;
+                    m >>= m.trailing_zeros();
+                    if n > m { ::std::mem::swap(&mut n, &mut m) }
+                    m -= n;
                 }
-                n.abs()
+
+                n << shift
             }
 
             /// Calculates the Lowest Common Multiple (LCM) of the number and
@@ -396,15 +419,25 @@ macro_rules! impl_integer_for_usize {
             /// Calculates the Greatest Common Divisor (GCD) of the number and `other`
             #[inline]
             fn gcd(&self, other: &$T) -> $T {
-                // Use Euclid's algorithm
+                // Use Stein's algorithm
                 let mut m = *self;
                 let mut n = *other;
+                if m == 0 || n == 0 { return m | n }
+
+                // find common factors of 2
+                let shift = (m | n).trailing_zeros();
+
+                // divide a and b by 2 until odd
+                // m inside loop
+                n >>= n.trailing_zeros();
+
                 while m != 0 {
-                    let temp = m;
-                    m = n % temp;
-                    n = temp;
+                    m >>= m.trailing_zeros();
+                    if n > m { ::std::mem::swap(&mut n, &mut m) }
+                    m -= n;
                 }
-                n
+
+                n << shift
             }
 
             /// Calculates the Lowest Common Multiple (LCM) of the number and `other`.
