@@ -360,6 +360,47 @@ macro_rules! impl_integer_for_isize {
                 assert_eq!((-6 as $T).gcd(&3), 3 as $T);
                 assert_eq!((-4 as $T).gcd(&-2), 2 as $T);
             }
+            #[test]
+            fn test_gcd_cmp_with_euclidean() {
+                fn euclidean_gcd(mut m: $T, mut n: $T) -> $T {
+                    while m != 0 {
+                        ::std::mem::swap(&mut m, &mut n);
+                        m %= n;
+                    }
+
+                    n.abs()
+                }
+
+                // gcd(-128, b) = 128 is not representable as positive value
+                // for i8
+                for i in -127..127 {
+                    for j in -127..127 {
+                        assert_eq!(euclidean_gcd(i,j), i.gcd(&j));
+                    }
+                }
+
+                // last value
+                // FIXME: Use inclusive ranges for above loop when implemented
+                let i = 127;
+                for j in -127..127 {
+                    assert_eq!(euclidean_gcd(i,j), i.gcd(&j));
+                }
+                assert_eq!(127.gcd(&127), 127);
+            }
+
+            #[test]
+            #[should_panic]
+            fn test_gcd_min_val_min_val() {
+                let min = <$T>::min_value();
+                min.gcd(&min);
+            }
+
+            #[test]
+            #[should_panic]
+            fn test_gcd_min_val_0() {
+                let min = <$T>::min_value();
+                min.gcd(&0);
+            }
 
             #[test]
             fn test_lcm() {
@@ -496,6 +537,31 @@ macro_rules! impl_integer_for_usize {
                 assert_eq!((0 as $T).gcd(&3), 3 as $T);
                 assert_eq!((3 as $T).gcd(&3), 3 as $T);
                 assert_eq!((56 as $T).gcd(&42), 14 as $T);
+            }
+
+            #[test]
+            fn test_gcd_cmp_with_euclidean() {
+                fn euclidean_gcd(mut m: $T, mut n: $T) -> $T {
+                    while m != 0 {
+                        ::std::mem::swap(&mut m, &mut n);
+                        m %= n;
+                    }
+                    n
+                }
+
+                for i in 0..255 {
+                    for j in 0..255 {
+                        assert_eq!(euclidean_gcd(i,j), i.gcd(&j));
+                    }
+                }
+
+                // last value
+                // FIXME: Use inclusive ranges for above loop when implemented
+                let i = 255;
+                for j in 0..255 {
+                    assert_eq!(euclidean_gcd(i,j), i.gcd(&j));
+                }
+                assert_eq!(255.gcd(&255), 255);
             }
 
             #[test]
