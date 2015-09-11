@@ -225,14 +225,17 @@ macro_rules! impl_integer_for_isize {
                 // find common factors of 2
                 let shift = (m | n).trailing_zeros();
 
-                // If one number is the minimum value, it cannot be represented as a
-                // positive number. It's also a power of two, so the gcd can
-                // trivially be calculated in that case by bitshifting
+                // The algorithm needs positive numbers, but the minimum value
+                // can't be represented as a positive one.
+                // It's also a power of two, so the gcd can be
+                // calculated by bitshifting in that case
 
-                // The result is always positive in two's complement, unless
-                // n and m are the minimum value, then it's negative
-                // no other way to represent that number
-                if m == <$T>::min_value() || n == <$T>::min_value() { return 1 << shift }
+                // Assuming two's complement, the number created by the shift
+                // is positive for all numbers except gcd = abs(min value)
+                // The call to .abs() causes a panic in debug mode
+                if m == <$T>::min_value() || n == <$T>::min_value() {
+                    return (1 << shift).abs()
+                }
 
                 // guaranteed to be positive now, rest like unsigned algorithm
                 m = m.abs();
