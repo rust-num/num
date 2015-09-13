@@ -104,6 +104,12 @@ impl<T: Clone + Float> Complex<T> {
         let exp_part = self.re.clone().exp();
         Complex::new(exp_part * self.im.clone().cos(), exp_part * self.im.clone().sin())
     }
+
+    /// Computes the principal logarithm to base e.
+    #[inline]
+    pub fn ln(self) -> Complex<T> {
+        Complex::new(self.norm().ln(), self.arg())
+    }
 }
 
 macro_rules! forward_val_val_binop {
@@ -455,5 +461,10 @@ mod test {
     fn test_exp() {
         assert_eq!((_0_0i).exp(), _1_0i);
         assert_eq!((_1_0i).exp(), Complex::new(2.718281828459045f64, 0f64));
+    }
+
+    #[test]
+    fn test_ln() {
+        assert_eq!((_1_0i).ln(), _0_0i);
     }
 }
