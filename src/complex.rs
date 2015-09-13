@@ -281,6 +281,12 @@ impl<T: Clone + Float> Complex<T> {
         }
         ((one + self).ln() - (one - self).ln()) / two
     }
+
+    /// Checks if the given complex number is NaN
+    #[inline]
+    pub fn is_nan(self) -> bool {
+        self.re.is_nan() || self.im.is_nan()
+    }
 }
 
 macro_rules! forward_val_val_binop {
@@ -514,11 +520,9 @@ mod test {
     }
 
     #[test]
-    #[should_panic]
-    #[ignore]
     fn test_inv_zero() {
-        // FIXME #5736: should this really fail, or just NaN?
-        _0_0i.inv();
+        // FIXME #20: should this really fail, or just NaN?
+        assert!(_0_0i.inv().is_nan());
     }
 
     #[test]
@@ -919,5 +923,20 @@ mod test {
         assert!(::hash(&a) != ::hash(&b));
         assert!(::hash(&b) != ::hash(&c));
         assert!(::hash(&c) != ::hash(&a));
+    }
+
+    #[test]
+    fn test_is_nan() {
+        assert!(!_1_1i.is_nan());
+        let a = Complex::new(f64::NAN, f64::NAN);
+        assert!(a.is_nan());
+    }
+
+    #[test]
+    fn test_is_nan_special_cases() {
+        let a = Complex::new(0f64, f64::NAN);
+        let b = Complex::new(f64::NAN, 0f64);
+        assert!(a.is_nan());
+        assert!(b.is_nan());
     }
 }
