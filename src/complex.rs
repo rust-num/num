@@ -97,6 +97,19 @@ impl<T: Clone + Float> Complex<T> {
     pub fn from_polar(r: &T, theta: &T) -> Complex<T> {
         Complex::new(*r * theta.cos(), *r * theta.sin())
     }
+
+    /// Raises `self` to the power of `e`.
+    #[inline]
+    pub fn exp(self) -> Complex<T> {
+        let exp_part = self.re.clone().exp();
+        Complex::new(exp_part * self.im.clone().cos(), exp_part * self.im.clone().sin())
+    }
+
+    /// Computes the principal logarithm to base `e`.
+    #[inline]
+    pub fn ln(self) -> Complex<T> {
+        Complex::new(self.norm().ln(), self.arg())
+    }
 }
 
 macro_rules! forward_val_val_binop {
@@ -442,5 +455,16 @@ mod test {
         assert!(::hash(&a) != ::hash(&b));
         assert!(::hash(&b) != ::hash(&c));
         assert!(::hash(&c) != ::hash(&a));
+    }
+
+    #[test]
+    fn test_exp() {
+        assert_eq!((_0_0i).exp(), _1_0i);
+        assert_eq!((_1_0i).exp(), Complex::new(2.718281828459045f64, 0f64));
+    }
+
+    #[test]
+    fn test_ln() {
+        assert_eq!((_1_0i).ln(), _0_0i);
     }
 }
