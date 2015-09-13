@@ -100,7 +100,7 @@ impl<T: Clone + Float> Complex<T> {
 
     /// Raises `self` to the power of `e`.
     #[inline]
-    fn exp(self) -> Complex<T> {
+    pub fn exp(self) -> Complex<T> {
         let exp_part = self.re.clone().exp();
         Complex::new(exp_part * self.im.clone().cos(), exp_part * self.im.clone().sin())
     }
