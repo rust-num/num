@@ -105,7 +105,7 @@ impl<T: Clone + Float> Complex<T> {
         Complex::new(exp_part * self.im.clone().cos(), exp_part * self.im.clone().sin())
     }
 
-    /// Computes the principal logarithm to base e.
+    /// Computes the principal logarithm to base `e`.
     #[inline]
     pub fn ln(self) -> Complex<T> {
         Complex::new(self.norm().ln(), self.arg())
