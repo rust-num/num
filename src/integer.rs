@@ -217,15 +217,41 @@ macro_rules! impl_integer_for_isize {
             /// `other`. The result is always positive.
             #[inline]
             fn gcd(&self, other: &$T) -> $T {
-                // Use Euclid's algorithm
+                // Use Stein's algorithm
                 let mut m = *self;
                 let mut n = *other;
-                while m != 0 {
-                    let temp = m;
-                    m = n % temp;
-                    n = temp;
+                if m == 0 || n == 0 { return (m | n).abs() }
+
+                // find common factors of 2
+                let shift = (m | n).trailing_zeros();
+
+                // The algorithm needs positive numbers, but the minimum value
+                // can't be represented as a positive one.
+                // It's also a power of two, so the gcd can be
+                // calculated by bitshifting in that case
+
+                // Assuming two's complement, the number created by the shift
+                // is positive for all numbers except gcd = abs(min value)
+                // The call to .abs() causes a panic in debug mode
+                if m == <$T>::min_value() || n == <$T>::min_value() {
+                    return (1 << shift).abs()
                 }
-                n.abs()
+
+                // guaranteed to be positive now, rest like unsigned algorithm
+                m = m.abs();
+                n = n.abs();
+
+                // divide n and m by 2 until odd
+                // m inside loop
+                n >>= n.trailing_zeros();
+
+                while m != 0 {
+                    m >>= m.trailing_zeros();
+                    if n > m { ::std::mem::swap(&mut n, &mut m) }
+                    m -= n;
+                }
+
+                n << shift
             }
 
             /// Calculates the Lowest Common Multiple (LCM) of the number and
@@ -334,6 +360,47 @@ macro_rules! impl_integer_for_isize {
                 assert_eq!((-6 as $T).gcd(&3), 3 as $T);
                 assert_eq!((-4 as $T).gcd(&-2), 2 as $T);
             }
+            #[test]
+            fn test_gcd_cmp_with_euclidean() {
+                fn euclidean_gcd(mut m: $T, mut n: $T) -> $T {
+                    while m != 0 {
+                        ::std::mem::swap(&mut m, &mut n);
+                        m %= n;
+                    }
+
+                    n.abs()
+                }
+
+                // gcd(-128, b) = 128 is not representable as positive value
+                // for i8
+                for i in -127..127 {
+                    for j in -127..127 {
+                        assert_eq!(euclidean_gcd(i,j), i.gcd(&j));
+                    }
+                }
+
+                // last value
+                // FIXME: Use inclusive ranges for above loop when implemented
+                let i = 127;
+                for j in -127..127 {
+                    assert_eq!(euclidean_gcd(i,j), i.gcd(&j));
+                }
+                assert_eq!(127.gcd(&127), 127);
+            }
+
+            #[test]
+            #[should_panic]
+            fn test_gcd_min_val_min_val() {
+                let min = <$T>::min_value();
+                min.gcd(&min);
+            }
+
+            #[test]
+            #[should_panic]
+            fn test_gcd_min_val_0() {
+                let min = <$T>::min_value();
+                min.gcd(&0);
+            }
 
             #[test]
             fn test_lcm() {
@@ -396,15 +463,25 @@ macro_rules! impl_integer_for_usize {
             /// Calculates the Greatest Common Divisor (GCD) of the number and `other`
             #[inline]
             fn gcd(&self, other: &$T) -> $T {
-                // Use Euclid's algorithm
+                // Use Stein's algorithm
                 let mut m = *self;
                 let mut n = *other;
+                if m == 0 || n == 0 { return m | n }
+
+                // find common factors of 2
+                let shift = (m | n).trailing_zeros();
+
+                // divide n and m by 2 until odd
+                // m inside loop
+                n >>= n.trailing_zeros();
+
                 while m != 0 {
-                    let temp = m;
-                    m = n % temp;
-                    n = temp;
+                    m >>= m.trailing_zeros();
+                    if n > m { ::std::mem::swap(&mut n, &mut m) }
+                    m -= n;
                 }
-                n
+
+                n << shift
             }
 
             /// Calculates the Lowest Common Multiple (LCM) of the number and `other`.
@@ -460,6 +537,31 @@ macro_rules! impl_integer_for_usize {
                 assert_eq!((0 as $T).gcd(&3), 3 as $T);
                 assert_eq!((3 as $T).gcd(&3), 3 as $T);
                 assert_eq!((56 as $T).gcd(&42), 14 as $T);
+            }
+
+            #[test]
+            fn test_gcd_cmp_with_euclidean() {
+                fn euclidean_gcd(mut m: $T, mut n: $T) -> $T {
+                    while m != 0 {
+                        ::std::mem::swap(&mut m, &mut n);
+                        m %= n;
+                    }
+                    n
+                }
+
+                for i in 0..255 {
+                    for j in 0..255 {
+                        assert_eq!(euclidean_gcd(i,j), i.gcd(&j));
+                    }
+                }
+
+                // last value
+                // FIXME: Use inclusive ranges for above loop when implemented
+                let i = 255;
+                for j in 0..255 {
+                    assert_eq!(euclidean_gcd(i,j), i.gcd(&j));
+                }
+                assert_eq!(255.gcd(&255), 255);
             }
 
             #[test]
