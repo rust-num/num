@@ -404,15 +404,18 @@ impl<T: Clone + Integer + PartialOrd> Num for Ratio<T> {
     fn from_str_radix(s: &str, radix: u32) -> Result<Ratio<T>, ParseRatioError> {
         let split: Vec<&str> = s.splitn(2, '/').collect();
         if split.len() < 2 {
-            Err(ParseRatioError)
+            Err(ParseRatioError{kind: RatioErrorKind::ParseError})
         } else {
             let a_result: Result<T, _> = T::from_str_radix(
                 split[0],
-                radix).map_err(|_| ParseRatioError);
+                radix).map_err(|_| ParseRatioError{kind: RatioErrorKind::ParseError});
             a_result.and_then(|a| {
                 let b_result: Result<T, _>  =
-                    T::from_str_radix(split[1], radix).map_err(|_| ParseRatioError);
-                b_result.and_then(|b| {
+                    T::from_str_radix(split[1], radix).map_err(
+                        |_| ParseRatioError{kind: RatioErrorKind::ParseError});
+                b_result.and_then(|b| if b.is_zero() {
+                    Err(ParseRatioError{kind: RatioErrorKind::ZeroDenominator})
+                } else {
                     Ok(Ratio::new(a.clone(), b.clone()))
                 })
             })
@@ -470,28 +473,50 @@ impl<T: FromStr + Clone + Integer + PartialOrd> FromStr for Ratio<T> {
     fn from_str(s: &str) -> Result<Ratio<T>, ParseRatioError> {
         let mut split = s.splitn(2, '/');
 
-        let n = try!(split.next().ok_or(ParseRatioError));
-        let num = try!(FromStr::from_str(n).map_err(|_| ParseRatioError));
+        let n = try!(split.next().ok_or(
+            ParseRatioError{kind: RatioErrorKind::ParseError}));
+        let num = try!(FromStr::from_str(n).map_err(
+            |_| ParseRatioError{kind: RatioErrorKind::ParseError}));
 
         let d = split.next().unwrap_or("1");
-        let den = try!(FromStr::from_str(d).map_err(|_| ParseRatioError));
+        let den = try!(FromStr::from_str(d).map_err(
+            |_| ParseRatioError{kind: RatioErrorKind::ParseError}));
 
-        Ok(Ratio::new(num, den))
+        if Zero::is_zero(&den) {
+            Err(ParseRatioError{kind: RatioErrorKind::ZeroDenominator})
+        } else {
+            Ok(Ratio::new(num, den))
+        }
     }
 }
 
 // FIXME: Bubble up specific errors
 #[derive(Copy, Clone, Debug, PartialEq)]
-pub struct ParseRatioError;
+pub struct ParseRatioError { kind: RatioErrorKind }
+
+#[derive(Copy, Clone, Debug, PartialEq)]
+enum RatioErrorKind {
+    ParseError,
+    ZeroDenominator,
+}
 
 impl fmt::Display for ParseRatioError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        "failed to parse provided string".fmt(f)
+        self.description().fmt(f)
     }
 }
 
 impl Error for ParseRatioError {
-    fn description(&self) -> &str { "failed to parse bigint/biguint" }
+    fn description(&self) -> &str { self.kind.description() }
+}
+
+impl RatioErrorKind {
+    fn description(&self) -> &'static str {
+        match *self {
+            RatioErrorKind::ParseError => "failed to parse integer",
+            RatioErrorKind::ZeroDenominator => "zero value denominator",
+        }
+    }
 }
 
 #[cfg(test)]
@@ -817,7 +842,7 @@ mod test {
             assert!(rational.is_err());
         }
 
-        let xs = ["0 /1", "abc", "", "1/", "--1/2","3/2/1"];
+        let xs = ["0 /1", "abc", "", "1/", "--1/2","3/2/1", "1/0"];
         for &s in xs.iter() {
             test(s);
         }
