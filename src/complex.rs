@@ -289,6 +289,20 @@ impl<T: Clone + Float> Complex<T> {
     }
 }
 
+impl<T: Clone + Num> From<T> for Complex<T> {
+    #[inline]
+    fn from(re: T) -> Complex<T> {
+        Complex { re: re, im: T::zero() }
+    }
+}
+
+impl<'a, T: Clone + Num> From<&'a T> for Complex<T> {
+    #[inline]
+    fn from(re: &T) -> Complex<T> {
+        From::from(re.clone())
+    }
+}
+
 macro_rules! forward_val_val_binop {
     (impl $imp:ident, $method:ident) => {
         impl<T: Clone + Num> $imp<Complex<T>> for Complex<T> {
@@ -406,6 +420,93 @@ impl<'a, T: Clone + Num + Neg<Output = T>> Neg for &'a Complex<T> {
         Complex::new(-self.re.clone(), -self.im.clone())
     }
 }
+
+macro_rules! real_arithmetic {
+    (@forward $imp:ident::$method:ident for $($real:ident),*) => (
+        impl<'a, T: Clone + Num> $imp<&'a T> for Complex<T> {
+            type Output = Complex<T>;
+
+            #[inline]
+            fn $method(self, other: &T) -> Complex<T> {
+                self.$method(other.clone())
+            }
+        }
+        impl<'a, T: Clone + Num> $imp<T> for &'a Complex<T> {
+            type Output = Complex<T>;
+
+            #[inline]
+            fn $method(self, other: T) -> Complex<T> {
+                self.clone().$method(other)
+            }
+        }
+        impl<'a, 'b, T: Clone + Num> $imp<&'a T> for &'b Complex<T> {
+            type Output = Complex<T>;
+
+            #[inline]
+            fn $method(self, other: &T) -> Complex<T> {
+                self.clone().$method(other.clone())
+            }
+        }
+        $(
+            impl<'a> $imp<&'a Complex<$real>> for $real {
+                type Output = Complex<$real>;
+
+                #[inline]
+                fn $method(self, other: &Complex<$real>) -> Complex<$real> {
+                    self.$method(other.clone())
+                }
+            }
+            impl<'a> $imp<Complex<$real>> for &'a $real {
+                type Output = Complex<$real>;
+
+                #[inline]
+                fn $method(self, other: Complex<$real>) -> Complex<$real> {
+                    self.clone().$method(other)
+                }
+            }
+            impl<'a, 'b> $imp<&'a Complex<$real>> for &'b $real {
+                type Output = Complex<$real>;
+
+                #[inline]
+                fn $method(self, other: &Complex<$real>) -> Complex<$real> {
+                    self.clone().$method(other.clone())
+                }
+            }
+        )*
+    );
+    (@implement $imp:ident::$method:ident for $($real:ident),*) => (
+        impl<T: Clone + Num> $imp<T> for Complex<T> {
+            type Output = Complex<T>;
+
+            #[inline]
+            fn $method(self, other: T) -> Complex<T> {
+                self.$method(Complex::from(other))
+            }
+        }
+        $(
+            impl $imp<Complex<$real>> for $real {
+                type Output = Complex<$real>;
+
+                #[inline]
+                fn $method(self, other: Complex<$real>) -> Complex<$real> {
+                    Complex::from(self).$method(other)
+                }
+            }
+        )*
+    );
+    ($($real:ident),*) => (
+        real_arithmetic!(@forward Add::add for $($real),*);
+        real_arithmetic!(@forward Sub::sub for $($real),*);
+        real_arithmetic!(@forward Mul::mul for $($real),*);
+        real_arithmetic!(@forward Div::div for $($real),*);
+        real_arithmetic!(@implement Add::add for $($real),*);
+        real_arithmetic!(@implement Sub::sub for $($real),*);
+        real_arithmetic!(@implement Mul::mul for $($real),*);
+        real_arithmetic!(@implement Div::div for $($real),*);
+    );
+}
+
+real_arithmetic!(usize, u8, u16, u32, u64, isize, i8, i16, i32, i64, f32, f64);
 
 /* constants */
 impl<T: Clone + Num> Zero for Complex<T> {
@@ -838,7 +939,7 @@ mod test {
         }
     }
 
-    mod arith {
+    mod complex_arithmetic {
         use super::{_0_0i, _1_0i, _1_1i, _0_1i, _neg1_1i, _05_05i, all_consts};
         use Zero;
 
@@ -880,6 +981,7 @@ mod test {
                 assert_eq!(_1_0i * c, c);
             }
         }
+
         #[test]
         fn test_div() {
             assert_eq!(_neg1_1i / _0_1i, _1_1i);
@@ -889,6 +991,7 @@ mod test {
                 }
             }
         }
+
         #[test]
         fn test_neg() {
             assert_eq!(-_1_0i + _0_1i, _neg1_1i);
@@ -896,6 +999,34 @@ mod test {
             for &c in all_consts.iter() {
                 assert_eq!(-(-c), c);
             }
+        }
+    }
+
+    mod real_arithmetic {
+        use super::super::Complex;
+
+        #[test]
+        fn test_add() {
+            assert_eq!(Complex::new(4.0, 2.0) + 0.5, Complex::new(4.5, 2.0));
+            assert_eq!(0.5 + Complex::new(4.0, 2.0), Complex::new(4.5, 2.0));
+        }
+
+        #[test]
+        fn test_sub() {
+            assert_eq!(Complex::new(4.0, 2.0) - 0.5, Complex::new(3.5, 2.0));
+            assert_eq!(0.5 - Complex::new(4.0, 2.0), Complex::new(-3.5, -2.0));
+        }
+
+        #[test]
+        fn test_mul() {
+            assert_eq!(Complex::new(4.0, 2.0) * 0.5, Complex::new(2.0, 1.0));
+            assert_eq!(0.5 * Complex::new(4.0, 2.0), Complex::new(2.0, 1.0));
+        }
+
+        #[test]
+        fn test_div() {
+            assert_eq!(Complex::new(4.0, 2.0) / 0.5, Complex::new(8.0, 4.0));
+            assert_eq!(0.5 / Complex::new(4.0, 2.0), Complex::new(0.1, -0.05));
         }
     }
 
@@ -915,8 +1046,6 @@ mod test {
 
     #[test]
     fn test_hash() {
-
-
         let a = Complex::new(0i32, 0i32);
         let b = Complex::new(1i32, 0i32);
         let c = Complex::new(0i32, 1i32);
