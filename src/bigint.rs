@@ -1779,6 +1779,22 @@ impl BigInt {
         (self.sign, self.data.to_bytes_be())
     }
 
+    /// Returns the sign of the `BigInt` as a `Sign`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use num::bigint::{ToBigInt, Sign};
+    ///
+    /// assert_eq!(ToBigInt::to_bigint(&1234).unwrap().sign(), Sign::Plus);
+    /// assert_eq!(ToBigInt::to_bigint(&-4321).unwrap().sign(), Sign::Minus);
+    /// assert_eq!(ToBigInt::to_bigint(&0).unwrap().sign(), Sign::NoSign);
+    /// ```
+    #[inline]
+    pub fn sign(&self) -> Sign {
+        self.sign
+    }
+
     /// Creates and initializes a `BigInt`.
     ///
     /// # Examples
