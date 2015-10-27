@@ -132,7 +132,7 @@ fn cs_from(name: &str, cx: &mut ExtCtxt, trait_span: Span, substr: &Substructure
             let mut arms = Vec::new();
 
             for variant in &enum_def.variants {
-                match *variant.node.data {
+                match variant.node.data {
                     ast::VariantData::Unit(..) => {
                         let span = variant.span;
 
