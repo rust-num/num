@@ -360,6 +360,7 @@ macro_rules! impl_integer_for_isize {
                 assert_eq!((-6 as $T).gcd(&3), 3 as $T);
                 assert_eq!((-4 as $T).gcd(&-2), 2 as $T);
             }
+
             #[test]
             fn test_gcd_cmp_with_euclidean() {
                 fn euclidean_gcd(mut m: $T, mut n: $T) -> $T {
@@ -389,17 +390,37 @@ macro_rules! impl_integer_for_isize {
             }
 
             #[test]
+            fn test_gcd_min_val() {
+                let min = <$T>::min_value();
+                let max = <$T>::max_value();
+                let max_pow2 = max / 2 + 1;
+                assert_eq!(min.gcd(&max), 1 as $T);
+                assert_eq!(max.gcd(&min), 1 as $T);
+                assert_eq!(min.gcd(&max_pow2), max_pow2);
+                assert_eq!(max_pow2.gcd(&min), max_pow2);
+                assert_eq!(min.gcd(&42), 2 as $T);
+                assert_eq!((42 as $T).gcd(&min), 2 as $T);
+            }
+
+            #[test]
             #[should_panic]
             fn test_gcd_min_val_min_val() {
                 let min = <$T>::min_value();
-                min.gcd(&min);
+                assert!(min.gcd(&min) >= 0);
             }
 
             #[test]
             #[should_panic]
             fn test_gcd_min_val_0() {
                 let min = <$T>::min_value();
-                min.gcd(&0);
+                assert!(min.gcd(&0) >= 0);
+            }
+
+            #[test]
+            #[should_panic]
+            fn test_gcd_0_min_val() {
+                let min = <$T>::min_value();
+                assert!((0 as $T).gcd(&min) >= 0);
             }
 
             #[test]
