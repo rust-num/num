@@ -287,6 +287,24 @@ impl<T: Clone + Float> Complex<T> {
     pub fn is_nan(self) -> bool {
         self.re.is_nan() || self.im.is_nan()
     }
+
+    /// Checks if the given complex number is infinite
+    #[inline]
+    pub fn is_infinite(self) -> bool {
+        !self.is_nan() && (self.re.is_infinite() || self.im.is_infinite())
+    }
+
+    /// Checks if the given complex number is finite
+    #[inline]
+    pub fn is_finite(self) -> bool {
+        self.re.is_finite() && self.im.is_finite()
+    }
+
+    /// Checks if the given complex number is normal
+    #[inline]
+   pub fn is_normal(self) -> bool {
+        self.re.is_normal() && self.im.is_normal()
+    }
 }
 
 macro_rules! forward_val_val_binop {
@@ -938,5 +956,25 @@ mod test {
         let b = Complex::new(f64::NAN, 0f64);
         assert!(a.is_nan());
         assert!(b.is_nan());
+    }
+
+    #[test]
+    fn test_is_infinite() {
+        let a = Complex::new(2f64, f64::INFINITY);
+        assert!(a.is_infinite());
+    }
+
+    #[test]
+    fn test_is_finite() {
+        assert!(_1_1i.is_finite())
+    }
+
+    #[test]
+    fn test_is_normal() {
+        let a = Complex::new(0f64, f64::NAN);
+        let b = Complex::new(2f64, f64::INFINITY);
+        assert!(!a.is_normal());
+        assert!(!b.is_normal());
+        assert!(_1_1i.is_normal());
     }
 }
