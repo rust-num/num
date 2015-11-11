@@ -25,5 +25,8 @@ bigint = ["rustc-serialize", "rand"]
 default = ["complex", "rational", "bigint"]
 
 [[bench]]
+name = "bigint"
+
+[[bench]]
 name = "shootout-pidigits"
 harness = false

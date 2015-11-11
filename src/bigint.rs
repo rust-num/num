@@ -73,7 +73,7 @@ use std::{i64, u64};
 use rand::Rng;
 use rustc_serialize::hex::ToHex;
 
-use traits::{ToPrimitive, FromPrimitive, cast};
+use traits::{ToPrimitive, FromPrimitive};
 
 use {Num, Unsigned, CheckedAdd, CheckedSub, CheckedMul, CheckedDiv, Signed, Zero, One};
 use self::Sign::{Minus, NoSign, Plus};
@@ -179,7 +179,7 @@ impl hash::Hash for BigUint {
 
 impl fmt::Display for BigUint {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", to_str_radix(self, 10))
+        write!(f, "{}", self.to_str_radix(10))
     }
 }
 
@@ -809,100 +809,68 @@ impl_to_biguint!(u16,  FromPrimitive::from_u16);
 impl_to_biguint!(u32,  FromPrimitive::from_u32);
 impl_to_biguint!(u64,  FromPrimitive::from_u64);
 
-// Cribbed from core/fmt/num.rs
-#[derive(Copy, Clone)]
-pub struct RadixFmt {
-    data: BigDigit,
-    base: u8
-}
+fn to_str_radix_reversed(u: &BigUint, radix: u32) -> Vec<u8> {
+    if radix < 2 || radix > 36 {
+        panic!("invalid radix: {}", radix);
+    }
 
-impl RadixFmt {
-    fn digit(&self, x: u8) -> u8 {
-        match x {
-            x @  0 ... 9 => b'0' + x,
-            x if x < self.base => b'a' + (x - 10),
-            x => panic!("number not in the range 0..{}: {}", self.base - 1, x),
+    if u.is_zero() {
+        vec![b'0']
+    } else {
+        let mut res = Vec::new();
+        let mut digits = u.data.to_vec();
+        let mut n_digits = digits.len();
+
+        while n_digits != 0 {
+            let rem = div_rem_in_place(&mut digits[..n_digits], radix);
+            res.push(to_digit(rem as u8));
+            n_digits = count_non_zero(&digits[..n_digits]);
         }
+
+        res
     }
 }
 
-impl fmt::Display for RadixFmt {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        // The radix can be as low as 2, so we need a buffer of at least 64
-        // characters for a base 2 number.
-        let mut x = self.data;
-        let zero = 0;
-        let is_positive = x >= zero;
-        let mut buf = [0u8; 64];
-        let mut curr = buf.len();
-        let base = self.base as BigDigit;
-        if is_positive {
-            // Accumulate each digit of the number from the least significant
-            // to the most significant figure.
-            for byte in buf.iter_mut().rev() {
-                let n = x % base;                         // Get the current place value.
-                x = x / base;                             // Deaccumulate the number.
-                *byte = self.digit(cast(n).unwrap());     // Store the digit in the buffer.
-                curr -= 1;
-                if x == zero { break };                   // No more digits left to accumulate.
-            }
+fn div_rem_in_place(digits: &mut [BigDigit], divisor: BigDigit) -> BigDigit {
+    let mut rem = 0;
+
+    for d in digits.iter_mut().rev() {
+        let (q, r) = full_div_rem(*d, divisor, rem);
+        *d = q;
+        rem = r;
+    }
+
+    rem
+}
+
+fn count_non_zero(digits: &[u32]) -> usize {
+    let mut n = digits.len();
+
+    for &i in digits.iter().rev() {
+        if i == 0 {
+            n -= 1;
         } else {
-            // Do the same as above, but accounting for two's complement.
-            for byte in buf.iter_mut().rev() {
-                let n = zero - (x % base);                // Get the current place value.
-                x = x / base;                             // Deaccumulate the number.
-                *byte = self.digit(cast(n).unwrap());     // Store the digit in the buffer.
-                curr -= 1;
-                if x == zero { break };                   // No more digits left to accumulate.
-            }
+            break;
         }
-        let buf = unsafe { str::from_utf8_unchecked(&buf[curr..]) };
-        f.pad_integral(is_positive, "", buf)
     }
+
+    n
 }
 
-fn to_str_radix(me: &BigUint, radix: u32) -> String {
-    assert!(1 < radix && radix <= 16, "The radix must be within (1, 16]");
-    let (base, max_len) = get_radix_base(radix);
-    if base == big_digit::BASE {
-        return fill_concat(&me.data, radix, max_len)
-    }
-    return fill_concat(&convert_base(me, base), radix, max_len);
+fn full_div_rem(a: BigDigit, b: BigDigit, borrow: BigDigit) -> (BigDigit, BigDigit) {
+    let lo = a as DoubleBigDigit;
+    let hi = borrow as DoubleBigDigit;
 
-    fn convert_base(n: &BigUint, base: DoubleBigDigit) -> Vec<BigDigit> {
-        let divider    = base.to_biguint().unwrap();
-        let mut result = Vec::new();
-        let mut m      = n.clone();
-        while m >= divider {
-            let (d, m0) = m.div_mod_floor(&divider);
-            result.push(m0.to_usize().unwrap() as BigDigit);
-            m = d;
-        }
-        if !m.is_zero() {
-            result.push(m.to_usize().unwrap() as BigDigit);
-        }
-        return result;
-    }
-
-    fn fill_concat(v: &[BigDigit], radix: u32, l: usize) -> String {
-        if v.is_empty() {
-            return "0".to_string()
-        }
-        let mut s = String::with_capacity(v.len() * l);
-        for n in v.iter().rev() {
-            let ss = format!("{}", RadixFmt { data: *n, base: radix as u8 });
-            s.extend(repeat("0").take(l - ss.len()));
-            s.push_str(&ss);
-        }
-        s.trim_left_matches('0').to_string()
-    }
+    let lhs = lo | (hi << big_digit::BITS);
+    let rhs = b as DoubleBigDigit;
+    ((lhs / rhs) as BigDigit, (lhs % rhs) as BigDigit)
 }
 
-fn to_str_radix_signed(me: &BigInt, radix: u32) -> String {
-    match me.sign {
-        Plus => to_str_radix(&me.data, radix),
-        NoSign => "0".to_string(),
-        Minus => format!("-{}", to_str_radix(&me.data, radix)),
+fn to_digit(b: u8) -> u8 {
+    match b {
+        0 ... 9 => b'0' + b,
+        10 ... 35 => b'a' - 10 + b,
+        _ => panic!("invalid digit: {}", b)
     }
 }
 
@@ -1011,6 +979,24 @@ impl BigUint {
         let mut v = self.to_bytes_le();
         v.reverse();
         v
+    }
+
+    /// Returns the integer formatted as a string in the given radix.
+    /// `radix` must be in the range `[2, 36]`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use num::bigint::BigUint;
+    ///
+    /// let i = BigUint::parse_bytes(b"ff", 16).unwrap();
+    /// assert_eq!(i.to_str_radix(16), "ff");
+    /// ```
+    #[inline]
+    pub fn to_str_radix(&self, radix: u32) -> String {
+        let mut v = to_str_radix_reversed(self, radix);
+        v.reverse();
+        unsafe { String::from_utf8_unchecked(v) }
     }
 
     /// Creates and initializes a `BigUint`.
@@ -1168,7 +1154,7 @@ impl Default for BigInt {
 
 impl fmt::Display for BigInt {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", to_str_radix_signed(self, 10))
+        write!(f, "{}", self.to_str_radix(10))
     }
 }
 
@@ -1779,6 +1765,29 @@ impl BigInt {
         (self.sign, self.data.to_bytes_be())
     }
 
+    /// Returns the integer formatted as a string in the given radix.
+    /// `radix` must be in the range `[2, 36]`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use num::bigint::BigInt;
+    ///
+    /// let i = BigInt::parse_bytes(b"ff", 16).unwrap();
+    /// assert_eq!(i.to_str_radix(16), "ff");
+    /// ```
+    #[inline]
+    pub fn to_str_radix(&self, radix: u32) -> String {
+        let mut v = to_str_radix_reversed(&self.data, radix);
+
+        if self.is_negative() {
+            v.push(b'-');
+        }
+
+        v.reverse();
+        unsafe { String::from_utf8_unchecked(v) }
+    }
+
     /// Returns the sign of the `BigInt` as a `Sign`.
     ///
     /// # Examples
@@ -1874,7 +1883,7 @@ impl From<ParseIntError> for ParseBigIntError {
 #[cfg(test)]
 mod biguint_tests {
     use Integer;
-    use super::{BigDigit, BigUint, ToBigUint, to_str_radix, big_digit};
+    use super::{BigDigit, BigUint, ToBigUint, big_digit};
     use super::{BigInt, RandBigInt, ToBigInt};
     use super::Sign::Plus;
 
@@ -2059,7 +2068,7 @@ mod biguint_tests {
     fn test_shl() {
         fn check(s: &str, shift: usize, ans: &str) {
             let opt_biguint = BigUint::from_str_radix(s, 16).ok();
-            let bu = to_str_radix(&(opt_biguint.unwrap() << shift), 16);
+            let bu = (opt_biguint.unwrap() << shift).to_str_radix(16);
             assert_eq!(bu, ans);
         }
 
@@ -2180,7 +2189,7 @@ mod biguint_tests {
     fn test_shr() {
         fn check(s: &str, shift: usize, ans: &str) {
             let opt_biguint = BigUint::from_str_radix(s, 16).ok();
-            let bu = to_str_radix(&(opt_biguint.unwrap() >> shift), 16);
+            let bu = (opt_biguint.unwrap() >> shift).to_str_radix(16);
             assert_eq!(bu, ans);
         }
 
@@ -2684,7 +2693,7 @@ mod biguint_tests {
             let &(ref n, ref rs) = num_pair;
             for str_pair in rs.iter() {
                 let &(ref radix, ref str) = str_pair;
-                assert_eq!(to_str_radix(n, *radix), *str);
+                assert_eq!(n.to_str_radix(*radix), *str);
             }
         }
     }
