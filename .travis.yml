@@ -26,7 +26,7 @@ after_success: |
   eval "$(ssh-agent -s)" &&
   ssh-add .travis/deploy &&
   pip install ghp-import --user $USER &&
-  cp doc/index.html target/doc/ &&
+  cp doc/* target/doc/ &&
   $HOME/.local/bin/ghp-import -n target/doc &&
   git push -qf ssh://git@github.com/${TRAVIS_REPO_SLUG}.git gh-pages
 notifications:

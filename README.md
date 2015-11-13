@@ -2,7 +2,7 @@
 
 Arbitrary sized numeric types for Rust.
 
-[Documentation](http://doc.rust-lang.org/num)
+[Documentation](http://rust-num.github.io/num)
 
 ## Usage
 
