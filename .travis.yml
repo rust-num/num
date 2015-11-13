@@ -21,13 +21,13 @@ after_success: |
   [ $TRAVIS_BRANCH = master ] &&
   [ $TRAVIS_PULL_REQUEST = false ] &&
   [ $TRAVIS_RUST_VERSION = nightly ] &&
-  echo '<meta http-equiv=refresh content=0;url=num/index.html>' > target/doc/index.html &&
+  openssl aes-256-cbc -K $encrypted_9e86330b283d_key -iv $encrypted_9e86330b283d_iv -in .travis/deploy.enc -out ./travis/deploy -d &&
+  chmod 600 ./travis/deploy &&
+  ssh-add ./travis/deploy &&
   pip install ghp-import --user $USER &&
+  cp doc/index.html target/doc/ &&
   $HOME/.local/bin/ghp-import -n target/doc &&
-  git push -qf https://${TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git gh-pages
-env:
-  global:
-    secure: NNQ8QgQFZ05OhljZiuCg39AEPU7Yhko/shFlJG1lqYFoFrELibSmBPd7zJsTubufHRddn0ed6IH7qPLnzWJ/cS+dxwAopuqCFzGMOcd/JW8DJgD5PUBA8EVh8x0tNFJVxxdnGac1ufRneWMvMIxH2hO1DMc+8FZBBd7u1DNG1Lk=
+  git push -qf ssh://git@github.com/${TRAVIS_REPO_SLUG}.git gh-pages
 notifications:
   email:
     on_success: never
