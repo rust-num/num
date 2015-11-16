@@ -1219,6 +1219,19 @@ impl Neg for Sign {
     }
 }
 
+impl Mul<Sign> for Sign {
+    type Output = Sign;
+
+    #[inline]
+    fn mul(self, other: Sign) -> Sign {
+        match (self, other) {
+            (NoSign, _) | (_, NoSign)  => NoSign,
+            (Plus, Plus) | (Minus, Minus) => Plus,
+            (Plus, Minus) | (Minus, Plus) => Minus,
+        }
+    }
+}
+
 /// A big signed integer type.
 #[derive(Clone, RustcEncodable, RustcDecodable, Debug)]
 pub struct BigInt {
@@ -1380,66 +1393,167 @@ impl Signed for BigInt {
     fn is_negative(&self) -> bool { self.sign == Minus }
 }
 
-forward_all_binop!(impl Add for BigInt, add);
+// We want to forward to BigUint::add, but it's not clear how that will go until
+// we compare both sign and magnitude.  So we duplicate this body for every
+// val/ref combination, deferring that decision to BigUint's own forwarding.
+macro_rules! bigint_add {
+    ($a:expr, $a_owned:expr, $a_data:expr, $b:expr, $b_owned:expr, $b_data:expr) => {
+        match ($a.sign, $b.sign) {
+            (_, NoSign) => $a_owned,
+            (NoSign, _) => $b_owned,
+            // same sign => keep the sign with the sum of magnitudes
+            (Plus, Plus) | (Minus, Minus) =>
+                BigInt::from_biguint($a.sign, $a_data + $b_data),
+            // opposite signs => keep the sign of the larger with the difference of magnitudes
+            (Plus, Minus) | (Minus, Plus) =>
+                match $a.data.cmp(&$b.data) {
+                    Less => BigInt::from_biguint($b.sign, $b_data - $a_data),
+                    Greater => BigInt::from_biguint($a.sign, $a_data - $b_data),
+                    Equal => Zero::zero(),
+                },
+        }
+    };
+}
 
 impl<'a, 'b> Add<&'b BigInt> for &'a BigInt {
     type Output = BigInt;
 
     #[inline]
     fn add(self, other: &BigInt) -> BigInt {
-        match (self.sign, other.sign) {
-            (NoSign, _)    => other.clone(),
-            (_,    NoSign) => self.clone(),
-            (Plus, Plus)   => BigInt::from_biguint(Plus, &self.data + &other.data),
-            (Plus, Minus)  => self - (-other),
-            (Minus, Plus)  => other - (-self),
-            (Minus, Minus) => -((-self) + (-other))
-        }
+        bigint_add!(self, self.clone(), &self.data, other, other.clone(), &other.data)
     }
 }
 
-forward_all_binop!(impl Sub for BigInt, sub);
+impl<'a> Add<BigInt> for &'a BigInt {
+    type Output = BigInt;
+
+    #[inline]
+    fn add(self, other: BigInt) -> BigInt {
+        bigint_add!(self, self.clone(), &self.data, other, other, other.data)
+    }
+}
+
+impl<'a> Add<&'a BigInt> for BigInt {
+    type Output = BigInt;
+
+    #[inline]
+    fn add(self, other: &BigInt) -> BigInt {
+        bigint_add!(self, self, self.data, other, other.clone(), &other.data)
+    }
+}
+
+impl Add<BigInt> for BigInt {
+    type Output = BigInt;
+
+    #[inline]
+    fn add(self, other: BigInt) -> BigInt {
+        bigint_add!(self, self, self.data, other, other, other.data)
+    }
+}
+
+// We want to forward to BigUint::sub, but it's not clear how that will go until
+// we compare both sign and magnitude.  So we duplicate this body for every
+// val/ref combination, deferring that decision to BigUint's own forwarding.
+macro_rules! bigint_sub {
+    ($a:expr, $a_owned:expr, $a_data:expr, $b:expr, $b_owned:expr, $b_data:expr) => {
+        match ($a.sign, $b.sign) {
+            (_, NoSign) => $a_owned,
+            (NoSign, _) => -$b_owned,
+            // opposite signs => keep the sign of the left with the sum of magnitudes
+            (Plus, Minus) | (Minus, Plus) =>
+                BigInt::from_biguint($a.sign, $a_data + $b_data),
+            // same sign => keep or toggle the sign of the left with the difference of magnitudes
+            (Plus, Plus) | (Minus, Minus) =>
+                match $a.data.cmp(&$b.data) {
+                    Less => BigInt::from_biguint(-$a.sign, $b_data - $a_data),
+                    Greater => BigInt::from_biguint($a.sign, $a_data - $b_data),
+                    Equal => Zero::zero(),
+                },
+        }
+    };
+}
 
 impl<'a, 'b> Sub<&'b BigInt> for &'a BigInt {
     type Output = BigInt;
 
     #[inline]
     fn sub(self, other: &BigInt) -> BigInt {
-        match (self.sign, other.sign) {
-            (NoSign, _)    => -other,
-            (_,    NoSign) => self.clone(),
-            (Plus, Plus) => match self.data.cmp(&other.data) {
-                Less    => BigInt::from_biguint(Minus, &other.data - &self.data),
-                Greater => BigInt::from_biguint(Plus, &self.data - &other.data),
-                Equal   => Zero::zero()
-            },
-            (Plus, Minus) => self + (-other),
-            (Minus, Plus) => -((-self) + other),
-            (Minus, Minus) => (-other) - (-self)
-        }
+        bigint_sub!(self, self.clone(), &self.data, other, other.clone(), &other.data)
     }
 }
 
-forward_all_binop!(impl Mul for BigInt, mul);
+impl<'a> Sub<BigInt> for &'a BigInt {
+    type Output = BigInt;
+
+    #[inline]
+    fn sub(self, other: BigInt) -> BigInt {
+        bigint_sub!(self, self.clone(), &self.data, other, other, other.data)
+    }
+}
+
+impl<'a> Sub<&'a BigInt> for BigInt {
+    type Output = BigInt;
+
+    #[inline]
+    fn sub(self, other: &BigInt) -> BigInt {
+        bigint_sub!(self, self, self.data, other, other.clone(), &other.data)
+    }
+}
+
+impl Sub<BigInt> for BigInt {
+    type Output = BigInt;
+
+    #[inline]
+    fn sub(self, other: BigInt) -> BigInt {
+        bigint_sub!(self, self, self.data, other, other, other.data)
+    }
+}
+
+// We want to forward to BigUint::mul, and defer the val/ref decision to
+// BigUint, so we duplicate this body for every val/ref combination.
+macro_rules! bigint_mul {
+    ($a:expr, $a_data:expr, $b:expr, $b_data:expr) => {
+        BigInt::from_biguint($a.sign * $b.sign, $a_data * $b_data)
+    };
+}
 
 impl<'a, 'b> Mul<&'b BigInt> for &'a BigInt {
     type Output = BigInt;
 
     #[inline]
     fn mul(self, other: &BigInt) -> BigInt {
-        match (self.sign, other.sign) {
-            (NoSign, _)     | (_,     NoSign)  => Zero::zero(),
-            (Plus, Plus)  | (Minus, Minus) => {
-                BigInt::from_biguint(Plus, &self.data * &other.data)
-            },
-            (Plus, Minus) | (Minus, Plus) => {
-                BigInt::from_biguint(Minus, &self.data * &other.data)
-            }
-        }
+        bigint_mul!(self, &self.data, other, &other.data)
     }
 }
 
-forward_all_binop!(impl Div for BigInt, div);
+impl<'a> Mul<BigInt> for &'a BigInt {
+    type Output = BigInt;
+
+    #[inline]
+    fn mul(self, other: BigInt) -> BigInt {
+        bigint_mul!(self, &self.data, other, other.data)
+    }
+}
+
+impl<'a> Mul<&'a BigInt> for BigInt {
+    type Output = BigInt;
+
+    #[inline]
+    fn mul(self, other: &BigInt) -> BigInt {
+        bigint_mul!(self, self.data, other, &other.data)
+    }
+}
+
+impl Mul<BigInt> for BigInt {
+    type Output = BigInt;
+
+    #[inline]
+    fn mul(self, other: BigInt) -> BigInt {
+        bigint_mul!(self, self.data, other, other.data)
+    }
+}
+
+forward_all_binop_to_ref_ref!(impl Div for BigInt, div);
 
 impl<'a, 'b> Div<&'b BigInt> for &'a BigInt {
     type Output = BigInt;
@@ -1451,7 +1565,7 @@ impl<'a, 'b> Div<&'b BigInt> for &'a BigInt {
     }
 }
 
-forward_all_binop!(impl Rem for BigInt, rem);
+forward_all_binop_to_ref_ref!(impl Rem for BigInt, rem);
 
 impl<'a, 'b> Rem<&'b BigInt> for &'a BigInt {
     type Output = BigInt;
@@ -1467,7 +1581,10 @@ impl Neg for BigInt {
     type Output = BigInt;
 
     #[inline]
-    fn neg(self) -> BigInt { -&self }
+    fn neg(mut self) -> BigInt {
+        self.sign = -self.sign;
+        self
+    }
 }
 
 impl<'a> Neg for &'a BigInt {
@@ -1475,7 +1592,7 @@ impl<'a> Neg for &'a BigInt {
 
     #[inline]
     fn neg(self) -> BigInt {
-        BigInt::from_biguint(self.sign.neg(), self.data.clone())
+        -self.clone()
     }
 }
 
@@ -1515,15 +1632,9 @@ impl Integer for BigInt {
     fn div_rem(&self, other: &BigInt) -> (BigInt, BigInt) {
         // r.sign == self.sign
         let (d_ui, r_ui) = self.data.div_mod_floor(&other.data);
-        let d = BigInt::from_biguint(Plus, d_ui);
-        let r = BigInt::from_biguint(Plus, r_ui);
-        match (self.sign, other.sign) {
-            (_,    NoSign)   => panic!(),
-            (Plus, Plus)  | (NoSign, Plus)  => ( d,  r),
-            (Plus, Minus) | (NoSign, Minus) => (-d,  r),
-            (Minus, Plus)                 => (-d, -r),
-            (Minus, Minus)                => ( d, -r)
-        }
+        let d = BigInt::from_biguint(self.sign, d_ui);
+        let r = BigInt::from_biguint(self.sign, r_ui);
+        if other.is_negative() { (-d, r) } else { (d, r) }
     }
 
     #[inline]
@@ -1630,17 +1741,13 @@ impl ToPrimitive for BigInt {
 impl FromPrimitive for BigInt {
     #[inline]
     fn from_i64(n: i64) -> Option<BigInt> {
-        if n > 0 {
-            FromPrimitive::from_u64(n as u64).and_then(|n| {
-                Some(BigInt::from_biguint(Plus, n))
-            })
-        } else if n < 0 {
-            FromPrimitive::from_u64(u64::MAX - (n as u64) + 1).and_then(
-                |n| {
-                    Some(BigInt::from_biguint(Minus, n))
-                })
+        if n >= 0 {
+            FromPrimitive::from_u64(n as u64)
         } else {
-            Some(Zero::zero())
+            let u = u64::MAX - (n as u64) + 1;
+            FromPrimitive::from_u64(u).map(|n| {
+                BigInt::from_biguint(Minus, n)
+            })
         }
     }
 
@@ -1649,8 +1756,8 @@ impl FromPrimitive for BigInt {
         if n == 0 {
             Some(Zero::zero())
         } else {
-            FromPrimitive::from_u64(n).and_then(|n| {
-                Some(BigInt::from_biguint(Plus, n))
+            FromPrimitive::from_u64(n).map(|n| {
+                BigInt::from_biguint(Plus, n)
             })
         }
     }
