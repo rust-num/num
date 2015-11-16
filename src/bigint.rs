@@ -819,12 +819,15 @@ fn to_str_radix_reversed(u: &BigUint, radix: u32) -> Vec<u8> {
     } else {
         let mut res = Vec::new();
         let mut digits = u.data.to_vec();
-        let mut n_digits = digits.len();
 
-        while n_digits != 0 {
-            let rem = div_rem_in_place(&mut digits[..n_digits], radix);
+        while !digits.is_empty() {
+            let rem = div_rem_in_place(&mut digits, radix);
             res.push(to_digit(rem as u8));
-            n_digits = count_non_zero(&digits[..n_digits]);
+
+            // If we finished the most significant digit, drop it
+            if let Some(&0) = digits.last() {
+                digits.pop();
+            }
         }
 
         res
@@ -841,20 +844,6 @@ fn div_rem_in_place(digits: &mut [BigDigit], divisor: BigDigit) -> BigDigit {
     }
 
     rem
-}
-
-fn count_non_zero(digits: &[u32]) -> usize {
-    let mut n = digits.len();
-
-    for &i in digits.iter().rev() {
-        if i == 0 {
-            n -= 1;
-        } else {
-            break;
-        }
-    }
-
-    n
 }
 
 fn full_div_rem(a: BigDigit, b: BigDigit, borrow: BigDigit) -> (BigDigit, BigDigit) {
@@ -881,8 +870,9 @@ impl BigUint {
     #[inline]
     pub fn new(mut digits: Vec<BigDigit>) -> BigUint {
         // omit trailing zeros
-        let new_len = digits.iter().rposition(|n| *n != 0).map_or(0, |p| p + 1);
-        digits.truncate(new_len);
+        while let Some(&0) = digits.last() {
+            digits.pop();
+        }
         BigUint { data: digits }
     }
 
@@ -953,8 +943,8 @@ impl BigUint {
             }
         }
 
-        if let Some(index) = result.iter().rposition(|x| *x != 0) {
-            result.truncate(index + 1);
+        while let Some(&0) = result.last() {
+            result.pop();
         }
 
         if result.is_empty() {
