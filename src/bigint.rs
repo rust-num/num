@@ -2113,6 +2113,16 @@ mod biguint_tests {
     use {Num, Zero, One, CheckedAdd, CheckedSub, CheckedMul, CheckedDiv};
     use {ToPrimitive, FromPrimitive};
 
+    /// Assert that an op works for all val/ref combinations
+    macro_rules! assert_op {
+        ($left:ident $op:tt $right:ident == $expected:expr) => {
+            assert_eq!((&$left) $op (&$right), $expected);
+            assert_eq!((&$left) $op $right.clone(), $expected);
+            assert_eq!($left.clone() $op (&$right), $expected);
+            assert_eq!($left.clone() $op $right.clone(), $expected);
+        };
+    }
+
     #[test]
     fn test_from_slice() {
         fn check(slice: &[BigDigit], data: &[BigDigit]) {
@@ -2238,46 +2248,57 @@ mod biguint_tests {
         assert!(::hash(&d) != ::hash(&e));
     }
 
+    const BIT_TESTS: &'static [(&'static [BigDigit],
+                                &'static [BigDigit],
+                                &'static [BigDigit],
+                                &'static [BigDigit],
+                                &'static [BigDigit])] = &[
+        // LEFT              RIGHT        AND          OR                XOR
+        ( &[],              &[],         &[],         &[],              &[]             ),
+        ( &[268, 482, 17],  &[964, 54],  &[260, 34],  &[972, 502, 17],  &[712, 468, 17] ),
+    ];
+
     #[test]
     fn test_bitand() {
-        fn check(left: &[BigDigit],
-                 right: &[BigDigit],
-                 expected: &[BigDigit]) {
-            assert_eq!(BigUint::from_slice(left) & BigUint::from_slice(right),
-                       BigUint::from_slice(expected));
+        for elm in BIT_TESTS {
+            let (a_vec, b_vec, c_vec, _, _) = *elm;
+            let a = BigUint::from_slice(a_vec);
+            let b = BigUint::from_slice(b_vec);
+            let c = BigUint::from_slice(c_vec);
+
+            assert_op!(a & b == c);
+            assert_op!(b & a == c);
         }
-        check(&[], &[], &[]);
-        check(&[268, 482, 17],
-              &[964, 54],
-              &[260, 34]);
     }
 
     #[test]
     fn test_bitor() {
-        fn check(left: &[BigDigit],
-                 right: &[BigDigit],
-                 expected: &[BigDigit]) {
-            assert_eq!(BigUint::from_slice(left) | BigUint::from_slice(right),
-                       BigUint::from_slice(expected));
+        for elm in BIT_TESTS {
+            let (a_vec, b_vec, _, c_vec, _) = *elm;
+            let a = BigUint::from_slice(a_vec);
+            let b = BigUint::from_slice(b_vec);
+            let c = BigUint::from_slice(c_vec);
+
+            assert_op!(a | b == c);
+            assert_op!(b | a == c);
         }
-        check(&[], &[], &[]);
-        check(&[268, 482, 17],
-              &[964, 54],
-              &[972, 502, 17]);
     }
 
     #[test]
     fn test_bitxor() {
-        fn check(left: &[BigDigit],
-                 right: &[BigDigit],
-                 expected: &[BigDigit]) {
-            assert_eq!(BigUint::from_slice(left) ^ BigUint::from_slice(right),
-                       BigUint::from_slice(expected));
+        for elm in BIT_TESTS {
+            let (a_vec, b_vec, _, _, c_vec) = *elm;
+            let a = BigUint::from_slice(a_vec);
+            let b = BigUint::from_slice(b_vec);
+            let c = BigUint::from_slice(c_vec);
+
+            assert_op!(a ^ b == c);
+            assert_op!(b ^ a == c);
+            assert_op!(a ^ c == b);
+            assert_op!(c ^ a == b);
+            assert_op!(b ^ c == a);
+            assert_op!(c ^ b == a);
         }
-        check(&[], &[], &[]);
-        check(&[268, 482, 17],
-              &[964, 54],
-              &[712, 468, 17]);
     }
 
     #[test]
@@ -2603,8 +2624,8 @@ mod biguint_tests {
             let b = BigUint::from_slice(b_vec);
             let c = BigUint::from_slice(c_vec);
 
-            assert!(&a + &b == c);
-            assert!(&b + &a == c);
+            assert_op!(a + b == c);
+            assert_op!(b + a == c);
         }
     }
 
@@ -2616,8 +2637,8 @@ mod biguint_tests {
             let b = BigUint::from_slice(b_vec);
             let c = BigUint::from_slice(c_vec);
 
-            assert!(&c - &a == b);
-            assert!(&c - &b == a);
+            assert_op!(c - a == b);
+            assert_op!(c - b == a);
         }
     }
 
@@ -2675,8 +2696,8 @@ mod biguint_tests {
             let b = BigUint::from_slice(b_vec);
             let c = BigUint::from_slice(c_vec);
 
-            assert!(&a * &b == c);
-            assert!(&b * &a == c);
+            assert_op!(a * b == c);
+            assert_op!(b * a == c);
         }
 
         for elm in DIV_REM_QUADRUPLES.iter() {
@@ -2700,9 +2721,13 @@ mod biguint_tests {
             let c = BigUint::from_slice(c_vec);
 
             if !a.is_zero() {
+                assert_op!(c / a == b);
+                assert_op!(c % a == Zero::zero());
                 assert_eq!(c.div_rem(&a), (b.clone(), Zero::zero()));
             }
             if !b.is_zero() {
+                assert_op!(c / b == a);
+                assert_op!(c % b == Zero::zero());
                 assert_eq!(c.div_rem(&b), (a.clone(), Zero::zero()));
             }
         }
@@ -2714,7 +2739,11 @@ mod biguint_tests {
             let c = BigUint::from_slice(c_vec);
             let d = BigUint::from_slice(d_vec);
 
-            if !b.is_zero() { assert!(a.div_rem(&b) == (c, d)); }
+            if !b.is_zero() {
+                assert_op!(a / b == c);
+                assert_op!(a % b == d);
+                assert!(a.div_rem(&b) == (c, d));
+            }
         }
     }
 
@@ -3040,6 +3069,16 @@ mod bigint_tests {
 
     use {Zero, One, Signed, ToPrimitive, FromPrimitive, Num};
 
+    /// Assert that an op works for all val/ref combinations
+    macro_rules! assert_op {
+        ($left:ident $op:tt $right:ident == $expected:expr) => {
+            assert_eq!((&$left) $op (&$right), $expected);
+            assert_eq!((&$left) $op $right.clone(), $expected);
+            assert_eq!($left.clone() $op (&$right), $expected);
+            assert_eq!($left.clone() $op $right.clone(), $expected);
+        };
+    }
+
     #[test]
     fn test_from_biguint() {
         fn check(inp_s: Sign, inp_n: usize, ans_s: Sign, ans_n: usize) {
@@ -3271,15 +3310,16 @@ mod bigint_tests {
             let a = BigInt::from_slice(Plus, a_vec);
             let b = BigInt::from_slice(Plus, b_vec);
             let c = BigInt::from_slice(Plus, c_vec);
+            let (na, nb, nc) = (-&a, -&b, -&c);
 
-            assert!(&a + &b == c);
-            assert!(&b + &a == c);
-            assert!(&c + (-&a) == b);
-            assert!(&c + (-&b) == a);
-            assert!(&a + (-&c) == (-&b));
-            assert!(&b + (-&c) == (-&a));
-            assert!((-&a) + (-&b) == (-&c));
-            assert!(&a + (-&a) == Zero::zero());
+            assert_op!(a + b == c);
+            assert_op!(b + a == c);
+            assert_op!(c + na == b);
+            assert_op!(c + nb == a);
+            assert_op!(a + nc == nb);
+            assert_op!(b + nc == na);
+            assert_op!(na + nb == nc);
+            assert_op!(a + na == Zero::zero());
         }
     }
 
@@ -3290,15 +3330,16 @@ mod bigint_tests {
             let a = BigInt::from_slice(Plus, a_vec);
             let b = BigInt::from_slice(Plus, b_vec);
             let c = BigInt::from_slice(Plus, c_vec);
+            let (na, nb, nc) = (-&a, -&b, -&c);
 
-            assert!(&c - &a == b);
-            assert!(&c - &b == a);
-            assert!((-&b) - &a == (-&c));
-            assert!((-&a) - &b == (-&c));
-            assert!(&b - (-&a) == c);
-            assert!(&a - (-&b) == c);
-            assert!((-&c) - (-&a) == (-&b));
-            assert!(&a - &a == Zero::zero());
+            assert_op!(c - a == b);
+            assert_op!(c - b == a);
+            assert_op!(nb - a == nc);
+            assert_op!(na - b == nc);
+            assert_op!(b - na == c);
+            assert_op!(a - nb == c);
+            assert_op!(nc - na == nb);
+            assert_op!(a - a == Zero::zero());
         }
     }
 
@@ -3348,12 +3389,14 @@ mod bigint_tests {
             let a = BigInt::from_slice(Plus, a_vec);
             let b = BigInt::from_slice(Plus, b_vec);
             let c = BigInt::from_slice(Plus, c_vec);
+            let (na, nb, nc) = (-&a, -&b, -&c);
 
-            assert!(&a * &b == c);
-            assert!(&b * &a == c);
+            assert_op!(a * b == c);
+            assert_op!(b * a == c);
+            assert_op!(na * nb == c);
 
-            assert!((-&a) * &b == -&c);
-            assert!((-&b) * &a == -&c);
+            assert_op!(na * b == nc);
+            assert_op!(nb * a == nc);
         }
 
         for elm in DIV_REM_QUADRUPLES.iter() {
@@ -3431,6 +3474,10 @@ mod bigint_tests {
             assert!(*a == b * &q + &r);
             assert!(q == *ans_q);
             assert!(r == *ans_r);
+
+            let (a, b, ans_q, ans_r) = (a.clone(), b.clone(), ans_q.clone(), ans_r.clone());
+            assert_op!(a / b == ans_q);
+            assert_op!(a % b == ans_r);
         }
 
         fn check(a: &BigInt, b: &BigInt, q: &BigInt, r: &BigInt) {
