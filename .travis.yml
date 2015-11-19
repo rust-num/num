@@ -9,7 +9,7 @@ script:
   - cargo test --verbose
   - .travis/test_features.sh
   - |
-    [ $TRAVIS_RUST_VERSION = nightly ] &&
+    [ $TRAVIS_RUST_VERSION != nightly ] ||
     .travis/test_nightly.sh
   - cargo doc
 after_success: |
