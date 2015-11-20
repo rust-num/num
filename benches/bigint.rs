@@ -2,10 +2,33 @@
 
 extern crate test;
 extern crate num;
+extern crate rand;
 
 use std::mem::replace;
 use test::Bencher;
 use num::{BigUint, Zero, One, FromPrimitive};
+use num::bigint::RandBigInt;
+use rand::{SeedableRng, StdRng};
+
+fn multiply_bench(b: &mut Bencher, xbits: usize, ybits: usize) {
+    let seed: &[_] = &[1, 2, 3, 4];
+    let mut rng: StdRng = SeedableRng::from_seed(seed);
+
+    let x = rng.gen_bigint(xbits);
+    let y = rng.gen_bigint(ybits);
+
+    b.iter(|| &x * &y);
+}
+
+fn divide_bench(b: &mut Bencher, xbits: usize, ybits: usize) {
+    let seed: &[_] = &[1, 2, 3, 4];
+    let mut rng: StdRng = SeedableRng::from_seed(seed);
+
+    let x = rng.gen_bigint(xbits);
+    let y = rng.gen_bigint(ybits);
+
+    b.iter(|| &x / &y);
+}
 
 fn factorial(n: usize) -> BigUint {
     let mut f: BigUint = One::one();
@@ -24,6 +47,36 @@ fn fib(n: usize) -> BigUint {
         f0 = replace(&mut f1, f2);
     }
     f0
+}
+
+#[bench]
+fn multiply_0(b: &mut Bencher) {
+    multiply_bench(b, 1 << 8, 1 << 8);
+}
+
+#[bench]
+fn multiply_1(b: &mut Bencher) {
+    multiply_bench(b, 1 << 8, 1 << 16);
+}
+
+#[bench]
+fn multiply_2(b: &mut Bencher) {
+    multiply_bench(b, 1 << 16, 1 << 16);
+}
+
+#[bench]
+fn divide_0(b: &mut Bencher) {
+    divide_bench(b, 1 << 8, 1 << 6);
+}
+
+#[bench]
+fn divide_1(b: &mut Bencher) {
+    divide_bench(b, 1 << 12, 1 << 8);
+}
+
+#[bench]
+fn divide_2(b: &mut Bencher) {
+    divide_bench(b, 1 << 16, 1 << 12);
 }
 
 #[bench]
