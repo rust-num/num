@@ -9,8 +9,8 @@ repository = "https://github.com/rust-num/num"
 documentation = "http://rust-num.github.io/num"
 keywords = ["mathematics", "numerics"]
 description = """
-Simple numerics. This crate contains basic arbitrary-sized integer,
-rational, and complex types.
+A collection of numeric types and traits for Rust, including bigint,
+complex, rational, range iterators, generic integers, and more!
 """
 
 [dependencies]

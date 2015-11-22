@@ -8,9 +8,11 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-//! Simple numerics.
+//! A collection of numeric types and traits for Rust.
 //!
-//! This crate contains arbitrary-sized integer, rational, and complex types.
+//! This includes new types for big integers, rationals, and complex numbers,
+//! new traits for generic programming on numeric properties like `Integer`,
+//! and generic range iterators.
 //!
 //! ## Example
 //!

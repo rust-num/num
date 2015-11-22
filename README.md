@@ -1,6 +1,10 @@
 # num
 
-Arbitrary sized numeric types for Rust.
+A collection of numeric types and traits for Rust.
+
+This includes new types for big integers, rationals, and complex numbers,
+new traits for generic programming on numeric properties like `Integer,
+and generic range iterators.
 
 [Documentation](http://rust-num.github.io/num)
 
@@ -10,7 +14,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-num = "*"
+num = "0.1"
 ```
 
 and this to your crate root:
