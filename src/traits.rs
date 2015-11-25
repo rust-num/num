@@ -1136,10 +1136,11 @@ macro_rules! impl_to_primitive_float_to_float {
     )
 }
 
-macro_rules! impl_to_primitive_float_to_int_or_uint {
+macro_rules! impl_to_primitive_float_to_integer {
     ($SrcT:ident, $DstT:ident, $slf:expr) => (
         {
-            if $slf >= $DstT::MIN as $SrcT && $slf <= $DstT::MAX as $SrcT {
+            let t = $slf.trunc();
+            if t >= $DstT::MIN as $SrcT && t <= $DstT::MAX as $SrcT {
                 Some($slf as $DstT)
             } else {
                 None
@@ -1152,26 +1153,26 @@ macro_rules! impl_to_primitive_float {
     ($T:ident) => (
         impl ToPrimitive for $T {
             #[inline]
-            fn to_isize(&self) -> Option<isize> { impl_to_primitive_float_to_int_or_uint!($T, isize, *self) }
+            fn to_isize(&self) -> Option<isize> { impl_to_primitive_float_to_integer!($T, isize, *self) }
             #[inline]
-            fn to_i8(&self) -> Option<i8> { impl_to_primitive_float_to_int_or_uint!($T, i8, *self) }
+            fn to_i8(&self) -> Option<i8> { impl_to_primitive_float_to_integer!($T, i8, *self) }
             #[inline]
-            fn to_i16(&self) -> Option<i16> { impl_to_primitive_float_to_int_or_uint!($T, i16, *self) }
+            fn to_i16(&self) -> Option<i16> { impl_to_primitive_float_to_integer!($T, i16, *self) }
             #[inline]
-            fn to_i32(&self) -> Option<i32> { impl_to_primitive_float_to_int_or_uint!($T, i32, *self) }
+            fn to_i32(&self) -> Option<i32> { impl_to_primitive_float_to_integer!($T, i32, *self) }
             #[inline]
-            fn to_i64(&self) -> Option<i64> { impl_to_primitive_float_to_int_or_uint!($T, i64, *self) }
+            fn to_i64(&self) -> Option<i64> { impl_to_primitive_float_to_integer!($T, i64, *self) }
 
             #[inline]
-            fn to_usize(&self) -> Option<usize> { impl_to_primitive_float_to_int_or_uint!($T, usize, *self) }
+            fn to_usize(&self) -> Option<usize> { impl_to_primitive_float_to_integer!($T, usize, *self) }
             #[inline]
-            fn to_u8(&self) -> Option<u8> { impl_to_primitive_float_to_int_or_uint!($T, u8, *self) }
+            fn to_u8(&self) -> Option<u8> { impl_to_primitive_float_to_integer!($T, u8, *self) }
             #[inline]
-            fn to_u16(&self) -> Option<u16> { impl_to_primitive_float_to_int_or_uint!($T, u16, *self) }
+            fn to_u16(&self) -> Option<u16> { impl_to_primitive_float_to_integer!($T, u16, *self) }
             #[inline]
-            fn to_u32(&self) -> Option<u32> { impl_to_primitive_float_to_int_or_uint!($T, u32, *self) }
+            fn to_u32(&self) -> Option<u32> { impl_to_primitive_float_to_integer!($T, u32, *self) }
             #[inline]
-            fn to_u64(&self) -> Option<u64> { impl_to_primitive_float_to_int_or_uint!($T, u64, *self) }
+            fn to_u64(&self) -> Option<u64> { impl_to_primitive_float_to_integer!($T, u64, *self) }
 
             #[inline]
             fn to_f32(&self) -> Option<f32> { impl_to_primitive_float_to_float!($T, f32, *self) }
