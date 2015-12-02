@@ -11,7 +11,7 @@
 #![feature(plugin_registrar, rustc_private)]
 
 extern crate syntax;
-extern crate rustc;
+extern crate rustc_plugin;
 
 use syntax::ast::{MetaItem, Expr};
 use syntax::ast;
@@ -25,7 +25,7 @@ use syntax::ptr::P;
 use syntax::ext::base::MultiDecorator;
 use syntax::parse::token;
 
-use rustc::plugin::Registry;
+use rustc_plugin::Registry;
 
 macro_rules! pathvec {
     ($($x:ident)::+) => (
