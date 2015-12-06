@@ -1105,26 +1105,46 @@ impl ToPrimitive for BigUint {
 impl FromPrimitive for BigUint {
     #[inline]
     fn from_i64(n: i64) -> Option<BigUint> {
-        if n > 0 {
-            FromPrimitive::from_u64(n as u64)
-        } else if n == 0 {
-            Some(Zero::zero())
+        if n >= 0 {
+            Some(BigUint::from(n as u64))
         } else {
             None
         }
     }
 
-    // `DoubleBigDigit` size dependent
     #[inline]
     fn from_u64(n: u64) -> Option<BigUint> {
-        let n = match big_digit::from_doublebigdigit(n) {
-            (0,  0)  => Zero::zero(),
-            (0,  n0) => BigUint::new(vec!(n0)),
-            (n1, n0) => BigUint::new(vec!(n0, n1))
-        };
-        Some(n)
+        Some(BigUint::from(n))
     }
 }
+
+impl From<u64> for BigUint {
+    // `DoubleBigDigit` size dependent
+    #[inline]
+    fn from(n: u64) -> Self {
+        match big_digit::from_doublebigdigit(n) {
+            (0, 0) => BigUint::zero(),
+            (0, n0) => BigUint { data: vec![n0] },
+            (n1, n0) => BigUint { data: vec![n0, n1] },
+        }
+    }
+}
+
+macro_rules! impl_biguint_from_uint {
+    ($T:ty) => {
+        impl From<$T> for BigUint {
+            #[inline]
+            fn from(n: $T) -> Self {
+                BigUint::from(n as u64)
+            }
+        }
+    }
+}
+
+impl_biguint_from_uint!(u8);
+impl_biguint_from_uint!(u16);
+impl_biguint_from_uint!(u32);
+impl_biguint_from_uint!(usize);
 
 /// A generic trait for converting a value to a `BigUint`.
 pub trait ToBigUint {
@@ -1973,24 +1993,77 @@ impl ToPrimitive for BigInt {
 impl FromPrimitive for BigInt {
     #[inline]
     fn from_i64(n: i64) -> Option<BigInt> {
-        if n >= 0 {
-            FromPrimitive::from_u64(n as u64)
-        } else {
-            let u = u64::MAX - (n as u64) + 1;
-            FromPrimitive::from_u64(u).map(|n| {
-                BigInt::from_biguint(Minus, n)
-            })
-        }
+        Some(BigInt::from(n))
     }
 
     #[inline]
     fn from_u64(n: u64) -> Option<BigInt> {
-        if n == 0 {
-            Some(Zero::zero())
+        Some(BigInt::from(n))
+    }
+}
+
+impl From<i64> for BigInt {
+    #[inline]
+    fn from(n: i64) -> Self {
+        if n >= 0 {
+            BigInt::from(n as u64)
         } else {
-            FromPrimitive::from_u64(n).map(|n| {
-                BigInt::from_biguint(Plus, n)
-            })
+            let u = u64::MAX - (n as u64) + 1;
+            BigInt { sign: Minus, data: BigUint::from(u) }
+        }
+    }
+}
+
+macro_rules! impl_bigint_from_int {
+    ($T:ty) => {
+        impl From<$T> for BigInt {
+            #[inline]
+            fn from(n: $T) -> Self {
+                BigInt::from(n as i64)
+            }
+        }
+    }
+}
+
+impl_bigint_from_int!(i8);
+impl_bigint_from_int!(i16);
+impl_bigint_from_int!(i32);
+impl_bigint_from_int!(isize);
+
+impl From<u64> for BigInt {
+    #[inline]
+    fn from(n: u64) -> Self {
+        if n > 0 {
+            BigInt { sign: Plus, data: BigUint::from(n) }
+        } else {
+            BigInt::zero()
+        }
+    }
+}
+
+macro_rules! impl_bigint_from_uint {
+    ($T:ty) => {
+        impl From<$T> for BigInt {
+            #[inline]
+            fn from(n: $T) -> Self {
+                BigInt::from(n as u64)
+            }
+        }
+    }
+}
+
+impl_bigint_from_uint!(u8);
+impl_bigint_from_uint!(u16);
+impl_bigint_from_uint!(u32);
+impl_bigint_from_uint!(usize);
+
+impl From<BigUint> for BigInt {
+    #[inline]
+    fn from(n: BigUint) -> Self {
+        if n.is_zero() {
+            BigInt::zero()
+        } else {
+            BigInt { sign: Plus, data: n }
         }
     }
 }
