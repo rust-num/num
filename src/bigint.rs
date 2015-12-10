@@ -158,6 +158,20 @@ fn mac_with_carry(a: BigDigit, b: BigDigit, c: BigDigit, carry: &mut BigDigit) -
     lo
 }
 
+/// Divide a two digit numerator by a one digit divisor, returns quotient and remainder:
+///
+/// Note: the caller must ensure that both the quotient and remainder will fit into a single digit.
+/// This is _not_ true for an arbitrary numerator/denominator.
+///
+/// (This function also matches what the x86 divide instruction does).
+#[inline]
+fn div_wide(hi: BigDigit, lo: BigDigit, divisor: BigDigit) -> (BigDigit, BigDigit) {
+    debug_assert!(hi < divisor);
+
+    let lhs = big_digit::to_doublebigdigit(hi, lo);
+    let rhs = divisor as DoubleBigDigit;
+    ((lhs / rhs) as BigDigit, (lhs % rhs) as BigDigit)
+}
 /// A big unsigned integer type.
 ///
 /// A `BigUint`-typed value `BigUint { data: vec!(a, b, c) }` represents a number
@@ -822,6 +836,18 @@ impl<'a, 'b> Mul<&'b BigUint> for &'a BigUint {
     }
 }
 
+fn div_rem_digit(mut a: BigUint, b: BigDigit) -> (BigUint, BigDigit) {
+    let mut rem = 0;
+
+    for d in a.data.iter_mut().rev() {
+        let (q, r) = div_wide(rem, *d, b);
+        *d = q;
+        rem = r;
+    }
+
+    (a.normalize(), rem)
+}
+
 forward_all_binop_to_ref_ref!(impl Div for BigUint, div);
 
 impl<'a, 'b> Div<&'b BigUint> for &'a BigUint {
@@ -917,83 +943,94 @@ impl Integer for BigUint {
         if self.is_zero() { return (Zero::zero(), Zero::zero()); }
         if *other == One::one() { return (self.clone(), Zero::zero()); }
 
+        /* Required or the q_len calculation below can underflow: */
         match self.cmp(other) {
             Less    => return (Zero::zero(), self.clone()),
             Equal   => return (One::one(), Zero::zero()),
             Greater => {} // Do nothing
         }
 
-        let mut shift = 0;
-        let mut n = *other.data.last().unwrap();
-        while n < (1 << big_digit::BITS - 2) {
-            n <<= 1;
-            shift += 1;
-        }
-        assert!(shift < big_digit::BITS);
-        let (d, m) = div_mod_floor_inner(self << shift, other << shift);
-        return (d, m >> shift);
+        /*
+         * This algorithm is from Knuth, TAOCP vol 2 section 4.3, algorithm D:
+         *
+         * First, normalize the arguments so the highest bit in the highest digit of the divisor is
+         * set: the main loop uses the highest digit of the divisor for generating guesses, so we
+         * want it to be the largest number we can efficiently divide by.
+         */
+        let shift = other.data.last().unwrap().leading_zeros() as usize;
+        let mut a = self << shift;
+        let b     = other << shift;
 
+        /*
+         * The algorithm works by incrementally calculating "guesses", q0, for part of the
+         * remainder. Once we have any number q0 such that q0 * b <= a, we can set
+         *
+         *     q += q0
+         *     a -= q0 * b
+         *
+         * and then iterate until a < b. Then, (q, a) will be our desired quotient and remainder.
+         *
+         * q0, our guess, is calculated by dividing the last few digits of a by the last digit of b
+         * - this should give us a guess that is "close" to the actual quotient, but is possibly
+         * greater than the actual quotient. If q0 * b > a, we simply use iterated subtraction
+         * until we have a guess such that q0 & b <= a.
+         */
 
-        fn div_mod_floor_inner(a: BigUint, b: BigUint) -> (BigUint, BigUint) {
-            let mut m = a;
-            let mut d: BigUint = Zero::zero();
-            let mut n = 1;
-            while m >= b {
-                let (d0, d_unit, b_unit) = div_estimate(&m, &b, n);
-                let mut d0 = d0;
-                let mut prod = &b * &d0;
-                while prod > m {
-                    // FIXME(#5992): assignment operator overloads
-                    // d0 -= &d_unit
-                    d0   = d0 - &d_unit;
-                    // FIXME(#5992): assignment operator overloads
-                    // prod -= &b_unit;
-                    prod = prod - &b_unit
-                }
-                if d0.is_zero() {
-                    n = 2;
-                    continue;
-                }
-                n = 1;
-                // FIXME(#5992): assignment operator overloads
-                // d += d0;
-                d = d + d0;
-                // FIXME(#5992): assignment operator overloads
-                // m -= prod;
-                m = m - prod;
+        let bn = *b.data.last().unwrap();
+        let q_len = a.data.len() - b.data.len() + 1;
+        let mut q: BigUint = BigUint { data: Vec::with_capacity(q_len) };
+
+        q.data.extend(repeat(0).take(q_len));
+
+        /*
+         * We reuse the same temporary to avoid hitting the allocator in our inner loop - this is
+         * sized to hold a0 (in the common case; if a particular digit of the quotient is zero a0
+         * can be bigger).
+         */
+        let mut tmp: BigUint = BigUint { data: Vec::with_capacity(2) };
+
+        for j in (0..q_len).rev() {
+            /*
+             * When calculating our next guess q0, we don't need to consider the digits below j
+             * + b.data.len() - 1: we're guessing digit j of the quotient (i.e. q0 << j) from
+             * digit bn of the divisor (i.e. bn << (b.data.len() - 1) - so the product of those
+             * two numbers will be zero in all digits up to (j + b.data.len() - 1).
+             */
+            let offset = j + b.data.len() - 1;
+            if offset >= a.data.len() {
+                continue;
             }
-            return (d, m);
+
+            /* just avoiding a heap allocation: */
+            let mut a0 = tmp;
+            a0.data.truncate(0);
+            a0.data.extend(a.data[offset..].iter().cloned());
+
+            /*
+             * q0 << j * big_digit::BITS is our actual quotient estimate - we do the shifts
+             * implicitly at the end, when adding and subtracting to a and q. Not only do we
+             * save the cost of the shifts, the rest of the arithmetic gets to work with
+             * smaller numbers.
+             */
+            let (mut q0, _) = div_rem_digit(a0, bn);
+            let mut prod = &b * &q0;
+
+            while cmp_slice(&prod.data[..], &a.data[j..]) == Greater {
+                let one: BigUint = One::one();
+                q0 = q0 - one;
+                prod = prod - &b;
+            }
+
+            add2(&mut q.data[j..], &q0.data[..]);
+            sub2(&mut a.data[j..], &prod.data[..]);
+            a = a.normalize();
+
+            tmp = q0;
         }
 
+        debug_assert!(a < b);
 
-        fn div_estimate(a: &BigUint, b: &BigUint, n: usize)
-                        -> (BigUint, BigUint, BigUint) {
-                            if a.data.len() < n {
-                                return (Zero::zero(), Zero::zero(), (*a).clone());
-                            }
-
-                            let an = &a.data[a.data.len() - n ..];
-                            let bn = *b.data.last().unwrap();
-                            let mut d = Vec::with_capacity(an.len());
-                            let mut carry = 0;
-                            for elt in an.iter().rev() {
-                                let ai = big_digit::to_doublebigdigit(carry, *elt);
-                                let di = ai / (bn as DoubleBigDigit);
-                                assert!(di < big_digit::BASE);
-                                carry = (ai % (bn as DoubleBigDigit)) as BigDigit;
-                                d.push(di as BigDigit)
-                            }
-                            d.reverse();
-
-                            let shift = (a.data.len() - an.len()) - (b.data.len() - 1);
-                            if shift == 0 {
-                                return (BigUint::new(d), One::one(), (*b).clone());
-                            }
-                            let one: BigUint = One::one();
-                            return (BigUint::new(d).shl_unit(shift),
-                                    one.shl_unit(shift),
-                                    b.shl_unit(shift));
-                        }
+        (q.normalize(), a >> shift)
     }
 
     /// Calculates the Greatest Common Divisor (GCD) of the number and `other`.
@@ -1146,41 +1183,16 @@ fn to_str_radix_reversed(u: &BigUint, radix: u32) -> Vec<u8> {
         vec![b'0']
     } else {
         let mut res = Vec::new();
-        let mut digits = u.data.to_vec();
+        let mut digits = u.clone();
 
-        while !digits.is_empty() {
-            let rem = div_rem_in_place(&mut digits, radix);
-            res.push(to_digit(rem as u8));
-
-            // If we finished the most significant digit, drop it
-            if let Some(&0) = digits.last() {
-                digits.pop();
-            }
+        while digits != Zero::zero() {
+            let (q, r) = div_rem_digit(digits, radix as BigDigit);
+            res.push(to_digit(r as u8));
+            digits = q;
         }
 
         res
     }
-}
-
-fn div_rem_in_place(digits: &mut [BigDigit], divisor: BigDigit) -> BigDigit {
-    let mut rem = 0;
-
-    for d in digits.iter_mut().rev() {
-        let (q, r) = full_div_rem(*d, divisor, rem);
-        *d = q;
-        rem = r;
-    }
-
-    rem
-}
-
-fn full_div_rem(a: BigDigit, b: BigDigit, borrow: BigDigit) -> (BigDigit, BigDigit) {
-    let lo = a as DoubleBigDigit;
-    let hi = borrow as DoubleBigDigit;
-
-    let lhs = lo | (hi << big_digit::BITS);
-    let rhs = b as DoubleBigDigit;
-    ((lhs / rhs) as BigDigit, (lhs % rhs) as BigDigit)
 }
 
 fn to_digit(b: u8) -> u8 {
