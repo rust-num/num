@@ -116,6 +116,38 @@ pub mod big_digit {
     }
 }
 
+/*
+ * Generic functions for add/subtract/multiply with carry/borrow:
+ */
+
+// Add with carry:
+#[inline]
+fn adc(a: BigDigit, b: BigDigit, carry: &mut BigDigit) -> BigDigit {
+    let (hi, lo) = big_digit::from_doublebigdigit(
+        (a as DoubleBigDigit) +
+        (b as DoubleBigDigit) +
+        (*carry as DoubleBigDigit));
+
+    *carry = hi;
+    lo
+}
+
+// Subtract with borrow:
+#[inline]
+fn sbb(a: BigDigit, b: BigDigit, borrow: &mut BigDigit) -> BigDigit {
+    let (hi, lo) = big_digit::from_doublebigdigit(
+        big_digit::BASE
+        + (a as DoubleBigDigit)
+        - (b as DoubleBigDigit)
+        - (*borrow as DoubleBigDigit));
+    /*
+       hi * (base) + lo == 1*(base) + ai - bi - borrow
+       => ai - bi - borrow < 0 <=> hi == 0
+       */
+    *borrow = if hi == 0 { 1 } else { 0 };
+    lo
+}
+
 /// A big unsigned integer type.
 ///
 /// A `BigUint`-typed value `BigUint { data: vec!(a, b, c) }` represents a number
@@ -467,69 +499,112 @@ impl Unsigned for BigUint {}
 
 forward_all_binop_to_val_ref_commutative!(impl Add for BigUint, add);
 
+// Only for the Add impl:
+#[must_use]
+#[inline]
+fn __add2(a: &mut [BigDigit], b: &[BigDigit]) -> BigDigit {
+    let mut b_iter = b.iter();
+    let mut carry = 0;
+
+    for ai in a.iter_mut() {
+        if let Some(bi) = b_iter.next() {
+            *ai = adc(*ai, *bi, &mut carry);
+        } else if carry != 0 {
+            *ai = adc(*ai, 0, &mut carry);
+        } else {
+            break;
+        }
+    }
+
+    debug_assert!(b_iter.next() == None);
+    carry
+}
+
+/// /Two argument addition of raw slices:
+/// a += b
+///
+/// The caller _must_ ensure that a is big enough to store the result - typically this means
+/// resizing a to max(a.len(), b.len()) + 1, to fit a possible carry.
+fn add2(a: &mut [BigDigit], b: &[BigDigit]) {
+    let carry = __add2(a, b);
+
+    debug_assert!(carry == 0);
+}
+
+/*
+ * We'd really prefer to avoid using add2/sub2 directly as much as possible - since they make the
+ * caller entirely responsible for ensuring a's vector is big enough, and that the result is
+ * normalized, they're rather error prone and verbose:
+ *
+ * We could implement the Add and Sub traits for BigUint + BigDigit slices, like below - this works
+ * great, except that then it becomes the module's public interface, which we probably don't want:
+ *
+ * I'm keeping the code commented out, because I think this is worth revisiting:
+
+impl<'a> Add<&'a [BigDigit]> for BigUint {
+    type Output = BigUint;
+
+    fn add(mut self, other: &[BigDigit]) -> BigUint {
+        if self.data.len() < other.len() {
+            let extra = other.len() - self.data.len();
+            self.data.extend(repeat(0).take(extra));
+        }
+
+        let carry = __add2(&mut self.data[..], other);
+        if carry != 0 {
+            self.data.push(carry);
+        }
+
+        self
+    }
+}
+ */
+
 impl<'a> Add<&'a BigUint> for BigUint {
     type Output = BigUint;
 
-    fn add(self, other: &BigUint) -> BigUint {
-        let mut sum = self.data;
-
-        if other.data.len() > sum.len() {
-            let additional = other.data.len() - sum.len();
-            sum.reserve(additional);
-            sum.extend(repeat(ZERO_BIG_DIGIT).take(additional));
-        }
-        let other_iter = other.data.iter().cloned().chain(repeat(ZERO_BIG_DIGIT));
-
-        let mut carry = 0;
-        for (a, b) in sum.iter_mut().zip(other_iter) {
-            let d = (*a as DoubleBigDigit)
-                + (b as DoubleBigDigit)
-                + (carry as DoubleBigDigit);
-            let (hi, lo) = big_digit::from_doublebigdigit(d);
-            carry = hi;
-            *a = lo;
+    fn add(mut self, other: &BigUint) -> BigUint {
+        if self.data.len() < other.data.len() {
+            let extra = other.data.len() - self.data.len();
+            self.data.extend(repeat(0).take(extra));
         }
 
-        if carry != 0 { sum.push(carry); }
-        BigUint::new(sum)
+        let carry = __add2(&mut self.data[..], &other.data[..]);
+        if carry != 0 {
+            self.data.push(carry);
+        }
+
+        self
     }
 }
 
 forward_all_binop_to_val_ref!(impl Sub for BigUint, sub);
 
+fn sub2(a: &mut [BigDigit], b: &[BigDigit]) {
+    let mut b_iter = b.iter();
+    let mut borrow = 0;
+
+    for ai in a.iter_mut() {
+        if let Some(bi) = b_iter.next() {
+            *ai = sbb(*ai, *bi, &mut borrow);
+        } else if borrow != 0 {
+            *ai = sbb(*ai, 0, &mut borrow);
+        } else {
+            break;
+        }
+    }
+
+    /* note: we're _required_ to fail on underflow */
+    assert!(borrow == 0 && b_iter.all(|x| *x == 0),
+            "Cannot subtract b from a because b is larger than a.");
+}
+
 impl<'a> Sub<&'a BigUint> for BigUint {
     type Output = BigUint;
 
-    fn sub(self, other: &BigUint) -> BigUint {
-        let mut diff = self.data;
-        let other = &other.data;
-        assert!(diff.len() >= other.len(), "arithmetic operation overflowed");
-
-        let mut borrow: DoubleBigDigit = 0;
-        for (a, &b) in diff.iter_mut().zip(other.iter()) {
-            let d = big_digit::BASE - borrow
-                + (*a as DoubleBigDigit)
-                - (b as DoubleBigDigit);
-            let (hi, lo) = big_digit::from_doublebigdigit(d);
-            /*
-            hi * (base) + lo == 1*(base) + ai - bi - borrow
-            => ai - bi - borrow < 0 <=> hi == 0
-             */
-            borrow = if hi == 0 { 1 } else { 0 };
-            *a = lo;
-        }
-
-        for a in &mut diff[other.len()..] {
-            if borrow == 0 { break }
-            let d = big_digit::BASE - borrow
-                + (*a as DoubleBigDigit);
-            let (hi, lo) = big_digit::from_doublebigdigit(d);
-            borrow = if hi == 0 { 1 } else { 0 };
-            *a = lo;
-        }
-
-        assert!(borrow == 0, "arithmetic operation overflowed");
-        BigUint::new(diff)
+    fn sub(mut self, other: &BigUint) -> BigUint {
+        sub2(&mut self.data[..], &other.data[..]);
+        self.normalize()
     }
 }
 
@@ -982,12 +1057,8 @@ impl BigUint {
     ///
     /// The digits are in little-endian base 2^32.
     #[inline]
-    pub fn new(mut digits: Vec<BigDigit>) -> BigUint {
-        // omit trailing zeros
-        while let Some(&0) = digits.last() {
-            digits.pop();
-        }
-        BigUint { data: digits }
+    pub fn new(digits: Vec<BigDigit>) -> BigUint {
+        BigUint { data: digits }.normalize()
     }
 
     /// Creates and initializes a `BigUint`.
@@ -1175,6 +1246,16 @@ impl BigUint {
         if self.is_zero() { return 0; }
         let zeros = self.data.last().unwrap().leading_zeros();
         return self.data.len()*big_digit::BITS - zeros as usize;
+    }
+
+    /// Strips off trailing zero bigdigits - comparisons require the last element in the vector to
+    /// be nonzero.
+    #[inline]
+    fn normalize(mut self) -> BigUint {
+        while let Some(&0) = self.data.last() {
+            self.data.pop();
+        }
+        self
     }
 }
 
