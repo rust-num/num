@@ -2412,7 +2412,7 @@ mod biguint_tests {
     use std::i64;
     use std::iter::repeat;
     use std::str::FromStr;
-    use std::u64;
+    use std::{u8, u16, u32, u64, usize};
 
     use rand::thread_rng;
     use {Num, Zero, One, CheckedAdd, CheckedSub, CheckedMul, CheckedDiv};
@@ -2905,6 +2905,24 @@ mod biguint_tests {
         check(Zero::zero(), Zero::zero());
         check(BigUint::new(vec!(1,2,3)),
               BigInt::from_biguint(Plus, BigUint::new(vec!(1,2,3))));
+    }
+
+    #[test]
+    fn test_convert_from_uint() {
+        macro_rules! check {
+            ($ty:ident, $max:expr) => {
+                assert_eq!(BigUint::from($ty::zero()), BigUint::zero());
+                assert_eq!(BigUint::from($ty::one()), BigUint::one());
+                assert_eq!(BigUint::from($ty::MAX - $ty::one()), $max - BigUint::one());
+                assert_eq!(BigUint::from($ty::MAX), $max);
+            }
+        }
+
+        check!(u8, BigUint::from_slice(&[u8::MAX as BigDigit]));
+        check!(u16, BigUint::from_slice(&[u16::MAX as BigDigit]));
+        check!(u32, BigUint::from_slice(&[u32::MAX]));
+        check!(u64, BigUint::from_slice(&[u32::MAX, u32::MAX]));
+        check!(usize, BigUint::from(usize::MAX as u64));
     }
 
     const SUM_TRIPLES: &'static [(&'static [BigDigit],
@@ -3411,9 +3429,9 @@ mod bigint_tests {
     use super::Sign::{Minus, NoSign, Plus};
 
     use std::cmp::Ordering::{Less, Equal, Greater};
-    use std::i64;
+    use std::{i8, i16, i32, i64, isize};
     use std::iter::repeat;
-    use std::u64;
+    use std::{u8, u16, u32, u64, usize};
     use std::ops::{Neg};
 
     use rand::thread_rng;
@@ -3635,6 +3653,57 @@ mod bigint_tests {
         check(positive, BigUint::new(vec!(1,2,3)));
 
         assert_eq!(negative.to_biguint(), None);
+    }
+
+    #[test]
+    fn test_convert_from_uint() {
+        macro_rules! check {
+            ($ty:ident, $max:expr) => {
+                assert_eq!(BigInt::from($ty::zero()), BigInt::zero());
+                assert_eq!(BigInt::from($ty::one()), BigInt::one());
+                assert_eq!(BigInt::from($ty::MAX - $ty::one()), $max - BigInt::one());
+                assert_eq!(BigInt::from($ty::MAX), $max);
+            }
+        }
+
+        check!(u8, BigInt::from_slice(Plus, &[u8::MAX as BigDigit]));
+        check!(u16, BigInt::from_slice(Plus, &[u16::MAX as BigDigit]));
+        check!(u32, BigInt::from_slice(Plus, &[u32::MAX as BigDigit]));
+        check!(u64, BigInt::from_slice(Plus, &[u32::MAX as BigDigit, u32::MAX as BigDigit]));
+        check!(usize, BigInt::from(usize::MAX as u64));
+    }
+
+    #[test]
+    fn test_convert_from_int() {
+        macro_rules! check {
+            ($ty:ident, $min:expr, $max:expr) => {
+                assert_eq!(BigInt::from($ty::MIN), $min);
+                assert_eq!(BigInt::from($ty::MIN + $ty::one()), $min + BigInt::one());
+                assert_eq!(BigInt::from(-$ty::one()), -BigInt::one());
+                assert_eq!(BigInt::from($ty::zero()), BigInt::zero());
+                assert_eq!(BigInt::from($ty::one()), BigInt::one());
+                assert_eq!(BigInt::from($ty::MAX - $ty::one()), $max - BigInt::one());
+                assert_eq!(BigInt::from($ty::MAX), $max);
+            }
+        }
+
+        check!(i8, BigInt::from_slice(Minus, &[1 << 7]),
+                BigInt::from_slice(Plus, &[i8::MAX as BigDigit]));
+        check!(i16, BigInt::from_slice(Minus, &[1 << 15]),
+                BigInt::from_slice(Plus, &[i16::MAX as BigDigit]));
+        check!(i32, BigInt::from_slice(Minus, &[1 << 31]),
+                BigInt::from_slice(Plus, &[i32::MAX as BigDigit]));
+        check!(i64, BigInt::from_slice(Minus, &[0, 1 << 31]),
+                BigInt::from_slice(Plus, &[u32::MAX as BigDigit, i32::MAX as BigDigit]));
+        check!(isize, BigInt::from(isize::MIN as i64),
+                BigInt::from(isize::MAX as i64));
+    }
+
+    #[test]
+    fn test_convert_from_biguint() {
+        assert_eq!(BigInt::from(BigUint::zero()), BigInt::zero());
+        assert_eq!(BigInt::from(BigUint::one()), BigInt::one());
+        assert_eq!(BigInt::from(BigUint::from_slice(&[1, 2, 3])), BigInt::from_slice(Plus, &[1, 2, 3]));
     }
 
     const N1: BigDigit = -1i32 as BigDigit;
