@@ -1105,26 +1105,46 @@ impl ToPrimitive for BigUint {
 impl FromPrimitive for BigUint {
     #[inline]
     fn from_i64(n: i64) -> Option<BigUint> {
-        if n > 0 {
-            FromPrimitive::from_u64(n as u64)
-        } else if n == 0 {
-            Some(Zero::zero())
+        if n >= 0 {
+            Some(BigUint::from(n as u64))
         } else {
             None
         }
     }
 
-    // `DoubleBigDigit` size dependent
     #[inline]
     fn from_u64(n: u64) -> Option<BigUint> {
-        let n = match big_digit::from_doublebigdigit(n) {
-            (0,  0)  => Zero::zero(),
-            (0,  n0) => BigUint::new(vec!(n0)),
-            (n1, n0) => BigUint::new(vec!(n0, n1))
-        };
-        Some(n)
+        Some(BigUint::from(n))
     }
 }
+
+impl From<u64> for BigUint {
+    // `DoubleBigDigit` size dependent
+    #[inline]
+    fn from(n: u64) -> Self {
+        match big_digit::from_doublebigdigit(n) {
+            (0, 0) => BigUint::zero(),
+            (0, n0) => BigUint { data: vec![n0] },
+            (n1, n0) => BigUint { data: vec![n0, n1] },
+        }
+    }
+}
+
+macro_rules! impl_biguint_from_uint {
+    ($T:ty) => {
+        impl From<$T> for BigUint {
+            #[inline]
+            fn from(n: $T) -> Self {
+                BigUint::from(n as u64)
+            }
+        }
+    }
+}
+
+impl_biguint_from_uint!(u8);
+impl_biguint_from_uint!(u16);
+impl_biguint_from_uint!(u32);
+impl_biguint_from_uint!(usize);
 
 /// A generic trait for converting a value to a `BigUint`.
 pub trait ToBigUint {
@@ -1973,24 +1993,77 @@ impl ToPrimitive for BigInt {
 impl FromPrimitive for BigInt {
     #[inline]
     fn from_i64(n: i64) -> Option<BigInt> {
-        if n >= 0 {
-            FromPrimitive::from_u64(n as u64)
-        } else {
-            let u = u64::MAX - (n as u64) + 1;
-            FromPrimitive::from_u64(u).map(|n| {
-                BigInt::from_biguint(Minus, n)
-            })
-        }
+        Some(BigInt::from(n))
     }
 
     #[inline]
     fn from_u64(n: u64) -> Option<BigInt> {
-        if n == 0 {
-            Some(Zero::zero())
+        Some(BigInt::from(n))
+    }
+}
+
+impl From<i64> for BigInt {
+    #[inline]
+    fn from(n: i64) -> Self {
+        if n >= 0 {
+            BigInt::from(n as u64)
         } else {
-            FromPrimitive::from_u64(n).map(|n| {
-                BigInt::from_biguint(Plus, n)
-            })
+            let u = u64::MAX - (n as u64) + 1;
+            BigInt { sign: Minus, data: BigUint::from(u) }
+        }
+    }
+}
+
+macro_rules! impl_bigint_from_int {
+    ($T:ty) => {
+        impl From<$T> for BigInt {
+            #[inline]
+            fn from(n: $T) -> Self {
+                BigInt::from(n as i64)
+            }
+        }
+    }
+}
+
+impl_bigint_from_int!(i8);
+impl_bigint_from_int!(i16);
+impl_bigint_from_int!(i32);
+impl_bigint_from_int!(isize);
+
+impl From<u64> for BigInt {
+    #[inline]
+    fn from(n: u64) -> Self {
+        if n > 0 {
+            BigInt { sign: Plus, data: BigUint::from(n) }
+        } else {
+            BigInt::zero()
+        }
+    }
+}
+
+macro_rules! impl_bigint_from_uint {
+    ($T:ty) => {
+        impl From<$T> for BigInt {
+            #[inline]
+            fn from(n: $T) -> Self {
+                BigInt::from(n as u64)
+            }
+        }
+    }
+}
+
+impl_bigint_from_uint!(u8);
+impl_bigint_from_uint!(u16);
+impl_bigint_from_uint!(u32);
+impl_bigint_from_uint!(usize);
+
+impl From<BigUint> for BigInt {
+    #[inline]
+    fn from(n: BigUint) -> Self {
+        if n.is_zero() {
+            BigInt::zero()
+        } else {
+            BigInt { sign: Plus, data: n }
         }
     }
 }
@@ -2339,7 +2412,7 @@ mod biguint_tests {
     use std::i64;
     use std::iter::repeat;
     use std::str::FromStr;
-    use std::u64;
+    use std::{u8, u16, u32, u64, usize};
 
     use rand::thread_rng;
     use {Num, Zero, One, CheckedAdd, CheckedSub, CheckedMul, CheckedDiv};
@@ -2832,6 +2905,24 @@ mod biguint_tests {
         check(Zero::zero(), Zero::zero());
         check(BigUint::new(vec!(1,2,3)),
               BigInt::from_biguint(Plus, BigUint::new(vec!(1,2,3))));
+    }
+
+    #[test]
+    fn test_convert_from_uint() {
+        macro_rules! check {
+            ($ty:ident, $max:expr) => {
+                assert_eq!(BigUint::from($ty::zero()), BigUint::zero());
+                assert_eq!(BigUint::from($ty::one()), BigUint::one());
+                assert_eq!(BigUint::from($ty::MAX - $ty::one()), $max - BigUint::one());
+                assert_eq!(BigUint::from($ty::MAX), $max);
+            }
+        }
+
+        check!(u8, BigUint::from_slice(&[u8::MAX as BigDigit]));
+        check!(u16, BigUint::from_slice(&[u16::MAX as BigDigit]));
+        check!(u32, BigUint::from_slice(&[u32::MAX]));
+        check!(u64, BigUint::from_slice(&[u32::MAX, u32::MAX]));
+        check!(usize, BigUint::from(usize::MAX as u64));
     }
 
     const SUM_TRIPLES: &'static [(&'static [BigDigit],
@@ -3338,9 +3429,9 @@ mod bigint_tests {
     use super::Sign::{Minus, NoSign, Plus};
 
     use std::cmp::Ordering::{Less, Equal, Greater};
-    use std::i64;
+    use std::{i8, i16, i32, i64, isize};
     use std::iter::repeat;
-    use std::u64;
+    use std::{u8, u16, u32, u64, usize};
     use std::ops::{Neg};
 
     use rand::thread_rng;
@@ -3562,6 +3653,57 @@ mod bigint_tests {
         check(positive, BigUint::new(vec!(1,2,3)));
 
         assert_eq!(negative.to_biguint(), None);
+    }
+
+    #[test]
+    fn test_convert_from_uint() {
+        macro_rules! check {
+            ($ty:ident, $max:expr) => {
+                assert_eq!(BigInt::from($ty::zero()), BigInt::zero());
+                assert_eq!(BigInt::from($ty::one()), BigInt::one());
+                assert_eq!(BigInt::from($ty::MAX - $ty::one()), $max - BigInt::one());
+                assert_eq!(BigInt::from($ty::MAX), $max);
+            }
+        }
+
+        check!(u8, BigInt::from_slice(Plus, &[u8::MAX as BigDigit]));
+        check!(u16, BigInt::from_slice(Plus, &[u16::MAX as BigDigit]));
+        check!(u32, BigInt::from_slice(Plus, &[u32::MAX as BigDigit]));
+        check!(u64, BigInt::from_slice(Plus, &[u32::MAX as BigDigit, u32::MAX as BigDigit]));
+        check!(usize, BigInt::from(usize::MAX as u64));
+    }
+
+    #[test]
+    fn test_convert_from_int() {
+        macro_rules! check {
+            ($ty:ident, $min:expr, $max:expr) => {
+                assert_eq!(BigInt::from($ty::MIN), $min);
+                assert_eq!(BigInt::from($ty::MIN + $ty::one()), $min + BigInt::one());
+                assert_eq!(BigInt::from(-$ty::one()), -BigInt::one());
+                assert_eq!(BigInt::from($ty::zero()), BigInt::zero());
+                assert_eq!(BigInt::from($ty::one()), BigInt::one());
+                assert_eq!(BigInt::from($ty::MAX - $ty::one()), $max - BigInt::one());
+                assert_eq!(BigInt::from($ty::MAX), $max);
+            }
+        }
+
+        check!(i8, BigInt::from_slice(Minus, &[1 << 7]),
+                BigInt::from_slice(Plus, &[i8::MAX as BigDigit]));
+        check!(i16, BigInt::from_slice(Minus, &[1 << 15]),
+                BigInt::from_slice(Plus, &[i16::MAX as BigDigit]));
+        check!(i32, BigInt::from_slice(Minus, &[1 << 31]),
+                BigInt::from_slice(Plus, &[i32::MAX as BigDigit]));
+        check!(i64, BigInt::from_slice(Minus, &[0, 1 << 31]),
+                BigInt::from_slice(Plus, &[u32::MAX as BigDigit, i32::MAX as BigDigit]));
+        check!(isize, BigInt::from(isize::MIN as i64),
+                BigInt::from(isize::MAX as i64));
+    }
+
+    #[test]
+    fn test_convert_from_biguint() {
+        assert_eq!(BigInt::from(BigUint::zero()), BigInt::zero());
+        assert_eq!(BigInt::from(BigUint::one()), BigInt::one());
+        assert_eq!(BigInt::from(BigUint::from_slice(&[1, 2, 3])), BigInt::from_slice(Plus, &[1, 2, 3]));
     }
 
     const N1: BigDigit = -1i32 as BigDigit;
