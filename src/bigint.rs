@@ -66,7 +66,7 @@ use std::iter::repeat;
 use std::num::ParseIntError;
 use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Rem, Shl, Shr, Sub};
 use std::str::{self, FromStr};
-use std::{fmt, hash};
+use std::fmt;
 use std::cmp::Ordering::{self, Less, Greater, Equal};
 use std::{i64, u64};
 
@@ -175,7 +175,7 @@ fn div_wide(hi: BigDigit, lo: BigDigit, divisor: BigDigit) -> (BigDigit, BigDigi
 ///
 /// A `BigUint`-typed value `BigUint { data: vec!(a, b, c) }` represents a number
 /// `(a + b * big_digit::BASE + c * big_digit::BASE^2)`.
-#[derive(Clone, RustcEncodable, RustcDecodable, Debug)]
+#[derive(Clone, RustcEncodable, RustcDecodable, Debug, Hash)]
 pub struct BigUint {
     data: Vec<BigDigit>
 }
@@ -220,22 +220,6 @@ impl Ord for BigUint {
 impl Default for BigUint {
     #[inline]
     fn default() -> BigUint { Zero::zero() }
-}
-
-impl hash::Hash for BigUint {
-    fn hash<H>(&self, state: &mut H) where H: hash::Hasher {
-        // hash 0 in case it's all 0's
-        0u32.hash(state);
-
-        let mut found_first_value = false;
-        for elem in self.data.iter().rev() {
-            // don't hash any leading 0's, they shouldn't affect the hash
-            if found_first_value || *elem != 0 {
-                found_first_value = true;
-                elem.hash(state);
-            }
-        }
-    }
 }
 
 impl fmt::Display for BigUint {
@@ -1637,7 +1621,7 @@ fn get_radix_base(radix: u32) -> (DoubleBigDigit, usize) {
 }
 
 /// A Sign is a `BigInt`'s composing element.
-#[derive(PartialEq, PartialOrd, Eq, Ord, Copy, Clone, Debug, RustcEncodable, RustcDecodable)]
+#[derive(PartialEq, PartialOrd, Eq, Ord, Copy, Clone, Debug, RustcEncodable, RustcDecodable, Hash)]
 pub enum Sign { Minus, NoSign, Plus }
 
 impl Neg for Sign {
@@ -1668,7 +1652,7 @@ impl Mul<Sign> for Sign {
 }
 
 /// A big signed integer type.
-#[derive(Clone, RustcEncodable, RustcDecodable, Debug)]
+#[derive(Clone, RustcEncodable, RustcDecodable, Debug, Hash)]
 pub struct BigInt {
     sign: Sign,
     data: BigUint
@@ -1712,13 +1696,6 @@ impl Default for BigInt {
 impl fmt::Display for BigInt {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.to_str_radix(10))
-    }
-}
-
-impl hash::Hash for BigInt {
-    fn hash<H>(&self, state: &mut H) where H: hash::Hasher {
-        (self.sign == Plus).hash(state);
-        self.data.hash(state);
     }
 }
 
