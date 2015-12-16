@@ -849,8 +849,7 @@ fn mac3(acc: &mut [BigDigit], b: &[BigDigit], c: &[BigDigit]) {
         /* We reuse the same BigUint for all the intermediate multiplies: */
 
         let len = y.len() + 1;
-        let mut p: BigUint = BigUint { data: Vec::with_capacity(len) };
-        p.data.extend(repeat(0).take(len));
+        let mut p = BigUint { data: vec![0; len] };
 
         // p2 = x1 * y1
         mac3(&mut p.data[..], x1, y1);
@@ -897,11 +896,7 @@ fn mac3(acc: &mut [BigDigit], b: &[BigDigit], c: &[BigDigit]) {
 
 fn mul3(x: &[BigDigit], y: &[BigDigit]) -> BigUint {
     let len = x.len() + y.len() + 1;
-    let mut prod: BigUint = BigUint { data: Vec::with_capacity(len) };
-
-    // resize isn't stable yet:
-    //prod.data.resize(len, 0);
-    prod.data.extend(repeat(0).take(len));
+    let mut prod = BigUint { data: vec![0; len] };
 
     mac3(&mut prod.data[..], x, y);
     prod.normalize()
@@ -1058,16 +1053,14 @@ impl Integer for BigUint {
 
         let bn = *b.data.last().unwrap();
         let q_len = a.data.len() - b.data.len() + 1;
-        let mut q: BigUint = BigUint { data: Vec::with_capacity(q_len) };
-
-        q.data.extend(repeat(0).take(q_len));
+        let mut q = BigUint { data: vec![0; q_len] };
 
         /*
          * We reuse the same temporary to avoid hitting the allocator in our inner loop - this is
          * sized to hold a0 (in the common case; if a particular digit of the quotient is zero a0
          * can be bigger).
          */
-        let mut tmp: BigUint = BigUint { data: Vec::with_capacity(2) };
+        let mut tmp = BigUint { data: Vec::with_capacity(2) };
 
         for j in (0..q_len).rev() {
             /*
