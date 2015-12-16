@@ -6,14 +6,17 @@ extern crate rand;
 
 use std::mem::replace;
 use test::Bencher;
-use num::{BigUint, Zero, One, FromPrimitive};
+use num::{BigInt, BigUint, Zero, One, FromPrimitive};
 use num::bigint::RandBigInt;
 use rand::{SeedableRng, StdRng};
 
-fn multiply_bench(b: &mut Bencher, xbits: usize, ybits: usize) {
+fn get_rng() -> StdRng {
     let seed: &[_] = &[1, 2, 3, 4];
-    let mut rng: StdRng = SeedableRng::from_seed(seed);
+    SeedableRng::from_seed(seed)
+}
 
+fn multiply_bench(b: &mut Bencher, xbits: usize, ybits: usize) {
+    let mut rng = get_rng();
     let x = rng.gen_bigint(xbits);
     let y = rng.gen_bigint(ybits);
 
@@ -21,9 +24,7 @@ fn multiply_bench(b: &mut Bencher, xbits: usize, ybits: usize) {
 }
 
 fn divide_bench(b: &mut Bencher, xbits: usize, ybits: usize) {
-    let seed: &[_] = &[1, 2, 3, 4];
-    let mut rng: StdRng = SeedableRng::from_seed(seed);
-
+    let mut rng = get_rng();
     let x = rng.gen_bigint(xbits);
     let y = rng.gen_bigint(ybits);
 
@@ -81,28 +82,89 @@ fn divide_2(b: &mut Bencher) {
 
 #[bench]
 fn factorial_100(b: &mut Bencher) {
-    b.iter(|| {
-        factorial(100);
-    });
+    b.iter(|| factorial(100));
 }
 
 #[bench]
 fn fib_100(b: &mut Bencher) {
-    b.iter(|| {
-        fib(100);
-    });
+    b.iter(|| fib(100));
 }
 
 #[bench]
-fn to_string(b: &mut Bencher) {
+fn fac_to_string(b: &mut Bencher) {
     let fac = factorial(100);
+    b.iter(|| fac.to_string());
+}
+
+#[bench]
+fn fib_to_string(b: &mut Bencher) {
     let fib = fib(100);
-    b.iter(|| {
-        fac.to_string();
-    });
-    b.iter(|| {
-        fib.to_string();
-    });
+    b.iter(|| fib.to_string());
+}
+
+fn to_str_radix_bench(b: &mut Bencher, radix: u32) {
+    let mut rng = get_rng();
+    let x = rng.gen_bigint(1009);
+    b.iter(|| x.to_str_radix(radix));
+}
+
+#[bench]
+fn to_str_radix_02(b: &mut Bencher) {
+    to_str_radix_bench(b, 2);
+}
+
+#[bench]
+fn to_str_radix_08(b: &mut Bencher) {
+    to_str_radix_bench(b, 8);
+}
+
+#[bench]
+fn to_str_radix_10(b: &mut Bencher) {
+    to_str_radix_bench(b, 10);
+}
+
+#[bench]
+fn to_str_radix_16(b: &mut Bencher) {
+    to_str_radix_bench(b, 16);
+}
+
+#[bench]
+fn to_str_radix_36(b: &mut Bencher) {
+    to_str_radix_bench(b, 36);
+}
+
+fn from_str_radix_bench(b: &mut Bencher, radix: u32) {
+    use num::Num;
+    let mut rng = get_rng();
+    let x = rng.gen_bigint(1009);
+    let s = x.to_str_radix(radix);
+    assert_eq!(x, BigInt::from_str_radix(&s, radix).unwrap());
+    b.iter(|| BigInt::from_str_radix(&s, radix));
+}
+
+#[bench]
+fn from_str_radix_02(b: &mut Bencher) {
+    from_str_radix_bench(b, 2);
+}
+
+#[bench]
+fn from_str_radix_08(b: &mut Bencher) {
+    from_str_radix_bench(b, 8);
+}
+
+#[bench]
+fn from_str_radix_10(b: &mut Bencher) {
+    from_str_radix_bench(b, 10);
+}
+
+#[bench]
+fn from_str_radix_16(b: &mut Bencher) {
+    from_str_radix_bench(b, 16);
+}
+
+#[bench]
+fn from_str_radix_36(b: &mut Bencher) {
+    from_str_radix_bench(b, 36);
 }
 
 #[bench]
