@@ -66,12 +66,11 @@ use std::iter::repeat;
 use std::num::ParseIntError;
 use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Rem, Shl, Shr, Sub};
 use std::str::{self, FromStr};
-use std::{cmp, fmt, hash};
+use std::{fmt, hash};
 use std::cmp::Ordering::{self, Less, Greater, Equal};
 use std::{i64, u64};
 
 use rand::Rng;
-use rustc_serialize::hex::ToHex;
 
 use traits::{ToPrimitive, FromPrimitive};
 
@@ -254,41 +253,122 @@ impl FromStr for BigUint {
     }
 }
 
+// Read bitwise digits that evenly divide BigDigit
+fn from_bitwise_digits_le(v: &[u8], bits: usize) -> BigUint {
+    debug_assert!(!v.is_empty() && bits <= 8 && big_digit::BITS % bits == 0);
+    debug_assert!(v.iter().all(|&c| (c as BigDigit) < (1 << bits)));
+
+    let digits_per_big_digit = big_digit::BITS / bits;
+
+    let data = v.chunks(digits_per_big_digit).map(|chunk| {
+        chunk.iter().rev().fold(0u32, |acc, &c| (acc << bits) | c as BigDigit)
+    }).collect();
+
+    BigUint::new(data)
+}
+
+// Read bitwise digits that don't evenly divide BigDigit
+fn from_inexact_bitwise_digits_le(v: &[u8], bits: usize) -> BigUint {
+    debug_assert!(!v.is_empty() && bits <= 8 && big_digit::BITS % bits != 0);
+    debug_assert!(v.iter().all(|&c| (c as BigDigit) < (1 << bits)));
+
+    let big_digits = (v.len() * bits + big_digit::BITS - 1) / big_digit::BITS;
+    let mut data = Vec::with_capacity(big_digits);
+
+    let mut d = 0;
+    let mut dbits = 0;
+    for &c in v {
+        d |= (c as DoubleBigDigit) << dbits;
+        dbits += bits;
+        if dbits >= big_digit::BITS {
+            let (hi, lo) = big_digit::from_doublebigdigit(d);
+            data.push(lo);
+            d = hi as DoubleBigDigit;
+            dbits -= big_digit::BITS;
+        }
+    }
+
+    if dbits > 0 {
+        debug_assert!(dbits < big_digit::BITS);
+        data.push(d as BigDigit);
+    }
+
+    BigUint::new(data)
+}
+
+// Read little-endian radix digits
+fn from_radix_digits_be(v: &[u8], radix: u32) -> BigUint {
+    debug_assert!(!v.is_empty() && !radix.is_power_of_two());
+    debug_assert!(v.iter().all(|&c| (c as u32) < radix));
+
+    let (base, power) = get_radix_base(radix);
+    debug_assert!(base < (1 << 32));
+    let base = base as BigDigit;
+
+    let r = v.len() % power;
+    let i = if r == 0 { power } else { r };
+    let (head, tail) = v.split_at(i);
+
+    let first = head.iter().fold(0, |acc, &d| acc * radix + d as BigDigit);
+    let mut data = vec![first];
+
+    debug_assert!(tail.len() % power == 0);
+    for chunk in tail.chunks(power) {
+        let mut carry = 0;
+        data.push(0);
+        for d in data.iter_mut() {
+            *d = mac_with_carry(0, *d, base, &mut carry);
+        }
+        debug_assert!(carry == 0);
+
+        let n = chunk.iter().fold(0, |acc, &d| acc * radix + d as BigDigit);
+        add2(&mut data, &[n]);
+
+        if let Some(&0) = data.last() {
+            data.pop();
+        }
+    }
+
+    BigUint::new(data)
+}
+
 impl Num for BigUint {
     type FromStrRadixErr = ParseBigIntError;
 
     /// Creates and initializes a `BigUint`.
-    #[inline]
     fn from_str_radix(s: &str, radix: u32) -> Result<BigUint, ParseBigIntError> {
-        let (base, unit_len) = get_radix_base(radix);
-        let base_num = match base.to_biguint() {
-            Some(base_num) => base_num,
-            None => { return Err(ParseBigIntError::Other); }
-        };
-
-        let mut end            = s.len();
-        let mut n: BigUint     = Zero::zero();
-        let mut power: BigUint = One::one();
-        loop {
-            let start = cmp::max(end, unit_len) - unit_len;
-            let d = try!(usize::from_str_radix(&s[start .. end], radix));
-            let d: Option<BigUint> = FromPrimitive::from_usize(d);
-            match d {
-                Some(d) => {
-                    // FIXME(#5992): assignment operator overloads
-                    // n += d * &power;
-                    n = n + d * &power;
-                }
-                None => { return Err(ParseBigIntError::Other); }
-            }
-            if end <= unit_len {
-                return Ok(n);
-            }
-            end -= unit_len;
-            // FIXME(#5992): assignment operator overloads
-            // power *= &base_num;
-            power = power * &base_num;
+        assert!(2 <= radix && radix <= 36, "The radix must be within 2...36");
+        if s.is_empty() {
+            // create ParseIntError
+            try!(u64::from_str_radix(s, radix));
+            unreachable!();
         }
+
+        // First normalize all characters to plain digit values
+        let mut v = Vec::with_capacity(s.len());
+        for (i, c) in s.chars().enumerate() {
+            if let Some(d) = c.to_digit(radix) {
+                v.push(d as u8);
+            } else {
+                // create ParseIntError
+                try!(u64::from_str_radix(&s[i..], radix));
+                unreachable!();
+            }
+        }
+
+        let res = if radix.is_power_of_two() {
+            // Powers of two can use bitwise masks and shifting instead of multiplication
+            let bits = radix.trailing_zeros() as usize;
+            v.reverse();
+            if big_digit::BITS % bits == 0 {
+                from_bitwise_digits_le(&v, bits)
+            } else {
+                from_inexact_bitwise_digits_le(&v, bits)
+            }
+        } else {
+            from_radix_digits_be(&v, radix)
+        };
+        Ok(res)
     }
 }
 
@@ -1351,7 +1431,9 @@ impl BigUint {
         if bytes.is_empty() {
             Zero::zero()
         } else {
-            BigUint::parse_bytes(bytes.to_hex().as_bytes(), 16).unwrap()
+            let mut v = bytes.to_vec();
+            v.reverse();
+            BigUint::from_bytes_le(&*v)
         }
     }
 
@@ -1360,9 +1442,11 @@ impl BigUint {
     /// The bytes are in little-endian byte order.
     #[inline]
     pub fn from_bytes_le(bytes: &[u8]) -> BigUint {
-        let mut v = bytes.to_vec();
-        v.reverse();
-        BigUint::from_bytes_be(&*v)
+        if bytes.is_empty() {
+            Zero::zero()
+        } else {
+            from_bitwise_digits_le(bytes, 8)
+        }
     }
 
     /// Returns the byte representation of the `BigUint` in little-endian byte order.
