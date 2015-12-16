@@ -971,10 +971,11 @@ impl CheckedAdd for BigUint {
 impl CheckedSub for BigUint {
     #[inline]
     fn checked_sub(&self, v: &BigUint) -> Option<BigUint> {
-        if *self < *v {
-            return None;
+        match self.cmp(v) {
+            Less => None,
+            Equal => Some(Zero::zero()),
+            Greater => Some(self.sub(v)),
         }
-        return Some(self.sub(v));
     }
 }
 
