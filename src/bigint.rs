@@ -1950,47 +1950,15 @@ impl Sub<BigInt> for BigInt {
     }
 }
 
-// We want to forward to BigUint::mul, and defer the val/ref decision to
-// BigUint, so we duplicate this body for every val/ref combination.
-macro_rules! bigint_mul {
-    ($a:expr, $a_data:expr, $b:expr, $b_data:expr) => {
-        BigInt::from_biguint($a.sign * $b.sign, $a_data * $b_data)
-    };
-}
+forward_all_binop_to_ref_ref!(impl Mul for BigInt, mul);
 
 impl<'a, 'b> Mul<&'b BigInt> for &'a BigInt {
     type Output = BigInt;
 
     #[inline]
     fn mul(self, other: &BigInt) -> BigInt {
-        bigint_mul!(self, &self.data, other, &other.data)
-    }
-}
-
-impl<'a> Mul<BigInt> for &'a BigInt {
-    type Output = BigInt;
-
-    #[inline]
-    fn mul(self, other: BigInt) -> BigInt {
-        bigint_mul!(self, &self.data, other, other.data)
-    }
-}
-
-impl<'a> Mul<&'a BigInt> for BigInt {
-    type Output = BigInt;
-
-    #[inline]
-    fn mul(self, other: &BigInt) -> BigInt {
-        bigint_mul!(self, self.data, other, &other.data)
-    }
-}
-
-impl Mul<BigInt> for BigInt {
-    type Output = BigInt;
-
-    #[inline]
-    fn mul(self, other: BigInt) -> BigInt {
-        bigint_mul!(self, self.data, other, other.data)
+        BigInt::from_biguint(self.sign * other.sign,
+                             &self.data * &other.data)
     }
 }
 
