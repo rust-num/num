@@ -177,3 +177,14 @@ fn shr(b: &mut Bencher) {
         }
     })
 }
+
+#[bench]
+fn hash(b: &mut Bencher) {
+    use std::collections::HashSet;
+    let mut rng = get_rng();
+    let v: Vec<BigInt> = (1000..2000).map(|bits| rng.gen_bigint(bits)).collect();
+    b.iter(|| {
+        let h: HashSet<&BigInt> = v.iter().collect();
+        assert_eq!(h.len(), v.len());
+    });
+}
