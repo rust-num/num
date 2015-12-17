@@ -68,7 +68,7 @@ use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Rem, Shl, Shr, Sub};
 use std::str::{self, FromStr};
 use std::{fmt, hash};
 use std::cmp::Ordering::{self, Less, Greater, Equal};
-use std::{i64, u64};
+use std::{u8, i64, u64};
 
 use rand::Rng;
 
@@ -301,6 +301,11 @@ fn from_radix_digits_be(v: &[u8], radix: u32) -> BigUint {
     debug_assert!(!v.is_empty() && !radix.is_power_of_two());
     debug_assert!(v.iter().all(|&c| (c as u32) < radix));
 
+    // Estimate how big the result will be, so we can pre-allocate it.
+    let bits = (radix as f64).log2() * v.len() as f64;
+    let big_digits = (bits / big_digit::BITS as f64).ceil();
+    let mut data = Vec::with_capacity(big_digits as usize);
+
     let (base, power) = get_radix_base(radix);
     debug_assert!(base < (1 << 32));
     let base = base as BigDigit;
@@ -310,12 +315,15 @@ fn from_radix_digits_be(v: &[u8], radix: u32) -> BigUint {
     let (head, tail) = v.split_at(i);
 
     let first = head.iter().fold(0, |acc, &d| acc * radix + d as BigDigit);
-    let mut data = vec![first];
+    data.push(first);
 
     debug_assert!(tail.len() % power == 0);
     for chunk in tail.chunks(power) {
+        if data.last() != Some(&0) {
+            data.push(0);
+        }
+
         let mut carry = 0;
-        data.push(0);
         for d in data.iter_mut() {
             *d = mac_with_carry(0, *d, base, &mut carry);
         }
@@ -323,10 +331,6 @@ fn from_radix_digits_be(v: &[u8], radix: u32) -> BigUint {
 
         let n = chunk.iter().fold(0, |acc, &d| acc * radix + d as BigDigit);
         add2(&mut data, &[n]);
-
-        if let Some(&0) = data.last() {
-            data.pop();
-        }
     }
 
     BigUint::new(data)
@@ -339,20 +343,26 @@ impl Num for BigUint {
     fn from_str_radix(s: &str, radix: u32) -> Result<BigUint, ParseBigIntError> {
         assert!(2 <= radix && radix <= 36, "The radix must be within 2...36");
         if s.is_empty() {
-            // create ParseIntError
-            try!(u64::from_str_radix(s, radix));
-            unreachable!();
+            // create ParseIntError::Empty
+            let e = u64::from_str_radix(s, radix).unwrap_err();
+            return Err(e.into());
         }
 
         // First normalize all characters to plain digit values
         let mut v = Vec::with_capacity(s.len());
-        for (i, c) in s.chars().enumerate() {
-            if let Some(d) = c.to_digit(radix) {
-                v.push(d as u8);
+        for b in s.bytes() {
+            let d = match b {
+                b'0' ... b'9' => b - b'0',
+                b'a' ... b'z' => b - b'a' + 10,
+                b'A' ... b'Z' => b - b'A' + 10,
+                _ => u8::MAX,
+            };
+            if d < radix as u8 {
+                v.push(d);
             } else {
-                // create ParseIntError
-                try!(u64::from_str_radix(&s[i..], radix));
-                unreachable!();
+                // create ParseIntError::InvalidDigit
+                let e = u64::from_str_radix(&s[v.len()..], radix).unwrap_err();
+                return Err(e.into());
             }
         }
 
@@ -1330,8 +1340,11 @@ fn to_inexact_bitwise_digits_le(u: &BigUint, bits: usize) -> Vec<u8> {
 fn to_radix_digits_le(u: &BigUint, radix: u32) -> Vec<u8> {
     debug_assert!(!u.is_zero() && !radix.is_power_of_two());
 
-    let mut res = Vec::new();
+    // Estimate how big the result will be, so we can pre-allocate it.
+    let radix_digits = ((u.bits() as f64) / (radix as f64).log2()).ceil();
+    let mut res = Vec::with_capacity(radix_digits as usize);
     let mut digits = u.clone();
+
     let (base, power) = get_radix_base(radix);
     debug_assert!(base < (1 << 32));
     let base = base as BigDigit;
@@ -1583,7 +1596,7 @@ impl BigUint {
 }
 
 // `DoubleBigDigit` size dependent
-/// Returns the greatest power of the radix <= BigDigit::MAX + 1
+/// Returns the greatest power of the radix <= big_digit::BASE
 #[inline]
 fn get_radix_base(radix: u32) -> (DoubleBigDigit, usize) {
     // To generate this table:
@@ -1736,16 +1749,10 @@ impl Num for BigInt {
 
     /// Creates and initializes a BigInt.
     #[inline]
-    fn from_str_radix(s: &str, radix: u32) -> Result<BigInt, ParseBigIntError> {
-        if s.is_empty() { return Err(ParseBigIntError::Other); }
-        let mut sign  = Plus;
-        let mut start = 0;
-        if s.starts_with("-") {
-            sign  = Minus;
-            start = 1;
-        }
-        BigUint::from_str_radix(&s[start ..], radix)
-            .map(|bu| BigInt::from_biguint(sign, bu))
+    fn from_str_radix(mut s: &str, radix: u32) -> Result<BigInt, ParseBigIntError> {
+        let sign = if s.starts_with('-') { s = &s[1..]; Minus } else { Plus };
+        let bu = try!(BigUint::from_str_radix(s, radix));
+        Ok(BigInt::from_biguint(sign, bu))
     }
 }
 
@@ -3444,9 +3451,15 @@ mod biguint_tests {
 
     #[test]
     fn test_all_str_radix() {
+        use std::ascii::AsciiExt;
+
         let n = BigUint::new((0..10).collect());
         for radix in 2..37 {
             let s = n.to_str_radix(radix);
+            let x = BigUint::from_str_radix(&s, radix);
+            assert_eq!(x.unwrap(), n);
+
+            let s = s.to_ascii_uppercase();
             let x = BigUint::from_str_radix(&s, radix);
             assert_eq!(x.unwrap(), n);
         }
