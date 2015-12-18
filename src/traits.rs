@@ -1355,16 +1355,12 @@ macro_rules! prim_int_impl {
 
             fn bits_to_unsigned(self) -> $AU
             {
-                unsafe {
-                    mem::transmute::<$T, $AU>(self)
-                }
+                self as $AU
             }
 
             fn bits_to_signed(self) -> $AS
             {
-                unsafe {
-                    mem::transmute::<$T, $AS>(self)
-                }
+                self as $AS
             }
             
             fn count_ones(self) -> u32 {
