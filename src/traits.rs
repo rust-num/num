@@ -1,4 +1,4 @@
-// Copyright 2013-2014 The Rust Project Developers. See the COPYRIGHT
+// Copyright 2013-2015 The Rust Project Developers. See the COPYRIGHT
 // file at the top-level directory of this distribution and at
 // http://rust-lang.org/COPYRIGHT.
 //
@@ -656,14 +656,44 @@ pub trait PrimInt
     + BitAnd<Output=Self>
     + BitOr<Output=Self>
     + BitXor<Output=Self>
-    + Shl<usize, Output=Self>
-    + Shr<usize, Output=Self>
+    + Shl<u32, Output=Self>
+    + Shr<u32, Output=Self>
     + CheckedAdd<Output=Self>
     + CheckedSub<Output=Self>
     + CheckedMul<Output=Self>
     + CheckedDiv<Output=Self>
+    + Sub<Output=Self>
     + Saturating
 {
+    type Signed : PrimInt;
+    type Unsigned : PrimInt;
+
+    /// Transmutes the integer into an unsigned integer of the
+    /// same size (loss less).
+    ///
+    /// # Examples
+    ///
+    /// ~~~
+    /// use num::traits::PrimInt;
+    ///
+    /// assert_eq!((8i32).bits_to_unsigned().bits_to_signed(), 8i32);
+    /// assert_eq!((-1i32).bits_to_unsigned().bits_to_signed(), -1i32);
+    /// ~~~
+    fn bits_to_unsigned(self) -> Self::Unsigned;
+
+    /// Transmutes an integer into a signed integer of the
+    /// same size (loss less).
+    ///
+    /// # Examples
+    ///
+    /// ~~~
+    /// use num::traits::PrimInt;
+    ///
+    /// assert_eq!((8i32).bits_to_unsigned().bits_to_signed(), 8i32);
+    /// assert_eq!((-1i32).bits_to_unsigned().bits_to_signed(), -1i32);
+    /// ~~~
+    fn bits_to_signed(self) -> Self::Signed;
+ 
     /// Returns the number of ones in the binary representation of `self`.
     ///
     /// # Examples
@@ -671,7 +701,7 @@ pub trait PrimInt
     /// ```
     /// use num::traits::PrimInt;
     ///
-    /// let n = 0b01001100u8;
+    /// let n = 0b0100_1100u8;
     ///
     /// assert_eq!(n.count_ones(), 3);
     /// ```
@@ -684,7 +714,7 @@ pub trait PrimInt
     /// ```
     /// use num::traits::PrimInt;
     ///
-    /// let n = 0b01001100u8;
+    /// let n = 0b0100_1100u8;
     ///
     /// assert_eq!(n.count_zeros(), 5);
     /// ```
@@ -698,7 +728,7 @@ pub trait PrimInt
     /// ```
     /// use num::traits::PrimInt;
     ///
-    /// let n = 0b0101000u16;
+    /// let n = 0b0000_0000_0010_1000u16;
     ///
     /// assert_eq!(n.leading_zeros(), 10);
     /// ```
@@ -712,7 +742,7 @@ pub trait PrimInt
     /// ```
     /// use num::traits::PrimInt;
     ///
-    /// let n = 0b0101000u16;
+    /// let n = 0b0000_0000_0010_1000u16;
     ///
     /// assert_eq!(n.trailing_zeros(), 3);
     /// ```
@@ -848,11 +878,495 @@ pub trait PrimInt
     /// assert_eq!(2i32.pow(4), 16);
     /// ```
     fn pow(self, mut exp: u32) -> Self;
+
+    /// Returns the number of leading ones in the binary representation
+    /// of `self`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use num::traits::PrimInt;
+    ///
+    /// let n = 0b1111_1111_1100_1000u16;
+    ///
+    /// assert_eq!(n.leading_ones(), 10);
+    /// ```
+    fn leading_ones(self) -> u32 {
+       Self::leading_zeros(!self)
+    }
+
+    /// Returns the number of trailing ones in the binary representation
+    /// of `self`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use num::traits::PrimInt;
+    ///
+    /// let n = 0b0000_0000_0010_0111u16;
+    ///
+    /// assert_eq!(n.trailing_ones(), 3);
+    /// ```
+    fn trailing_ones(self) -> u32 {
+       Self::trailing_zeros(!self)
+    }
+
+   /// Returns the number of 1 bits in `self` mod 2, that is, returns 1 if the number
+   /// of 1 bits in `self` is odd, and zero otherwise
+   ///
+   ///
+   /// # Examples
+   ///
+   /// ```
+   /// use num::traits::PrimInt;
+   ///
+   /// let n0 = 0b0000;  // 0 -> even => parity = 0
+   /// let n1 = 0b0001;  // 1 -> odd  => partiy = 1
+   /// let n2 = 0b0010;  // 1 -> odd  => parity = 1
+   /// let n3 = 0b0011;  // 2 -> even => parity = 0
+   ///
+   /// assert_eq!(n0.parity(), 0);
+   /// assert_eq!(n1.parity(), 1);
+   /// assert_eq!(n2.parity(), 1);
+   /// assert_eq!(n3.parity(), 0);
+   /// ```
+   fn parity(self) -> u32 {
+        // TODO: use intrinsics depending on size:
+        //  - __builtin_parity, __builtin_parityl, __builtin_parityll
+        self.count_ones() & 1
+   }
+
+   /// Reset least significant 1 bit of `self`; returns 0 if `self` is 0.
+   ///
+   /// # Examples
+   ///
+   /// ```
+   /// use num::traits::PrimInt;
+   ///
+   /// let n = 0b0110;
+   /// let s = 0b0100;  
+   ///
+   /// assert_eq!(n.reset_least_significant_one(), s);
+   /// ```
+   fn reset_least_significant_one(self) -> Self {
+       self & (self - cast(1).unwrap())
+   }
+
+   /// Set least significant 0 bit of `self`.
+   ///
+   /// # Examples
+   ///
+   /// ```
+   /// use num::traits::PrimInt;
+   ///
+   /// let n = 0b0101;
+   /// let s = 0b0111;  
+   ///
+   /// assert_eq!(n.set_least_significant_zero(), s);
+   /// ```
+   fn set_least_significant_zero(self) -> Self {
+       self | (self + cast(1).unwrap())
+   }
+
+   /// Isolate least significant 1 bit of `self` and returns it; returns 0
+   /// if `self` is 0.
+   ///
+   /// # Examples
+   ///
+   /// ```
+   /// use num::traits::PrimInt;
+   ///
+   /// let n = 0b0110;
+   /// let s = 0b0010;  
+   ///
+   /// assert_eq!(n.isolate_least_significant_one(), s);
+   /// ```
+   fn isolate_least_significant_one(self) -> Self {
+       // note: self & -self is intended, which is rewritten as self & (0 - self), so:
+       self & (cast::<_,Self>(0).unwrap() - self)
+   }
+
+   /// Set the least significant zero bit of `self` to 1 and all of the
+   /// rest to 0.
+   ///
+   /// # Examples
+   ///
+   /// ```
+   /// use num::traits::PrimInt;
+   ///
+   /// let n = 0b0101;
+   /// let s = 0b0010;  
+   ///
+   /// assert_eq!(n.isolate_least_significant_zero(), s);
+   /// ```
+   fn isolate_least_significant_zero(self) -> Self {
+       (!self) & (self + cast(1).unwrap())
+   }
+
+   /// Reset the trailing 1's in `self`.
+   ///
+   /// # Examples
+   ///
+   /// ```
+   /// use num::traits::PrimInt;
+   ///
+   /// let n = 0b0110_1111;
+   /// let s = 0b0110_0000;  
+   ///
+   /// assert_eq!(n.reset_trailing_ones(), s);
+   /// ```
+   fn reset_trailing_ones(self) -> Self {
+       self & (self + cast(1).unwrap())
+   }
+
+   /// Set all of the trailing 0's in `self`.
+   ///
+   /// # Examples
+   ///
+   /// ```
+   /// use num::traits::PrimInt;
+   ///
+   /// let n = 0b0110_0000u8;
+   /// let s = 0b0111_1111u8;  
+   ///
+   /// assert_eq!(n.set_trailing_zeros(), s);
+   /// ```
+   fn set_trailing_zeros(self) -> Self {
+       self | (self - cast(1).unwrap())
+   }
+
+   /// Returns a mask with all of the trailing 0's of `self` set.
+   ///
+   /// # Examples
+   ///
+   /// ```
+   /// use num::traits::PrimInt;
+   ///
+   /// let n = 0b0110_0000u8;
+   /// let s = 0b0001_1111u8;  
+   ///
+   /// assert_eq!(n.mask_trailing_zeros(), s);
+   /// ```
+   fn mask_trailing_zeros(self) -> Self {
+       (!self) & (self - cast(1).unwrap())
+   }
+
+   /// Returns a mask with all of the trailing 1's of `self` set.
+   ///
+   /// # Examples
+   ///
+   /// ```
+   /// use num::traits::PrimInt;
+   ///
+   /// let n = 0b0101_1111u8;
+   /// let s = 0b0001_1111u8;  
+   ///
+   /// assert_eq!(n.mask_trailing_ones(), s);
+   /// ```
+   fn mask_trailing_ones(self) -> Self {
+       !((!self) | (self + cast(1).unwrap()))
+   }
+   
+   /// Returns a mask with all of the trailing 0's of `self` set and the least
+   /// significant 1 bit set.
+   ///
+   /// # Examples
+   ///
+   /// ```
+   /// use num::traits::PrimInt;
+   ///
+   /// let n = 0b0101_0000u8;
+   /// let s = 0b0001_1111u8;  
+   ///
+   /// assert_eq!(n.mask_trailing_zeros_and_least_significant_one(), s);
+   /// ```
+   fn mask_trailing_zeros_and_least_significant_one(self) -> Self {
+       (self - cast(1).unwrap()) ^ self
+   }
+
+   /// Returns a mask with all of the trailing 1's of `self` set and the least
+   /// significant 0 bit set.
+   ///
+   /// # Examples
+   ///
+   /// ```
+   /// use num::traits::PrimInt;
+   ///
+   /// let n = 0b0101_1111u8;
+   /// let s = 0b0011_1111u8;  
+   ///
+   /// assert_eq!(n.mask_trailing_zeros_and_least_significant_zero(), s);
+   /// ```
+   fn mask_trailing_zeros_and_least_significant_zero(self) -> Self {
+       self ^ (self + cast(1).unwrap())
+   }
+
+   fn general_reverse_bits(self, subword_bits: u32, group_subwords: u32) -> Self;
+
+   /// Reverses the bits of `self`
+   ///
+   /// # Examples
+   ///
+   /// ```
+   /// use num::traits::PrimInt;
+   ///
+   /// let n = 0b1011_0010u8;
+   /// let s = 0b0100_1101u8;  
+   /// assert_eq!(n.reverse_bits(), s);
+   ///
+   /// let n1 = 0b1011_0010_1010_1001u16;
+   /// let s1 = 0b1001_0101_0100_1101u16;
+   /// assert_eq!(n1.reverse_bits(), s1);
+   /// ```
+   fn reverse_bits(self) -> Self {
+       self.general_reverse_bits(1, 1)
+   }
+
+   /// Reverses the pairs of bits of `self`
+   ///
+   /// # Examples
+   ///
+   /// ```
+   /// use num::traits::PrimInt;
+   ///
+   /// let n = 0b1011_0010u8;
+   /// let s = 0b1000_1110u8;  
+   /// assert_eq!(n.reverse_bit_pairs(), s);
+   ///
+   /// let n1 = 0b1011_0010_1010_1001u16;
+   /// let s1 = 0b0110_1010_1000_1110u16;
+   /// assert_eq!(n1.reverse_bit_pairs(), s1);
+   /// ```
+   fn reverse_bit_pairs(self) -> Self {
+       self.general_reverse_bits(2, 1)
+   }
+
+   /// Reverses the nibbles of `self`
+   ///
+   /// # Examples
+   ///
+   /// ```
+   /// use num::traits::PrimInt;
+   ///
+   /// let n = 0b1011_0010u8;
+   /// let s = 0b0010_1011u8;  
+   /// assert_eq!(n.reverse_bit_nibbles(), s);
+   ///
+   /// let n1 = 0b1011_0010_1010_1001u16;
+   /// let s1 = 0b1001_1010_0010_1011u16;
+   /// assert_eq!(n1.reverse_bit_nibbles(), s1);
+   /// ```
+   fn reverse_bit_nibbles(self) -> Self {
+       self.general_reverse_bits(4, 1)
+   }
+
+   fn reverse_byte_groups(self, bytes_per_block: u32, blocks_per_group: u32) -> Self {
+       self.general_reverse_bits(8 * bytes_per_block, blocks_per_group)
+   }
+
+   /// Reverses the bytes of `self`
+   ///
+   /// # Examples
+   ///
+   /// ```
+   /// use num::traits::PrimInt;
+   ///
+   /// let n = 0b1011_0010u8;
+   /// let s = 0b1011_0010u8;  
+   /// assert_eq!(n.reverse_bytes(), s);
+   ///
+   /// let n1 = 0b1011_0010_1010_1001u16;
+   /// let s1 = 0b1010_1001_1011_0010u16;
+   /// assert_eq!(n1.reverse_bytes(), s1);
+   /// ```
+   fn reverse_bytes(self) -> Self {
+       self.reverse_byte_groups(1, 1)
+   }
+
+   /// Sets the `bit` of `self`
+   ///
+   /// # Examples
+   ///
+   /// ```
+   /// use num::traits::PrimInt;
+   ///
+   /// let n  = 0b1011_0010u8;
+   /// let s0 = 0b1111_0010u8;
+   /// let s1 = 0b1011_0011u8;
+   /// let s2 = 0b1011_1010u8;  
+   /// assert_eq!(n.set_bit(6), s0);
+   /// assert_eq!(n.set_bit(0), s1);
+   /// assert_eq!(n.set_bit(3), s2);
+   /// ```
+   fn set_bit(self, bit: u32) -> Self {
+        self | (cast::<_, Self>(1).unwrap() << bit)
+   }
+
+   /// Resets the `bit` of `self`
+   ///
+   /// # Examples
+   ///
+   /// ```
+   /// use num::traits::PrimInt;
+   ///
+   /// let n = 0b1011_0010u8;
+   /// let s0 = 0b0011_0010u8;
+   /// let s1 = 0b1011_0000u8;
+   /// let s2 = 0b1001_0010u8;
+   /// assert_eq!(n.reset_bit(7), s0);
+   /// assert_eq!(n.reset_bit(1), s1);
+   /// assert_eq!(n.reset_bit(5), s2);
+   /// ```
+   fn reset_bit(self, bit: u32) -> Self {
+        self & !(cast::<_, Self>(1).unwrap() << bit)
+   }
+
+   /// Flip the `bit` of `self`
+   ///
+   /// # Examples
+   ///
+   /// ```
+   /// use num::traits::PrimInt;
+   ///
+   /// let n = 0b1011_0010u8;
+   /// let s0 = 0b0011_0010u8;
+   /// let s1 = 0b1111_0010u8;
+   /// let s2 = 0b1001_0010u8;
+   /// assert_eq!(n.flip_bit(7), s0);
+   /// assert_eq!(n.flip_bit(6), s1);
+   /// assert_eq!(n.flip_bit(5), s2);
+   /// ```
+   fn flip_bit(self, bit: u32) -> Self {
+        self ^ (cast::<_, Self>(1).unwrap() << bit)
+   }
+
+   /// Test the `bit` of `self`
+   ///
+   /// # Examples
+   ///
+   /// ```
+   /// use num::traits::PrimInt;
+   ///
+   /// let n = 0b1011_0010u8;
+   /// assert_eq!(n.test_bit(7), true);
+   /// assert_eq!(n.test_bit(6), false);
+   /// assert_eq!(n.test_bit(5), true);
+   /// ```
+   fn test_bit(self, bit: u32) -> bool {
+        self & (cast::<_, Self>(1).unwrap() << bit) > cast::<_, Self>(0).unwrap()
+   }
+
+   /// Resets all bits of `self` at position >= `bit`
+   ///
+   /// # Examples
+   ///
+   /// ```
+   /// use num::traits::PrimInt;
+   ///
+   /// let n = 0b1111_0010u8;
+   /// let s = 0b0001_0010u8;
+   /// assert_eq!(n.reset_bits_geq(5), s);
+   /// ```
+   fn reset_bits_geq(self, bit: u32) -> Self {
+       self & ((cast::<_, Self>(1).unwrap() << bit) - cast::<_, Self>(1).unwrap())
+   }
+
+   /// Resets all bits of `self` at position <= `bit`
+   ///
+   /// # Examples
+   ///
+   /// ```
+   /// use num::traits::PrimInt;
+   ///
+   /// let n = 0b1111_0010u8;
+   /// let s = 0b1100_0000u8;
+   /// assert_eq!(n.reset_bits_leq(5), s);
+   /// ```
+   fn reset_bits_leq(self, bit: u32) -> Self {
+       self & !((cast::<_, Self>(1).unwrap() << (bit + 1)) - cast::<_, Self>(1).unwrap())
+   }   
+
+   /// Sets all bits of `self` at position >= `bit`
+   ///
+   /// # Examples
+   ///
+   /// ```
+   /// use num::traits::PrimInt;
+   ///
+   /// let n = 0b1000_0010u8;
+   /// let s = 0b1110_0010u8;
+   /// assert_eq!(n.set_bits_geq(5), s);
+   /// ```
+   fn set_bits_geq(self, bit: u32) -> Self {
+       self | !((cast::<_, Self>(1).unwrap() << bit) - cast::<_, Self>(1).unwrap())
+   }
+
+   /// Sets all bits of `self` at position <= `bit`
+   ///
+   /// # Examples
+   ///
+   /// ```
+   /// use num::traits::PrimInt;
+   ///
+   /// let n = 0b1000_0010u8;
+   /// let s = 0b1011_1111u8;
+   /// assert_eq!(n.set_bits_leq(5), s);
+   /// ```
+   fn set_bits_leq(self, bit: u32) -> Self {
+       self | ((cast::<_, Self>(1).unwrap() << (bit + 1)) - cast::<_, Self>(1).unwrap())
+   }
+
+   /// Flip all bits of `self` at position >= `bit`
+   ///
+   /// # Examples
+   ///
+   /// ```
+   /// use num::traits::PrimInt;
+   ///
+   /// let n = 0b1001_0010u8;
+   /// let s = 0b0111_0010u8;
+   /// assert_eq!(n.flip_bits_geq(5), s);
+   /// ```
+   fn flip_bits_geq(self, bit: u32) -> Self {
+       self ^ !((cast::<_, Self>(1).unwrap() << bit) - cast::<_, Self>(1).unwrap())
+   }
+
+   /// Flip all bits of `self` at position <= `bit`
+   ///
+   /// # Examples
+   ///
+   /// ```
+   /// use num::traits::PrimInt;
+   ///
+   /// let n = 0b1011_0010u8;
+   /// let s = 0b1000_1101u8;
+   /// assert_eq!(n.flip_bits_leq(5), s);
+   /// ```
+   fn flip_bits_leq(self, bit: u32) -> Self {
+       self ^ ((cast::<_, Self>(1).unwrap() << (bit + 1)) - cast::<_, Self>(1).unwrap())
+   }
 }
 
 macro_rules! prim_int_impl {
-    ($($T:ty)*) => ($(
+    ($T:ty, $AS:ty, $AU:ty) => (
         impl PrimInt for $T {
+            type Signed = $AS;
+            type Unsigned = $AU;
+
+            fn bits_to_unsigned(self) -> $AU
+            {
+                unsafe {
+                    mem::transmute::<$T, $AU>(self)
+                }
+            }
+
+            fn bits_to_signed(self) -> $AS
+            {
+                unsafe {
+                    mem::transmute::<$T, $AS>(self)
+                }
+            }
+            
             fn count_ones(self) -> u32 {
                 <$T>::count_ones(self)
             }
@@ -900,11 +1414,62 @@ macro_rules! prim_int_impl {
             fn pow(self, exp: u32) -> Self {
                 <$T>::pow(self, exp)
             }
+
+           fn general_reverse_bits(self, subword_bits: u32, group_subwords: u32) -> Self {
+              // Adapted from Matthew Fioravante's stdcxx-bitops, which
+              // is released under the MIT's License here:
+              // https://github.com/fmatthew5876/stdcxx-bitops
+           
+              let mut x: Self::Unsigned = self.bits_to_unsigned();
+              println!("input {:b}, as unsigned: {:b}, subword_bits: {}, group_subwords: {}", self, x, subword_bits, group_subwords);
+              let width: u32  = mem::size_of::<Self>() as u32;
+              let group_sz: u32 = width * 8 / group_subwords;
+              let k: u32 = group_sz - subword_bits;
+              println!("k {}", k);
+              {
+                  let mut up0 = |i: u32, l: usize, r: usize| {
+                      if k & i > 0 {
+                          x = ((x & (l as Self::Unsigned)) << (i as Self::Unsigned))
+                              | ((x & (r as Self::Unsigned)) >> (i as Self::Unsigned));
+                      }
+                      println!("up0({}): x = {:b}", i, x);
+                  };
+
+                  up0(1, 0x5555555555555555usize, 0xAAAAAAAAAAAAAAAAusize);
+                  up0(2, 0x3333333333333333usize, 0xCCCCCCCCCCCCCCCCusize);
+                  up0(4, 0x0F0F0F0F0F0F0F0Fusize, 0xF0F0F0F0F0F0F0F0usize);
+              }
+
+              {
+                  let mut up1 = |i: u32, s: u32, l: usize, r: usize| {
+                      if width > i && (k & s > 0) {
+                          x = ((x & (l as Self::Unsigned)) << (s as Self::Unsigned))
+                              | ((x & (r as Self::Unsigned)) >> (s as Self::Unsigned));
+                      }
+                      println!("up1({}): x = {:b}", i, x);
+                  };
+
+                  up1(1, 8, 0x00FF00FF00FF00FFusize, 0xFF00FF00FF00FF00usize);
+                  up1(2, 16, 0x0000FFFF0000FFFFusize, 0xFFFF0000FFFF0000usize);
+                  up1(4, 32, 0x00000000FFFFFFFFusize, 0xFFFFFFFF00000000usize);
+              }
+              println!("output {:b}, as Self {:b}", x, x as Self);
+              x as Self
+           }
         }
-    )*)
+    )
 }
 
-prim_int_impl!(u8 u16 u32 u64 usize i8 i16 i32 i64 isize);
+prim_int_impl!(u8, i8, u8);
+prim_int_impl!(u16, i16, u16);
+prim_int_impl!(u32, i32, u32);
+prim_int_impl!(u64, i64, u64);
+prim_int_impl!(usize, isize, usize);
+prim_int_impl!(i8, i8, u8);
+prim_int_impl!(i16, i16, u16);
+prim_int_impl!(i32, i32, u32);
+prim_int_impl!(i64, i64, u64);
+prim_int_impl!(isize, isize, usize);
 
 /// A generic trait for converting a value to a number.
 pub trait ToPrimitive {
