@@ -701,7 +701,7 @@ pub trait PrimInt
     /// ```
     /// use num::traits::PrimInt;
     ///
-    /// let n = 0b0100_1100u8;
+    /// let n = 0b01001100u8;
     ///
     /// assert_eq!(n.count_ones(), 3);
     /// ```
@@ -714,7 +714,7 @@ pub trait PrimInt
     /// ```
     /// use num::traits::PrimInt;
     ///
-    /// let n = 0b0100_1100u8;
+    /// let n = 0b01001100u8;
     ///
     /// assert_eq!(n.count_zeros(), 5);
     /// ```
@@ -728,7 +728,7 @@ pub trait PrimInt
     /// ```
     /// use num::traits::PrimInt;
     ///
-    /// let n = 0b0000_0000_0010_1000u16;
+    /// let n = 0b00101000u16;
     ///
     /// assert_eq!(n.leading_zeros(), 10);
     /// ```
@@ -742,7 +742,7 @@ pub trait PrimInt
     /// ```
     /// use num::traits::PrimInt;
     ///
-    /// let n = 0b0000_0000_0010_1000u16;
+    /// let n = 0b00101000u16;
     ///
     /// assert_eq!(n.trailing_zeros(), 3);
     /// ```
@@ -903,7 +903,7 @@ pub trait PrimInt
     /// ```
     /// use num::traits::PrimInt;
     ///
-    /// let n = 0b0000_0000_0010_0111u16;
+    /// let n = 0b0010_0111u16;
     ///
     /// assert_eq!(n.trailing_ones(), 3);
     /// ```
@@ -1095,9 +1095,9 @@ pub trait PrimInt
    /// let n = 0b0101_1111u8;
    /// let s = 0b0011_1111u8;  
    ///
-   /// assert_eq!(n.mask_trailing_zeros_and_least_significant_zero(), s);
+   /// assert_eq!(n.mask_trailing_ones_and_least_significant_zero(), s);
    /// ```
-   fn mask_trailing_zeros_and_least_significant_zero(self) -> Self {
+   fn mask_trailing_ones_and_least_significant_zero(self) -> Self {
        self ^ (self + cast(1).unwrap())
    }
 
