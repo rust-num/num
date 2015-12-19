@@ -10,7 +10,9 @@
 
 //! External iterators for generic mathematics
 
-use {Integer, Zero, One, CheckedAdd, ToPrimitive};
+use {Float, Integer, Zero, One, CheckedAdd, ToPrimitive};
+use traits::cast;
+
 use std::ops::{Add, Sub};
 
 /// An iterator over the range [start, stop)
@@ -256,8 +258,94 @@ impl<A> Iterator for RangeStepInclusive<A>
     }
 }
 
+/// An iterator of a sequence of evenly spaced floats.
+///
+/// Created from `linspace()`.
+///
+/// Iterator element type is `F`.
+pub struct Linspace<F> {
+    start: F,
+    step: F,
+    index: usize,
+    len: usize,
+}
+
+impl<F> Iterator for Linspace<F>
+    where F: Float,
+{
+    type Item = F;
+
+    #[inline]
+    fn next(&mut self) -> Option<F> {
+        if self.index >= self.len {
+            None
+        } else {
+            // Calculate the value just like numpy.linspace does
+            let i = self.index;
+            self.index += 1;
+            Some(self.start + self.step * cast(i).unwrap())
+        }
+    }
+
+    #[inline]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let n = self.len - self.index;
+        (n, Some(n))
+    }
+}
+
+impl<F> DoubleEndedIterator for Linspace<F>
+    where F: Float,
+{
+    #[inline]
+    fn next_back(&mut self) -> Option<F> {
+        if self.index >= self.len {
+            None
+        } else {
+            self.len -= 1;
+            let i = self.len;
+            Some(self.start + self.step * cast(i).unwrap())
+        }
+    }
+}
+
+impl<F> ExactSizeIterator for Linspace<F> where F: Float { }
+
+/// Returns an iterator of evenly spaced floats.
+///
+/// The `Linspace` has `n` evenly spaced elements, where the first
+/// element is `a` and the last element is `b`.
+///
+/// Iterator element type is `F`, where `F` is a float type.
+///
+/// ```
+/// use num::iter::linspace;
+///
+/// let iterator = linspace::<f32>(0., 1., 5);
+/// assert_eq!(iterator.collect::<Vec<_>>(),
+///            vec![0., 0.25, 0.5, 0.75, 1.0]);
+/// ```
+#[inline]
+pub fn linspace<F>(a: F, b: F, n: usize) -> Linspace<F>
+    where F: Float
+{
+    let step = if n > 1 {
+        let nf: F = cast(n).unwrap();
+        (b - a)/(nf - F::one())
+    } else {
+        F::zero()
+    };
+    Linspace {
+        start: a,
+        step: step,
+        index: 0,
+        len: n,
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    use std::fmt::Debug;
     use std::usize;
     use std::ops::{Add, Mul};
     use std::cmp::Ordering;
@@ -369,4 +457,46 @@ mod tests {
         assert!(super::range_step_inclusive(200, 200, 1).collect::<Vec<isize>>() ==
                 vec![200]);
     }
+
+    fn assert_equal<I, J>(i: I, j: J)
+        where I: IntoIterator,
+              J: IntoIterator<Item=I::Item>,
+              I::Item: PartialEq + Debug,
+    {
+        let iv = i.into_iter().collect::<Vec<_>>();
+        let jv = j.into_iter().collect::<Vec<_>>();
+        assert_eq!(iv, jv);
+    }
+
+    #[test]
+    fn test_linspace() {
+        use super::linspace;
+
+        let iter = linspace::<f64>(0., 2., 3);
+        assert_equal(iter, vec![0., 1., 2.]);
+
+        let iter = linspace::<f32>(0., 1.0, 11);
+        for (a, b) in iter.zip(vec![ 0., 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]) {
+            assert!((a - b).abs() < 1.0e-6);
+        }
+
+        let iter = linspace::<f32>(0., 100.0, 1001);
+        assert_eq!(iter.last(), Some(100.0));
+
+        let iter = linspace::<f32>(0., -2., 4);
+        assert_equal(iter, vec![0., -0.666666666667, -1.333333333333, -2.]);
+
+        let iter = linspace::<f32>(0., -2., 4);
+        assert_equal(iter.rev(), vec![-2., -1.333333333333, -0.666666666667, 0.]);
+
+        let iter = linspace::<f32>(0., 1., 1);
+        assert_equal(iter, vec![0.]);
+
+        let iter = linspace::<f32>(0., 1., 1);
+        assert_equal(iter.rev(), vec![0.]);
+
+        let mut iter = linspace::<f32>(0., 1., 0);
+        assert_eq!(iter.next(), None);
+    }
+
 }
