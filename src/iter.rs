@@ -263,6 +263,7 @@ impl<A> Iterator for RangeStepInclusive<A>
 /// Created from `linspace()`.
 ///
 /// Iterator element type is `F`.
+#[derive(Clone, Debug)]
 pub struct Linspace<F> {
     start: F,
     step: F,
