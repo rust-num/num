@@ -11,6 +11,7 @@
 #![feature(plugin_registrar, rustc_private)]
 
 extern crate syntax;
+extern crate syntax_ext;
 extern crate rustc_plugin;
 
 use syntax::ast::{MetaItem, Expr};
@@ -18,8 +19,8 @@ use syntax::ast;
 use syntax::codemap::Span;
 use syntax::ext::base::{ExtCtxt, Annotatable};
 use syntax::ext::build::AstBuilder;
-use syntax::ext::deriving::generic::*;
-use syntax::ext::deriving::generic::ty::*;
+use syntax_ext::deriving::generic::*;
+use syntax_ext::deriving::generic::ty::*;
 use syntax::parse::token::InternedString;
 use syntax::ptr::P;
 use syntax::ext::base::MultiDecorator;
@@ -35,13 +36,13 @@ macro_rules! pathvec {
 
 macro_rules! path {
     ($($x:tt)*) => (
-        ::syntax::ext::deriving::generic::ty::Path::new( pathvec!( $($x)* ) )
+        ::syntax_ext::deriving::generic::ty::Path::new( pathvec!( $($x)* ) )
     )
 }
 
 macro_rules! path_local {
     ($x:ident) => (
-        ::syntax::ext::deriving::generic::ty::Path::new_local(stringify!($x))
+        ::syntax_ext::deriving::generic::ty::Path::new_local(stringify!($x))
     )
 }
 
