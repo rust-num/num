@@ -22,12 +22,13 @@
 //! ```
 //! extern crate num;
 //! # #[cfg(all(feature = "bigint", feature="rational"))]
-//! # pub mod test {
+//! # mod test {
 //!
 //! use num::FromPrimitive;
 //! use num::bigint::BigInt;
 //! use num::rational::{Ratio, BigRational};
 //!
+//! # pub
 //! fn approx_sqrt(number: u64, iterations: usize) -> BigRational {
 //!     let start: Ratio<BigInt> = Ratio::from_integer(FromPrimitive::from_u64(number).unwrap());
 //!     let mut approx = start.clone();
@@ -41,7 +42,8 @@
 //! }
 //! # }
 //! # #[cfg(not(all(feature = "bigint", feature="rational")))]
-//! # fn approx_sqrt(n: u64, _: usize) -> u64 { n }
+//! # mod test { pub fn approx_sqrt(n: u64, _: usize) -> u64 { n } }
+//! # use test::approx_sqrt;
 //!
 //! fn main() {
 //!     println!("{}", approx_sqrt(10, 4)); // prints 4057691201/1283082416
