@@ -1241,7 +1241,7 @@ pub trait PrimInt
    /// assert_eq!(n1.swap_bytes(), s1);
    /// ```
    fn reverse_bytes(self) -> Self {
-       self.reverse_byte_groups(1, 1)
+       self.swap_bytes()
    }
 
    /// Sets the `bit` of `self`
