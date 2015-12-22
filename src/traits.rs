@@ -1102,7 +1102,45 @@ pub trait PrimInt
        self ^ (self + <Self as One>::one())
    }
 
-   fn general_reverse_bits(self, subword_bits: u32, group_subwords: u32) -> Self;
+   /// Reverses the bits of `self` by `subword_bits` and `group_subwords`:
+   ///
+   /// - `subword_bits`: the bits will be reversed in grous:
+   ///   1 (single bits), 2 (pair-wise), 4 (nibbles)
+   /// - `group_subwords`: the subword size is 8 bits: `mem::size_of::<u8>()`,
+   ///   the bits will be reversed within each subword.
+   ///
+   /// # Examples
+   ///
+   /// ```
+   /// use num::traits::PrimInt;
+   ///
+   /// let n = 0b0101_1101_1010_0101_u16;
+   ///
+   /// // Single bits:
+   /// let s0 = 0b1010_0101_1011_1010u16;
+   /// assert_eq!(n.reverse_bit_groups(1, 1), s0);
+   ///
+   /// // Bit pairs:
+   /// let s1 = 0b0101_1010_0111_0101u16;
+   /// assert_eq!(n.reverse_bit_groups(2, 1), s1);
+   ///
+   /// // Bit nibbles:
+   /// let s2 = 0b0101_1010_1101_0101u16;
+   /// assert_eq!(n.reverse_bit_groups(4, 1), s2);
+   ///
+   /// // Single bits: group_subwords = 2
+   /// let s3 = 0b1011_1010_1010_0101u16;
+   /// assert_eq!(n.reverse_bit_groups(1, 2), s3);
+   ///
+   /// // Bit pairs: group_subwords = 2
+   /// let s4 = 0b0111_0101_0101_1010u16;
+   /// assert_eq!(n.reverse_bit_groups(2, 2), s4);
+   ///
+   /// // Bit nibbles: group_subwords = 2
+   /// let s5 = 0b1101_0101_0101_1010u16;
+   /// assert_eq!(n.reverse_bit_groups(4, 2), s5);
+   /// ```
+   fn reverse_bit_groups(self, subword_bits: u32, group_subwords: u32) -> Self;
 
    /// Reverses the bits of `self`
    ///
@@ -1120,7 +1158,7 @@ pub trait PrimInt
    /// assert_eq!(n1.reverse_bits(), s1);
    /// ```
    fn reverse_bits(self) -> Self {
-       self.general_reverse_bits(1, 1)
+       self.reverse_bit_groups(1, 1)
    }
 
    /// Reverses the pairs of bits of `self`
@@ -1139,7 +1177,7 @@ pub trait PrimInt
    /// assert_eq!(n1.reverse_bit_pairs(), s1);
    /// ```
    fn reverse_bit_pairs(self) -> Self {
-       self.general_reverse_bits(2, 1)
+       self.reverse_bit_groups(2, 1)
    }
 
    /// Reverses the nibbles of `self`
@@ -1158,14 +1196,34 @@ pub trait PrimInt
    /// assert_eq!(n1.reverse_bit_nibbles(), s1);
    /// ```
    fn reverse_bit_nibbles(self) -> Self {
-       self.general_reverse_bits(4, 1)
-   }
-
-   fn reverse_byte_groups(self, bytes_per_block: u32, blocks_per_group: u32) -> Self {
-       self.general_reverse_bits(8 * bytes_per_block, blocks_per_group)
+       self.reverse_bit_groups(4, 1)
    }
 
    /// Reverses the bytes of `self`
+   ///
+   /// - `bytes_per_block`: number of bytes per block to reverse.
+   /// - `blocks_per_group`: number of blocks per group of blocks.
+   ///
+   /// # Examples
+   ///
+   /// ```
+   /// use num::traits::PrimInt;
+   ///
+   /// let n = 0b0101_1101_1010_0101_u16;
+   ///
+   /// // Single bytes:
+   /// let s0 = 0b1010_0101_0101_1101u16;
+   /// assert_eq!(n.reverse_byte_groups(1, 1), s0);
+   ///
+   /// // Single bytes: group_subwords = 2
+   /// let s3 = 0b0101_1101_1010_0101u16;
+   /// assert_eq!(n.reverse_byte_groups(1, 2), s3);
+   /// ```
+   fn reverse_byte_groups(self, bytes_per_block: u32, blocks_per_group: u32) -> Self {
+       self.reverse_bit_groups(8 * bytes_per_block, blocks_per_group)
+   }
+
+   /// Reverses the bytes of `self` (equivalent to swap bytes)
    ///
    /// # Examples
    ///
@@ -1175,10 +1233,12 @@ pub trait PrimInt
    /// let n = 0b1011_0010u8;
    /// let s = 0b1011_0010u8;  
    /// assert_eq!(n.reverse_bytes(), s);
+   /// assert_eq!(n.swap_bytes(), s);
    ///
    /// let n1 = 0b1011_0010_1010_1001u16;
    /// let s1 = 0b1010_1001_1011_0010u16;
    /// assert_eq!(n1.reverse_bytes(), s1);
+   /// assert_eq!(n1.swap_bytes(), s1);
    /// ```
    fn reverse_bytes(self) -> Self {
        self.reverse_byte_groups(1, 1)
@@ -1412,7 +1472,7 @@ macro_rules! prim_int_impl {
                 <$T>::pow(self, exp)
             }
 
-            fn general_reverse_bits(self, subword_bits: u32, group_subwords: u32) -> Self {
+            fn reverse_bit_groups(self, subword_bits: u32, group_subwords: u32) -> Self {
               // Adapted from Matthew Fioravante's stdcxx-bitops, which
               // is released under the MIT's License here:
               // https://github.com/fmatthew5876/stdcxx-bitops
