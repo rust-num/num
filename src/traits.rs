@@ -676,10 +676,10 @@ pub trait PrimInt
     /// ~~~
     /// use num::traits::PrimInt;
     ///
-    /// assert_eq!((8i32).bits_to_unsigned().bits_to_signed(), 8i32);
-    /// assert_eq!((-1i32).bits_to_unsigned().bits_to_signed(), -1i32);
+    /// assert_eq!((8i32).to_unsigned().to_signed(), 8i32);
+    /// assert_eq!((-1i32).to_unsigned().to_signed(), -1i32);
     /// ~~~
-    fn bits_to_unsigned(self) -> Self::Unsigned;
+    fn to_unsigned(self) -> Self::Unsigned;
 
     /// Transmutes an integer into a signed integer of the
     /// same size (loss less).
@@ -689,10 +689,10 @@ pub trait PrimInt
     /// ~~~
     /// use num::traits::PrimInt;
     ///
-    /// assert_eq!((8i32).bits_to_unsigned().bits_to_signed(), 8i32);
-    /// assert_eq!((-1i32).bits_to_unsigned().bits_to_signed(), -1i32);
+    /// assert_eq!((8i32).to_unsigned().to_signed(), 8i32);
+    /// assert_eq!((-1i32).to_unsigned().to_signed(), -1i32);
     /// ~~~
-    fn bits_to_signed(self) -> Self::Signed;
+    fn to_signed(self) -> Self::Signed;
  
     /// Returns the number of ones in the binary representation of `self`.
     ///
@@ -949,7 +949,7 @@ pub trait PrimInt
    /// assert_eq!(n.reset_least_significant_one(), s);
    /// ```
    fn reset_least_significant_one(self) -> Self {
-       self & (self - cast(1).unwrap())
+       self & (self - <Self as One>::one())
    }
 
    /// Set least significant 0 bit of `self`.
@@ -965,7 +965,7 @@ pub trait PrimInt
    /// assert_eq!(n.set_least_significant_zero(), s);
    /// ```
    fn set_least_significant_zero(self) -> Self {
-       self | (self + cast(1).unwrap())
+       self | (self + <Self as One>::one())
    }
 
    /// Isolate least significant 1 bit of `self` and returns it; returns 0
@@ -982,8 +982,9 @@ pub trait PrimInt
    /// assert_eq!(n.isolate_least_significant_one(), s);
    /// ```
    fn isolate_least_significant_one(self) -> Self {
-       // note: self & -self is intended, which is rewritten as self & (0 - self), so:
-       self & (cast::<_,Self>(0).unwrap() - self)
+       // note: self & -self is intended, which is rewritten as
+       // self & (0 - self), so:
+       self & (<Self as Zero>::zero() - self)
    }
 
    /// Set the least significant zero bit of `self` to 1 and all of the
@@ -1000,7 +1001,7 @@ pub trait PrimInt
    /// assert_eq!(n.isolate_least_significant_zero(), s);
    /// ```
    fn isolate_least_significant_zero(self) -> Self {
-       (!self) & (self + cast(1).unwrap())
+       (!self) & (self + <Self as One>::one())
    }
 
    /// Reset the trailing 1's in `self`.
@@ -1016,7 +1017,7 @@ pub trait PrimInt
    /// assert_eq!(n.reset_trailing_ones(), s);
    /// ```
    fn reset_trailing_ones(self) -> Self {
-       self & (self + cast(1).unwrap())
+       self & (self + <Self as One>::one())
    }
 
    /// Set all of the trailing 0's in `self`.
@@ -1032,7 +1033,7 @@ pub trait PrimInt
    /// assert_eq!(n.set_trailing_zeros(), s);
    /// ```
    fn set_trailing_zeros(self) -> Self {
-       self | (self - cast(1).unwrap())
+       self | (self - <Self as One>::one())
    }
 
    /// Returns a mask with all of the trailing 0's of `self` set.
@@ -1048,7 +1049,7 @@ pub trait PrimInt
    /// assert_eq!(n.mask_trailing_zeros(), s);
    /// ```
    fn mask_trailing_zeros(self) -> Self {
-       (!self) & (self - cast(1).unwrap())
+       (!self) & (self - <Self as One>::one())
    }
 
    /// Returns a mask with all of the trailing 1's of `self` set.
@@ -1064,7 +1065,7 @@ pub trait PrimInt
    /// assert_eq!(n.mask_trailing_ones(), s);
    /// ```
    fn mask_trailing_ones(self) -> Self {
-       !((!self) | (self + cast(1).unwrap()))
+       !((!self) | (self + <Self as One>::one()))
    }
    
    /// Returns a mask with all of the trailing 0's of `self` set and the least
@@ -1081,7 +1082,7 @@ pub trait PrimInt
    /// assert_eq!(n.mask_trailing_zeros_and_least_significant_one(), s);
    /// ```
    fn mask_trailing_zeros_and_least_significant_one(self) -> Self {
-       (self - cast(1).unwrap()) ^ self
+       (self - <Self as One>::one()) ^ self
    }
 
    /// Returns a mask with all of the trailing 1's of `self` set and the least
@@ -1098,7 +1099,7 @@ pub trait PrimInt
    /// assert_eq!(n.mask_trailing_ones_and_least_significant_zero(), s);
    /// ```
    fn mask_trailing_ones_and_least_significant_zero(self) -> Self {
-       self ^ (self + cast(1).unwrap())
+       self ^ (self + <Self as One>::one())
    }
 
    fn general_reverse_bits(self, subword_bits: u32, group_subwords: u32) -> Self;
@@ -1199,7 +1200,7 @@ pub trait PrimInt
    /// assert_eq!(n.set_bit(3), s2);
    /// ```
    fn set_bit(self, bit: u32) -> Self {
-        self | (cast::<_, Self>(1).unwrap() << bit)
+        self | (<Self as One>::one() << bit)
    }
 
    /// Resets the `bit` of `self`
@@ -1218,7 +1219,7 @@ pub trait PrimInt
    /// assert_eq!(n.reset_bit(5), s2);
    /// ```
    fn reset_bit(self, bit: u32) -> Self {
-        self & !(cast::<_, Self>(1).unwrap() << bit)
+        self & !(<Self as One>::one() << bit)
    }
 
    /// Flip the `bit` of `self`
@@ -1237,7 +1238,7 @@ pub trait PrimInt
    /// assert_eq!(n.flip_bit(5), s2);
    /// ```
    fn flip_bit(self, bit: u32) -> Self {
-        self ^ (cast::<_, Self>(1).unwrap() << bit)
+        self ^ (<Self as One>::one() << bit)
    }
 
    /// Test the `bit` of `self`
@@ -1253,7 +1254,7 @@ pub trait PrimInt
    /// assert_eq!(n.test_bit(5), true);
    /// ```
    fn test_bit(self, bit: u32) -> bool {
-        self & (cast::<_, Self>(1).unwrap() << bit) > cast::<_, Self>(0).unwrap()
+       self & (<Self as One>::one() << bit) != <Self as Zero>::zero()
    }
 
    /// Resets all bits of `self` at position >= `bit`
@@ -1268,7 +1269,7 @@ pub trait PrimInt
    /// assert_eq!(n.reset_bits_geq(5), s);
    /// ```
    fn reset_bits_geq(self, bit: u32) -> Self {
-       self & ((cast::<_, Self>(1).unwrap() << bit) - cast::<_, Self>(1).unwrap())
+       self & ((<Self as One>::one() << bit) - <Self as One>::one())
    }
 
    /// Resets all bits of `self` at position <= `bit`
@@ -1283,7 +1284,7 @@ pub trait PrimInt
    /// assert_eq!(n.reset_bits_leq(5), s);
    /// ```
    fn reset_bits_leq(self, bit: u32) -> Self {
-       self & !((cast::<_, Self>(1).unwrap() << (bit + 1)) - cast::<_, Self>(1).unwrap())
+       self & !((<Self as One>::one() << (bit + 1)) - <Self as One>::one())
    }   
 
    /// Sets all bits of `self` at position >= `bit`
@@ -1298,7 +1299,7 @@ pub trait PrimInt
    /// assert_eq!(n.set_bits_geq(5), s);
    /// ```
    fn set_bits_geq(self, bit: u32) -> Self {
-       self | !((cast::<_, Self>(1).unwrap() << bit) - cast::<_, Self>(1).unwrap())
+       self | !((<Self as One>::one() << bit) - <Self as One>::one())
    }
 
    /// Sets all bits of `self` at position <= `bit`
@@ -1313,7 +1314,7 @@ pub trait PrimInt
    /// assert_eq!(n.set_bits_leq(5), s);
    /// ```
    fn set_bits_leq(self, bit: u32) -> Self {
-       self | ((cast::<_, Self>(1).unwrap() << (bit + 1)) - cast::<_, Self>(1).unwrap())
+       self | ((<Self as One>::one() << (bit + 1)) - <Self as One>::one())
    }
 
    /// Flip all bits of `self` at position >= `bit`
@@ -1328,7 +1329,7 @@ pub trait PrimInt
    /// assert_eq!(n.flip_bits_geq(5), s);
    /// ```
    fn flip_bits_geq(self, bit: u32) -> Self {
-       self ^ !((cast::<_, Self>(1).unwrap() << bit) - cast::<_, Self>(1).unwrap())
+       self ^ !((<Self as One>::one() << bit) - <Self as One>::one())
    }
 
    /// Flip all bits of `self` at position <= `bit`
@@ -1343,7 +1344,7 @@ pub trait PrimInt
    /// assert_eq!(n.flip_bits_leq(5), s);
    /// ```
    fn flip_bits_leq(self, bit: u32) -> Self {
-       self ^ ((cast::<_, Self>(1).unwrap() << (bit + 1)) - cast::<_, Self>(1).unwrap())
+       self ^ ((<Self as One>::one() << (bit + 1)) - <Self as One>::one() )
    }
 }
 
@@ -1353,12 +1354,12 @@ macro_rules! prim_int_impl {
             type Signed = $AS;
             type Unsigned = $AU;
 
-            fn bits_to_unsigned(self) -> $AU
+            fn to_unsigned(self) -> $AU
             {
                 self as $AU
             }
 
-            fn bits_to_signed(self) -> $AS
+            fn to_signed(self) -> $AS
             {
                 self as $AS
             }
@@ -1411,45 +1412,40 @@ macro_rules! prim_int_impl {
                 <$T>::pow(self, exp)
             }
 
-           fn general_reverse_bits(self, subword_bits: u32, group_subwords: u32) -> Self {
+            fn general_reverse_bits(self, subword_bits: u32, group_subwords: u32) -> Self {
               // Adapted from Matthew Fioravante's stdcxx-bitops, which
               // is released under the MIT's License here:
               // https://github.com/fmatthew5876/stdcxx-bitops
            
-              let mut x: Self::Unsigned = self.bits_to_unsigned();
-              println!("input {:b}, as unsigned: {:b}, subword_bits: {}, group_subwords: {}", self, x, subword_bits, group_subwords);
+              let mut x: Self::Unsigned = self.to_unsigned();
               let width: u32  = mem::size_of::<Self>() as u32;
               let group_sz: u32 = width * 8 / group_subwords;
               let k: u32 = group_sz - subword_bits;
-              println!("k {}", k);
               {
-                  let mut up0 = |i: u32, l: usize, r: usize| {
+                  let mut up0 = |i: u32, l: u64, r: u64| {
                       if k & i > 0 {
                           x = ((x & (l as Self::Unsigned)) << (i as Self::Unsigned))
                               | ((x & (r as Self::Unsigned)) >> (i as Self::Unsigned));
                       }
-                      println!("up0({}): x = {:b}", i, x);
                   };
 
-                  up0(1, 0x5555555555555555usize, 0xAAAAAAAAAAAAAAAAusize);
-                  up0(2, 0x3333333333333333usize, 0xCCCCCCCCCCCCCCCCusize);
-                  up0(4, 0x0F0F0F0F0F0F0F0Fusize, 0xF0F0F0F0F0F0F0F0usize);
+                  up0(1, 0x5555555555555555u64, 0xAAAAAAAAAAAAAAAAu64);
+                  up0(2, 0x3333333333333333u64, 0xCCCCCCCCCCCCCCCCu64);
+                  up0(4, 0x0F0F0F0F0F0F0F0Fu64, 0xF0F0F0F0F0F0F0F0u64);
               }
 
               {
-                  let mut up1 = |i: u32, s: u32, l: usize, r: usize| {
+                  let mut up1 = |i: u32, s: u32, l: u64, r: u64| {
                       if width > i && (k & s > 0) {
                           x = ((x & (l as Self::Unsigned)) << (s as Self::Unsigned))
                               | ((x & (r as Self::Unsigned)) >> (s as Self::Unsigned));
                       }
-                      println!("up1({}): x = {:b}", i, x);
                   };
 
-                  up1(1, 8, 0x00FF00FF00FF00FFusize, 0xFF00FF00FF00FF00usize);
-                  up1(2, 16, 0x0000FFFF0000FFFFusize, 0xFFFF0000FFFF0000usize);
-                  up1(4, 32, 0x00000000FFFFFFFFusize, 0xFFFFFFFF00000000usize);
+                  up1(1, 8, 0x00FF00FF00FF00FFu64, 0xFF00FF00FF00FF00u64);
+                  up1(2, 16, 0x0000FFFF0000FFFFu64, 0xFFFF0000FFFF0000u64);
+                  up1(4, 32, 0x00000000FFFFFFFFu64, 0xFFFFFFFF00000000u64);
               }
-              println!("output {:b}, as Self {:b}", x, x as Self);
               x as Self
            }
         }
