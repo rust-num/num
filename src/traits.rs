@@ -1584,7 +1584,7 @@ pub trait PrimInt
     /// ```
     fn align_down(self, alignment: u32) -> Self;
 
-    /// Outer Perfect Shuffle
+    /// Outer Perfect Shuffle of `self`
     ///
     /// See also [Hacker's Delight: shuffling bits](http://icodeguru.com/Embedded/Hacker's-Delight/047.htm).
     ///
@@ -1602,7 +1602,7 @@ pub trait PrimInt
     /// ```
     fn outer_perfect_shuffle(self) -> Self;
 
-    /// Outer Perfect Unshuffle
+    /// Outer Perfect Unshuffle of `self`
     ///
     /// See also [Hacker's Delight: shuffling bits](http://icodeguru.com/Embedded/Hacker's-Delight/047.htm).
     ///
@@ -1620,7 +1620,7 @@ pub trait PrimInt
     /// ```
     fn outer_perfect_unshuffle(self) -> Self;
 
-    /// Inner Perfect Shuffle
+    /// Inner Perfect Shuffle of `self`
     ///
     /// See also [Hacker's Delight: shuffling bits](http://icodeguru.com/Embedded/Hacker's-Delight/047.htm).
     ///
@@ -1640,7 +1640,7 @@ pub trait PrimInt
         self.reverse_bit_groups((mem::size_of::<Self>() * 8 / 2) as u32, 1).outer_perfect_shuffle()
     }
 
-    /// Inner Perfect Unshuffle
+    /// Inner Perfect Unshuffle of `self`
     ///
     /// See also [Hacker's Delight: shuffling bits](http://icodeguru.com/Embedded/Hacker's-Delight/047.htm).
     ///
@@ -1659,6 +1659,46 @@ pub trait PrimInt
     fn inner_perfect_unshuffle(self) -> Self {
         self.outer_perfect_unshuffle().reverse_bit_groups((mem::size_of::<Self>() * 8 / 2) as u32, 1)
     }
+
+    /// Parallel bits deposit of `mask` into `self`
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use num::traits::PrimInt;
+    ///
+    /// let n  = 0b1011_1110_1001_0011u16;
+    ///
+    /// let m0 = 0b0110_0011_1000_0101u16;
+    /// let s0 = 0b0000_0010_0000_0101u16;
+    ///
+    /// let m1 = 0b1110_1011_1110_1111u16;
+    /// let s1 = 0b1110_1001_0010_0011u16;
+    ///
+    /// assert_eq!(n.parallel_bits_deposit(m0), s0);
+    /// assert_eq!(n.parallel_bits_deposit(m1), s1);
+    /// ```
+    fn parallel_bits_deposit(self, mask_: Self) -> Self; 
+
+    /// Parallel bits extract of `mask` from `self`
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use num::traits::PrimInt;
+    ///
+    /// let n  = 0b1011_1110_1001_0011u16;
+    ///
+    /// let m0 = 0b0110_0011_1000_0101u16;
+    /// let s0 = 0b0000_0000_0011_0101u16;
+    ///
+    /// let m1 = 0b1110_1011_1110_1111u16;
+    /// let s1 = 0b0001_0111_0100_0011u16;
+    ///
+    /// assert_eq!(n.parallel_bits_extract(m0), s0);
+    /// assert_eq!(n.parallel_bits_extract(m1), s1);
+    /// ```
+    fn parallel_bits_extract(self, mask_: Self) -> Self;
 }
 
 macro_rules! prim_int_impl {
@@ -1817,6 +1857,41 @@ macro_rules! prim_int_impl {
                     x = x ^ t ^ (t << 16);
                 }
                 return x;
+            }
+
+            fn parallel_bits_deposit(self, mask_: Self) -> Self
+            {
+                let mut res = <Self as Zero>::zero();
+                let mut mask = mask_;
+                let mut bb = <Self as One>::one();
+                loop {
+                    if mask == <Self as Zero>::zero() {
+                        break;
+                    }
+                    if (self & bb) != <Self as Zero>::zero() {
+                        res = res | (mask & mask.wrapping_neg());
+                    }
+                    mask = mask & (mask - <Self as One>::one());
+                    bb = bb + bb;
+                }
+                res
+            }
+
+            fn parallel_bits_extract(self, mask_: Self) -> Self {
+                let mut res = <Self as Zero>::zero();
+                let mut mask = mask_;
+                let mut bb = <Self as One>::one();
+                loop {
+                    if mask == <Self as Zero>::zero() {
+                        break;
+                    }
+                    if self & mask & (mask.wrapping_neg()) != <Self as Zero>::zero() {
+                        res = res | bb;
+                    }
+                    mask = mask & (mask - <Self as One>::one());
+                    bb = bb + bb;
+                }
+                res
             }
         }
     )
