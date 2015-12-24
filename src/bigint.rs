@@ -1178,16 +1178,16 @@ impl ToPrimitive for BigUint {
             0 => Some(f32::zero()),
             1 => Some(self.data[0] as f32),
             len => {
-                // prevent overflow of exponant
+                // this will prevent any overflow of exponent
                 if len > (f32::MAX_EXP as usize) / big_digit::BITS {
                     None
                 } else {
-                    let exponant = (len - 2) * big_digit::BITS;
+                    let exponent = (len - 2) * big_digit::BITS;
                     // we need 25 significant digits, 24 to be stored and 1 for rounding
                     // this gives at least 33 significant digits
                     let mantissa = big_digit::to_doublebigdigit(self.data[len - 1], self.data[len - 2]);
                     // this cast handles rounding
-                    let ret = (mantissa as f32) * 2.0.powi(exponant as i32);
+                    let ret = (mantissa as f32) * 2.0.powi(exponent as i32);
                     if ret.is_infinite() {
                         None
                     } else {
@@ -1206,26 +1206,22 @@ impl ToPrimitive for BigUint {
             1 => Some(self.data[0] as f64),
             2 => Some(big_digit::to_doublebigdigit(self.data[1], self.data[0]) as f64),
             len => {
-                // this will prevent any overflow of exponant
+                // this will prevent any overflow of exponent
                 if len > (f64::MAX_EXP as usize) / big_digit::BITS {
                     None
                 } else {
-                    let mut exponant = (len - 2) * big_digit::BITS;
+                    let mut exponent = (len - 2) * big_digit::BITS;
                     let mut mantissa = big_digit::to_doublebigdigit(self.data[len - 1], self.data[len - 2]);
                     // we need at least 54 significant bit digits, 53 to be stored and 1 for rounding
-                    // so we take enough from the next BigDigit to make it up if needed
-                    let needed = (f64::MANTISSA_DIGITS as usize) + 1;
-                    let bits = (2 * big_digit::BITS) - (mantissa.leading_zeros() as usize);
-                    if needed > bits {
-                        let diff = needed - bits;
-                        mantissa <<= diff;
-                        exponant -= diff;
-                        let mut x = self.data[len - 3];
-                        x >>= big_digit::BITS - diff;
-                        mantissa |= x as u64;
+                    // so we take enough from the next BigDigit to make it up to 64
+                    let shift = mantissa.leading_zeros() as usize;
+                    if shift > 0 {
+                        mantissa <<= shift;
+                        mantissa |= self.data[len - 3] as u64 >> (big_digit::BITS - shift);
+                        exponent -= shift;
                     }
                     // this cast handles rounding
-                    let ret = (mantissa as f64) * 2.0.powi(exponant as i32);
+                    let ret = (mantissa as f64) * 2.0.powi(exponent as i32);
                     if ret.is_infinite() {
                         None
                     } else {
@@ -1250,11 +1246,6 @@ impl FromPrimitive for BigUint {
     #[inline]
     fn from_u64(n: u64) -> Option<BigUint> {
         Some(BigUint::from(n))
-    }
-
-    #[inline]
-    fn from_f32(n: f32) -> Option<BigUint> {
-        BigUint::from_f64(n as f64)
     }
 
     #[inline]
@@ -2248,15 +2239,6 @@ impl FromPrimitive for BigInt {
     #[inline]
     fn from_u64(n: u64) -> Option<BigInt> {
         Some(BigInt::from(n))
-    }
-
-    #[inline]
-    fn from_f32(n: f32) -> Option<BigInt> {
-        if n >= 0.0 {
-            BigUint::from_f32(n).map(|x| BigInt::from_biguint(Plus, x))
-        } else {
-            BigUint::from_f32(-n).map(|x| BigInt::from_biguint(Minus, x))
-        }
     }
 
     #[inline]
