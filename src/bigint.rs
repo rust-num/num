@@ -68,11 +68,13 @@ use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Rem, Shl, Shr, Sub};
 use std::str::{self, FromStr};
 use std::fmt;
 use std::cmp::Ordering::{self, Less, Greater, Equal};
+use std::{f32, f64};
 use std::{u8, i64, u64};
 
 use rand::Rng;
 
 use traits::{ToPrimitive, FromPrimitive};
+use traits::Float;
 
 use {Num, Unsigned, CheckedAdd, CheckedSub, CheckedMul, CheckedDiv, Signed, Zero, One};
 use self::Sign::{Minus, NoSign, Plus};
@@ -1168,6 +1170,67 @@ impl ToPrimitive for BigUint {
             _ => None
         }
     }
+
+    // `DoubleBigDigit` size dependent
+    #[inline]
+    fn to_f32(&self) -> Option<f32> {
+        match self.data.len() {
+            0 => Some(f32::zero()),
+            1 => Some(self.data[0] as f32),
+            len => {
+                // this will prevent any overflow of exponent
+                if len > (f32::MAX_EXP as usize) / big_digit::BITS {
+                    None
+                } else {
+                    let exponent = (len - 2) * big_digit::BITS;
+                    // we need 25 significant digits, 24 to be stored and 1 for rounding
+                    // this gives at least 33 significant digits
+                    let mantissa = big_digit::to_doublebigdigit(self.data[len - 1], self.data[len - 2]);
+                    // this cast handles rounding
+                    let ret = (mantissa as f32) * 2.0.powi(exponent as i32);
+                    if ret.is_infinite() {
+                        None
+                    } else {
+                        Some(ret)
+                    }
+                }
+            }
+        }
+    }
+
+    // `DoubleBigDigit` size dependent
+    #[inline]
+    fn to_f64(&self) -> Option<f64> {
+        match self.data.len() {
+            0 => Some(f64::zero()),
+            1 => Some(self.data[0] as f64),
+            2 => Some(big_digit::to_doublebigdigit(self.data[1], self.data[0]) as f64),
+            len => {
+                // this will prevent any overflow of exponent
+                if len > (f64::MAX_EXP as usize) / big_digit::BITS {
+                    None
+                } else {
+                    let mut exponent = (len - 2) * big_digit::BITS;
+                    let mut mantissa = big_digit::to_doublebigdigit(self.data[len - 1], self.data[len - 2]);
+                    // we need at least 54 significant bit digits, 53 to be stored and 1 for rounding
+                    // so we take enough from the next BigDigit to make it up to 64
+                    let shift = mantissa.leading_zeros() as usize;
+                    if shift > 0 {
+                        mantissa <<= shift;
+                        mantissa |= self.data[len - 3] as u64 >> (big_digit::BITS - shift);
+                        exponent -= shift;
+                    }
+                    // this cast handles rounding
+                    let ret = (mantissa as f64) * 2.0.powi(exponent as i32);
+                    if ret.is_infinite() {
+                        None
+                    } else {
+                        Some(ret)
+                    }
+                }
+            }
+        }
+    }
 }
 
 impl FromPrimitive for BigUint {
@@ -1183,6 +1246,36 @@ impl FromPrimitive for BigUint {
     #[inline]
     fn from_u64(n: u64) -> Option<BigUint> {
         Some(BigUint::from(n))
+    }
+
+    #[inline]
+    fn from_f64(mut n: f64) -> Option<BigUint> {
+        // handle NAN, INFINITY, NEG_INFINITY
+        if !n.is_finite() {
+            return None;
+        }
+
+        // match the rounding of casting from float to int
+        n = n.trunc();
+
+        // handle 0.x, -0.x
+        if n.is_zero() {
+            return Some(BigUint::zero());
+        }
+
+        let (mantissa, exponent, sign) = Float::integer_decode(n);
+
+        if sign == -1 {
+            return None;
+        }
+
+        let mut ret = BigUint::from(mantissa);
+        if exponent > 0 {
+            ret = ret << exponent as usize;
+        } else if exponent < 0 {
+            ret = ret >> (-exponent) as usize;
+        }
+        Some(ret)
     }
 }
 
@@ -1261,6 +1354,8 @@ impl_to_biguint!(u8,   FromPrimitive::from_u8);
 impl_to_biguint!(u16,  FromPrimitive::from_u16);
 impl_to_biguint!(u32,  FromPrimitive::from_u32);
 impl_to_biguint!(u64,  FromPrimitive::from_u64);
+impl_to_biguint!(f32,  FromPrimitive::from_f32);
+impl_to_biguint!(f64,  FromPrimitive::from_f64);
 
 // Extract bitwise digits that evenly divide BigDigit
 fn to_bitwise_digits_le(u: &BigUint, bits: usize) -> Vec<u8> {
@@ -2123,6 +2218,16 @@ impl ToPrimitive for BigInt {
             Minus => None
         }
     }
+
+    #[inline]
+    fn to_f32(&self) -> Option<f32> {
+        self.data.to_f32().map(|n| if self.sign == Minus { -n } else { n })
+    }
+
+    #[inline]
+    fn to_f64(&self) -> Option<f64> {
+        self.data.to_f64().map(|n| if self.sign == Minus { -n } else { n })
+    }
 }
 
 impl FromPrimitive for BigInt {
@@ -2134,6 +2239,15 @@ impl FromPrimitive for BigInt {
     #[inline]
     fn from_u64(n: u64) -> Option<BigInt> {
         Some(BigInt::from(n))
+    }
+
+    #[inline]
+    fn from_f64(n: f64) -> Option<BigInt> {
+        if n >= 0.0 {
+            BigUint::from_f64(n).map(|x| BigInt::from_biguint(Plus, x))
+        } else {
+            BigUint::from_f64(-n).map(|x| BigInt::from_biguint(Minus, x))
+        }
     }
 }
 
@@ -2248,6 +2362,8 @@ impl_to_bigint!(u8,   FromPrimitive::from_u8);
 impl_to_bigint!(u16,  FromPrimitive::from_u16);
 impl_to_bigint!(u32,  FromPrimitive::from_u32);
 impl_to_bigint!(u64,  FromPrimitive::from_u64);
+impl_to_bigint!(f32,  FromPrimitive::from_f32);
+impl_to_bigint!(f64,  FromPrimitive::from_f64);
 
 pub trait RandBigInt {
     /// Generate a random `BigUint` of the given bit size.
@@ -2544,6 +2660,7 @@ mod biguint_tests {
     use super::Sign::Plus;
 
     use std::cmp::Ordering::{Less, Equal, Greater};
+    use std::{f32, f64};
     use std::i64;
     use std::iter::repeat;
     use std::str::FromStr;
@@ -2552,6 +2669,7 @@ mod biguint_tests {
     use rand::thread_rng;
     use {Num, Zero, One, CheckedAdd, CheckedSub, CheckedMul, CheckedDiv};
     use {ToPrimitive, FromPrimitive};
+    use Float;
 
     /// Assert that an op works for all val/ref combinations
     macro_rules! assert_op {
@@ -3029,6 +3147,137 @@ mod biguint_tests {
 
         assert_eq!(BigUint::new(vec!( 0,  0,  1)).to_u64(), None);
         assert_eq!(BigUint::new(vec!(N1, N1, N1)).to_u64(), None);
+    }
+
+    #[test]
+    fn test_convert_f32() {
+        fn check(b1: &BigUint, f: f32) {
+            let b2 = BigUint::from_f32(f).unwrap();
+            assert_eq!(b1, &b2);
+            assert_eq!(b1.to_f32().unwrap(), f);
+        }
+
+        check(&BigUint::zero(), 0.0);
+        check(&BigUint::one(), 1.0);
+        check(&BigUint::from(u16::MAX), 2.0.powi(16) - 1.0);
+        check(&BigUint::from(1u64 << 32), 2.0.powi(32));
+        check(&BigUint::from_slice(&[0, 0, 1]), 2.0.powi(64));
+        check(&((BigUint::one() << 100) + (BigUint::one() << 123)), 2.0.powi(100) + 2.0.powi(123));
+        check(&(BigUint::one() << 127), 2.0.powi(127));
+        check(&(BigUint::from((1u64 << 24) - 1) << (128 - 24)), f32::MAX);
+
+        // keeping all 24 digits with the bits at different offsets to the BigDigits
+        let x: u32 = 0b00000000101111011111011011011101;
+        let mut f = x as f32;
+        let mut b = BigUint::from(x);
+        for _ in 0..64 {
+            check(&b, f);
+            f *= 2.0;
+            b = b << 1;
+        }
+
+        // this number when rounded to f64 then f32 isn't the same as when rounded straight to f32
+        let n: u64 = 0b0000000000111111111111111111111111011111111111111111111111111111;
+        assert!((n as f64) as f32 != n as f32);
+        assert_eq!(BigUint::from(n).to_f32(), Some(n as f32));
+
+        // test rounding up with the bits at different offsets to the BigDigits
+        let mut f = ((1u64 << 25) - 1) as f32;
+        let mut b = BigUint::from(1u64 << 25);
+        for _ in 0..64 {
+            assert_eq!(b.to_f32(), Some(f));
+            f *= 2.0;
+            b = b << 1;
+        }
+
+        // rounding
+        assert_eq!(BigUint::from_f32(-1.0), None);
+        assert_eq!(BigUint::from_f32(-0.99999), Some(BigUint::zero()));
+        assert_eq!(BigUint::from_f32(-0.5), Some(BigUint::zero()));
+        assert_eq!(BigUint::from_f32(-0.0), Some(BigUint::zero()));
+        assert_eq!(BigUint::from_f32(f32::MIN_POSITIVE / 2.0), Some(BigUint::zero()));
+        assert_eq!(BigUint::from_f32(f32::MIN_POSITIVE), Some(BigUint::zero()));
+        assert_eq!(BigUint::from_f32(0.5), Some(BigUint::zero()));
+        assert_eq!(BigUint::from_f32(0.99999), Some(BigUint::zero()));
+        assert_eq!(BigUint::from_f32(f32::consts::E), Some(BigUint::from(2u32)));
+        assert_eq!(BigUint::from_f32(f32::consts::PI), Some(BigUint::from(3u32)));
+
+        // special float values
+        assert_eq!(BigUint::from_f32(f32::NAN), None);
+        assert_eq!(BigUint::from_f32(f32::INFINITY), None);
+        assert_eq!(BigUint::from_f32(f32::NEG_INFINITY), None);
+        assert_eq!(BigUint::from_f32(f32::MIN), None);
+
+        // largest BigUint that will round to a finite f32 value
+        let big_num = (BigUint::one() << 128) - BigUint::one() - (BigUint::one() << (128 - 25));
+        assert_eq!(big_num.to_f32(), Some(f32::MAX));
+        assert_eq!((big_num + BigUint::one()).to_f32(), None);
+
+        assert_eq!(((BigUint::one() << 128) - BigUint::one()).to_f32(), None);
+        assert_eq!((BigUint::one() << 128).to_f32(), None);
+    }
+
+    #[test]
+    fn test_convert_f64() {
+        fn check(b1: &BigUint, f: f64) {
+            let b2 = BigUint::from_f64(f).unwrap();
+            assert_eq!(b1, &b2);
+            assert_eq!(b1.to_f64().unwrap(), f);
+        }
+
+        check(&BigUint::zero(), 0.0);
+        check(&BigUint::one(), 1.0);
+        check(&BigUint::from(u32::MAX), 2.0.powi(32) - 1.0);
+        check(&BigUint::from(1u64 << 32), 2.0.powi(32));
+        check(&BigUint::from_slice(&[0, 0, 1]), 2.0.powi(64));
+        check(&((BigUint::one() << 100) + (BigUint::one() << 152)), 2.0.powi(100) + 2.0.powi(152));
+        check(&(BigUint::one() << 1023), 2.0.powi(1023));
+        check(&(BigUint::from((1u64 << 53) - 1) << (1024 - 53)), f64::MAX);
+
+        // keeping all 53 digits with the bits at different offsets to the BigDigits
+        let x: u64 = 0b0000000000011110111110110111111101110111101111011111011011011101;
+        let mut f = x as f64;
+        let mut b = BigUint::from(x);
+        for _ in 0..128 {
+            check(&b, f);
+            f *= 2.0;
+            b = b << 1;
+        }
+
+        // test rounding up with the bits at different offsets to the BigDigits
+        let mut f = ((1u64 << 54) - 1) as f64;
+        let mut b = BigUint::from(1u64 << 54);
+        for _ in 0..128 {
+            assert_eq!(b.to_f64(), Some(f));
+            f *= 2.0;
+            b = b << 1;
+        }
+
+        // rounding
+        assert_eq!(BigUint::from_f64(-1.0), None);
+        assert_eq!(BigUint::from_f64(-0.99999), Some(BigUint::zero()));
+        assert_eq!(BigUint::from_f64(-0.5), Some(BigUint::zero()));
+        assert_eq!(BigUint::from_f64(-0.0), Some(BigUint::zero()));
+        assert_eq!(BigUint::from_f64(f64::MIN_POSITIVE / 2.0), Some(BigUint::zero()));
+        assert_eq!(BigUint::from_f64(f64::MIN_POSITIVE), Some(BigUint::zero()));
+        assert_eq!(BigUint::from_f64(0.5), Some(BigUint::zero()));
+        assert_eq!(BigUint::from_f64(0.99999), Some(BigUint::zero()));
+        assert_eq!(BigUint::from_f64(f64::consts::E), Some(BigUint::from(2u32)));
+        assert_eq!(BigUint::from_f64(f64::consts::PI), Some(BigUint::from(3u32)));
+
+        // special float values
+        assert_eq!(BigUint::from_f64(f64::NAN), None);
+        assert_eq!(BigUint::from_f64(f64::INFINITY), None);
+        assert_eq!(BigUint::from_f64(f64::NEG_INFINITY), None);
+        assert_eq!(BigUint::from_f64(f64::MIN), None);
+
+        // largest BigUint that will round to a finite f64 value
+        let big_num = (BigUint::one() << 1024) - BigUint::one() - (BigUint::one() << (1024 - 54));
+        assert_eq!(big_num.to_f64(), Some(f64::MAX));
+        assert_eq!((big_num + BigUint::one()).to_f64(), None);
+
+        assert_eq!(((BigInt::one() << 1024) - BigInt::one()).to_f64(), None);
+        assert_eq!((BigUint::one() << 1024).to_f64(), None);
     }
 
     #[test]
@@ -3585,6 +3834,7 @@ mod bigint_tests {
     use super::Sign::{Minus, NoSign, Plus};
 
     use std::cmp::Ordering::{Less, Equal, Greater};
+    use std::{f32, f64};
     use std::{i8, i16, i32, i64, isize};
     use std::iter::repeat;
     use std::{u8, u16, u32, u64, usize};
@@ -3593,6 +3843,7 @@ mod bigint_tests {
     use rand::thread_rng;
 
     use {Zero, One, Signed, ToPrimitive, FromPrimitive, Num};
+    use Float;
 
     /// Assert that an op works for all val/ref combinations
     macro_rules! assert_op {
@@ -3791,6 +4042,156 @@ mod bigint_tests {
         let max_value: BigUint = FromPrimitive::from_u64(u64::MAX).unwrap();
         assert_eq!(BigInt::from_biguint(Minus, max_value).to_u64(), None);
         assert_eq!(BigInt::from_biguint(Minus, BigUint::new(vec!(1, 2, 3, 4, 5))).to_u64(), None);
+    }
+
+    #[test]
+    fn test_convert_f32() {
+        fn check(b1: &BigInt, f: f32) {
+            let b2 = BigInt::from_f32(f).unwrap();
+            assert_eq!(b1, &b2);
+            assert_eq!(b1.to_f32().unwrap(), f);
+            let neg_b1 = -b1;
+            let neg_b2 = BigInt::from_f32(-f).unwrap();
+            assert_eq!(neg_b1, neg_b2);
+            assert_eq!(neg_b1.to_f32().unwrap(), -f);
+        }
+
+        check(&BigInt::zero(), 0.0);
+        check(&BigInt::one(), 1.0);
+        check(&BigInt::from(u16::MAX), 2.0.powi(16) - 1.0);
+        check(&BigInt::from(1u64 << 32), 2.0.powi(32));
+        check(&BigInt::from_slice(Plus, &[0, 0, 1]), 2.0.powi(64));
+        check(&((BigInt::one() << 100) + (BigInt::one() << 123)), 2.0.powi(100) + 2.0.powi(123));
+        check(&(BigInt::one() << 127), 2.0.powi(127));
+        check(&(BigInt::from((1u64 << 24) - 1) << (128 - 24)), f32::MAX);
+
+        // keeping all 24 digits with the bits at different offsets to the BigDigits
+        let x: u32 = 0b00000000101111011111011011011101;
+        let mut f = x as f32;
+        let mut b = BigInt::from(x);
+        for _ in 0..64 {
+            check(&b, f);
+            f *= 2.0;
+            b = b << 1;
+        }
+
+        // this number when rounded to f64 then f32 isn't the same as when rounded straight to f32
+        let mut n: i64 = 0b0000000000111111111111111111111111011111111111111111111111111111;
+        assert!((n as f64) as f32 != n as f32);
+        assert_eq!(BigInt::from(n).to_f32(), Some(n as f32));
+        n = -n;
+        assert!((n as f64) as f32 != n as f32);
+        assert_eq!(BigInt::from(n).to_f32(), Some(n as f32));
+
+        // test rounding up with the bits at different offsets to the BigDigits
+        let mut f = ((1u64 << 25) - 1) as f32;
+        let mut b = BigInt::from(1u64 << 25);
+        for _ in 0..64 {
+            assert_eq!(b.to_f32(), Some(f));
+            f *= 2.0;
+            b = b << 1;
+        }
+
+        // rounding
+        assert_eq!(BigInt::from_f32(-f32::consts::PI), Some(BigInt::from(-3i32)));
+        assert_eq!(BigInt::from_f32(-f32::consts::E), Some(BigInt::from(-2i32)));
+        assert_eq!(BigInt::from_f32(-0.99999), Some(BigInt::zero()));
+        assert_eq!(BigInt::from_f32(-0.5), Some(BigInt::zero()));
+        assert_eq!(BigInt::from_f32(-0.0), Some(BigInt::zero()));
+        assert_eq!(BigInt::from_f32(f32::MIN_POSITIVE / 2.0), Some(BigInt::zero()));
+        assert_eq!(BigInt::from_f32(f32::MIN_POSITIVE), Some(BigInt::zero()));
+        assert_eq!(BigInt::from_f32(0.5), Some(BigInt::zero()));
+        assert_eq!(BigInt::from_f32(0.99999), Some(BigInt::zero()));
+        assert_eq!(BigInt::from_f32(f32::consts::E), Some(BigInt::from(2u32)));
+        assert_eq!(BigInt::from_f32(f32::consts::PI), Some(BigInt::from(3u32)));
+
+        // special float values
+        assert_eq!(BigInt::from_f32(f32::NAN), None);
+        assert_eq!(BigInt::from_f32(f32::INFINITY), None);
+        assert_eq!(BigInt::from_f32(f32::NEG_INFINITY), None);
+
+        // largest BigInt that will round to a finite f32 value
+        let big_num = (BigInt::one() << 128) - BigInt::one() - (BigInt::one() << (128 - 25));
+        assert_eq!(big_num.to_f32(), Some(f32::MAX));
+        assert_eq!((&big_num + BigInt::one()).to_f32(), None);
+        assert_eq!((-&big_num).to_f32(), Some(f32::MIN));
+        assert_eq!(((-&big_num) - BigInt::one()).to_f32(), None);
+
+        assert_eq!(((BigInt::one() << 128) - BigInt::one()).to_f32(), None);
+        assert_eq!((BigInt::one() << 128).to_f32(), None);
+        assert_eq!((-((BigInt::one() << 128) - BigInt::one())).to_f32(), None);
+        assert_eq!((-(BigInt::one() << 128)).to_f32(), None);
+    }
+
+    #[test]
+    fn test_convert_f64() {
+        fn check(b1: &BigInt, f: f64) {
+            let b2 =  BigInt::from_f64(f).unwrap();
+            assert_eq!(b1, &b2);
+            assert_eq!(b1.to_f64().unwrap(), f);
+            let neg_b1 = -b1;
+            let neg_b2 = BigInt::from_f64(-f).unwrap();
+            assert_eq!(neg_b1, neg_b2);
+            assert_eq!(neg_b1.to_f64().unwrap(), -f);
+        }
+
+        check(&BigInt::zero(), 0.0);
+        check(&BigInt::one(), 1.0);
+        check(&BigInt::from(u32::MAX), 2.0.powi(32) - 1.0);
+        check(&BigInt::from(1u64 << 32), 2.0.powi(32));
+        check(&BigInt::from_slice(Plus, &[0, 0, 1]), 2.0.powi(64));
+        check(&((BigInt::one() << 100) + (BigInt::one() << 152)), 2.0.powi(100) + 2.0.powi(152));
+        check(&(BigInt::one() << 1023), 2.0.powi(1023));
+        check(&(BigInt::from((1u64 << 53) - 1) << (1024 - 53)), f64::MAX);
+
+        // keeping all 53 digits with the bits at different offsets to the BigDigits
+        let x: u64 = 0b0000000000011110111110110111111101110111101111011111011011011101;
+        let mut f = x as f64;
+        let mut b = BigInt::from(x);
+        for _ in 0..128 {
+            check(&b, f);
+            f *= 2.0;
+            b = b << 1;
+        }
+
+        // test rounding up with the bits at different offsets to the BigDigits
+        let mut f = ((1u64 << 54) - 1) as f64;
+        let mut b = BigInt::from(1u64 << 54);
+        for _ in 0..128 {
+            assert_eq!(b.to_f64(), Some(f));
+            f *= 2.0;
+            b = b << 1;
+        }
+
+        // rounding
+        assert_eq!(BigInt::from_f64(-f64::consts::PI), Some(BigInt::from(-3i32)));
+        assert_eq!(BigInt::from_f64(-f64::consts::E), Some(BigInt::from(-2i32)));
+        assert_eq!(BigInt::from_f64(-0.99999), Some(BigInt::zero()));
+        assert_eq!(BigInt::from_f64(-0.5), Some(BigInt::zero()));
+        assert_eq!(BigInt::from_f64(-0.0), Some(BigInt::zero()));
+        assert_eq!(BigInt::from_f64(f64::MIN_POSITIVE / 2.0), Some(BigInt::zero()));
+        assert_eq!(BigInt::from_f64(f64::MIN_POSITIVE), Some(BigInt::zero()));
+        assert_eq!(BigInt::from_f64(0.5), Some(BigInt::zero()));
+        assert_eq!(BigInt::from_f64(0.99999), Some(BigInt::zero()));
+        assert_eq!(BigInt::from_f64(f64::consts::E), Some(BigInt::from(2u32)));
+        assert_eq!(BigInt::from_f64(f64::consts::PI), Some(BigInt::from(3u32)));
+
+        // special float values
+        assert_eq!(BigInt::from_f64(f64::NAN), None);
+        assert_eq!(BigInt::from_f64(f64::INFINITY), None);
+        assert_eq!(BigInt::from_f64(f64::NEG_INFINITY), None);
+
+        // largest BigInt that will round to a finite f64 value
+        let big_num = (BigInt::one() << 1024) - BigInt::one() - (BigInt::one() << (1024 - 54));
+        assert_eq!(big_num.to_f64(), Some(f64::MAX));
+        assert_eq!((&big_num + BigInt::one()).to_f64(), None);
+        assert_eq!((-&big_num).to_f64(), Some(f64::MIN));
+        assert_eq!(((-&big_num) - BigInt::one()).to_f64(), None);
+
+        assert_eq!(((BigInt::one() << 1024) - BigInt::one()).to_f64(), None);
+        assert_eq!((BigInt::one() << 1024).to_f64(), None);
+        assert_eq!((-((BigInt::one() << 1024) - BigInt::one())).to_f64(), None);
+        assert_eq!((-(BigInt::one() << 1024)).to_f64(), None);
     }
 
     #[test]
