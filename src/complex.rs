@@ -39,6 +39,12 @@ impl<T: Clone + Num> Complex<T> {
         Complex { re: re, im: im }
     }
 
+    /// Returns imaginary unit
+    #[inline]
+    pub fn i() -> Complex<T> {
+        Self::new(T::zero(), T::one())
+    }
+
     /// Returns the square of the norm (since `T` doesn't necessarily
     /// have a sqrt function), i.e. `re^2 + im^2`.
     #[inline]
@@ -166,7 +172,7 @@ impl<T: Clone + Float> Complex<T> {
     #[inline]
     pub fn asin(&self) -> Complex<T> {
         // formula: arcsin(z) = -i ln(sqrt(1-z^2) + iz)
-        let i = Complex::new(T::zero(), T::one());
+        let i = Complex::i();
         -i*((Complex::one() - self*self).sqrt() + i*self).ln()
     }
 
@@ -181,7 +187,7 @@ impl<T: Clone + Float> Complex<T> {
     #[inline]
     pub fn acos(&self) -> Complex<T> {
         // formula: arccos(z) = -i ln(i sqrt(1-z^2) + z)
-        let i = Complex::new(T::zero(), T::one());
+        let i = Complex::i();
         -i*(i*(Complex::one() - self*self).sqrt() + self).ln()
     }
 
@@ -196,7 +202,7 @@ impl<T: Clone + Float> Complex<T> {
     #[inline]
     pub fn atan(&self) -> Complex<T> {
         // formula: arctan(z) = (ln(1+iz) - ln(1-iz))/(2i)
-        let i = Complex::new(T::zero(), T::one());
+        let i = Complex::i();
         let one = Complex::one();
         let two = one + one;
         if *self == i {
