@@ -39,6 +39,12 @@ impl<T: Clone + Num> Complex<T> {
         Complex { re: re, im: im }
     }
 
+    /// Returns imaginary unit
+    #[inline]
+    pub fn i() -> Complex<T> {
+        Self::new(T::zero(), T::one())
+    }
+
     /// Returns the square of the norm (since `T` doesn't necessarily
     /// have a sqrt function), i.e. `re^2 + im^2`.
     #[inline]
@@ -56,14 +62,6 @@ impl<T: Clone + Num> Complex<T> {
     #[inline]
     pub fn unscale(&self, t: T) -> Complex<T> {
         Complex::new(self.re.clone() / t.clone(), self.im.clone() / t)
-    }
-}
-
-impl<T: Clone + Num> Complex<T> {
-    /// Returns `i`
-    #[inline]
-    pub fn i() -> Complex<T> {
-        Self::new(T::zero(), T::one())
     }
 }
 
