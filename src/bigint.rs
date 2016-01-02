@@ -1471,8 +1471,12 @@ fn to_str_radix_reversed(u: &BigUint, radix: u32) -> Vec<u8> {
 
     // Now convert everything to ASCII digits.
     for r in &mut res {
-        const DIGITS: &'static [u8; 36] = b"0123456789abcdefghijklmnopqrstuvwxyz";
-        *r = DIGITS[*r as usize];
+        debug_assert!((*r as u32) < radix);
+        if *r < 10 {
+            *r += b'0';
+        } else {
+            *r += b'a' - 10;
+        }
     }
     res
 }
