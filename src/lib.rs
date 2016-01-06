@@ -140,18 +140,20 @@ pub fn abs_sub<T: Signed>(x: T, y: T) -> T {
 /// assert_eq!(num::pow(6u8, 3), 216);
 /// ```
 #[inline]
-pub fn pow<T: Clone + One + Mul<T, Output = T>>(mut base: T, mut exp: usize) -> T {
+pub fn pow<T>(mut base: T, mut exp: usize) -> T
+    where T: One,
+         for <'a> &'a T: Mul<&'a T,Output = T>, {
     if exp == 1 { base }
     else {
-        let mut acc = one::<T>();
+        let mut acc = T::one();
         while exp > 0 {
             if (exp & 1) == 1 {
-                acc = acc * base.clone();
+                acc = &acc * &base;
             }
 
             // avoid overflow if we won't need it
             if exp > 1 {
-                base = base.clone() * base;
+                base = &base * &base;
             }
             exp = exp >> 1;
         }
