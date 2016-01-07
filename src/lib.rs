@@ -141,22 +141,23 @@ pub fn abs_sub<T: Signed>(x: T, y: T) -> T {
 /// ```
 #[inline]
 pub fn pow<T: Clone + One + Mul<T, Output = T>>(mut base: T, mut exp: usize) -> T {
-    if exp == 1 { base }
-    else {
-        let mut acc = one::<T>();
-        while exp > 0 {
-            if (exp & 1) == 1 {
-                acc = acc * base.clone();
-            }
+    if exp == 0 { return T::one() }
 
-            // avoid overflow if we won't need it
-            if exp > 1 {
-                base = base.clone() * base;
-            }
-            exp = exp >> 1;
-        }
-        acc
+    while exp & 1 == 0 {
+        base = base.clone() * base;
+        exp >>= 1;
     }
+    if exp == 1 { return base }
+
+    let mut acc = base.clone();
+    while exp > 1 {
+        exp >>= 1;
+        base = base.clone() * base;
+        if exp & 1 == 1 {
+            acc = acc * base.clone();
+        }
+    }
+    acc
 }
 
 #[cfg(test)]
