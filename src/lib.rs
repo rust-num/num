@@ -140,11 +140,13 @@ pub fn abs_sub<T: Signed>(x: T, y: T) -> T {
 /// assert_eq!(num::pow(6u8, 3), 216);
 /// ```
 #[inline]
-pub fn pow<T: Clone + One + Mul<T, Output = T>>(mut base: T, mut exp: usize) -> T {
+pub fn pow<T: One + Clone>(mut base: T, mut exp: usize) -> T
+        where for <'a> &'a T: Mul<&'a T,Output = T>, {
+
     if exp == 0 { return T::one() }
 
     while exp & 1 == 0 {
-        base = base.clone() * base;
+        base = &base * &base;
         exp >>= 1;
     }
     if exp == 1 { return base }
@@ -152,9 +154,9 @@ pub fn pow<T: Clone + One + Mul<T, Output = T>>(mut base: T, mut exp: usize) -> 
     let mut acc = base.clone();
     while exp > 1 {
         exp >>= 1;
-        base = base.clone() * base;
+        base = &base * &base;
         if exp & 1 == 1 {
-            acc = acc * base.clone();
+            acc = &acc * &base;
         }
     }
     acc
