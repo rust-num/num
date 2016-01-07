@@ -192,7 +192,7 @@ fn hash(b: &mut Bencher) {
 #[bench]
 fn pow_bench(b: &mut Bencher) {
     b.iter(|| {
-        let upper = 250_usize;
+        let upper = 100_usize;
         for i in 2..upper + 1 {
             for j in 2..upper + 1 {
                 let i_big = BigUint::from_usize(i).unwrap();
