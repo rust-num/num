@@ -59,7 +59,11 @@
 
 #[cfg(feature = "rustc-serialize")]
 extern crate rustc_serialize;
-#[cfg(feature = "rand")]
+
+// Some of the tests of non-RNG-based functionality are randomized using the
+// RNG-based functionality, so the RNG-based functionality needs to be enabled
+// for tests.
+#[cfg(any(feature = "rand", all(feature = "bigint", test)))]
 extern crate rand;
 
 #[cfg(feature = "bigint")]
