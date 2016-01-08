@@ -43,6 +43,8 @@
 //! ```rust
 //! extern crate rand;
 //! extern crate num;
+//!
+//! # #[cfg(feature = "rand")]
 //! # fn main() {
 //! use num::bigint::{ToBigInt, RandBigInt};
 //!
@@ -55,6 +57,10 @@
 //!
 //! // Probably an even larger number.
 //! println!("{}", a * b);
+//! # }
+//!
+//! # #[cfg(not(feature = "rand"))]
+//! # fn main() {
 //! # }
 //! ```
 
@@ -71,6 +77,10 @@ use std::cmp::Ordering::{self, Less, Greater, Equal};
 use std::{f32, f64};
 use std::{u8, i64, u64};
 
+// Some of the tests of non-RNG-based functionality are randomized using the
+// RNG-based functionality, so the RNG-based functionality needs to be enabled
+// for tests.
+#[cfg(any(feature = "rand", test))]
 use rand::Rng;
 
 use traits::{ToPrimitive, FromPrimitive};
@@ -173,11 +183,13 @@ fn div_wide(hi: BigDigit, lo: BigDigit, divisor: BigDigit) -> (BigDigit, BigDigi
     let rhs = divisor as DoubleBigDigit;
     ((lhs / rhs) as BigDigit, (lhs % rhs) as BigDigit)
 }
+
 /// A big unsigned integer type.
 ///
 /// A `BigUint`-typed value `BigUint { data: vec!(a, b, c) }` represents a number
 /// `(a + b * big_digit::BASE + c * big_digit::BASE^2)`.
-#[derive(Clone, RustcEncodable, RustcDecodable, Debug, Hash)]
+#[derive(Clone, Debug, Hash)]
+#[cfg_attr(feature = "rustc-serialize", derive(RustcEncodable, RustcDecodable))]
 pub struct BigUint {
     data: Vec<BigDigit>
 }
@@ -1729,7 +1741,8 @@ fn get_radix_base(radix: u32) -> (DoubleBigDigit, usize) {
 }
 
 /// A Sign is a `BigInt`'s composing element.
-#[derive(PartialEq, PartialOrd, Eq, Ord, Copy, Clone, Debug, RustcEncodable, RustcDecodable, Hash)]
+#[derive(PartialEq, PartialOrd, Eq, Ord, Copy, Clone, Debug, Hash)]
+#[cfg_attr(feature = "rustc-serialize", derive(RustcEncodable, RustcDecodable))]
 pub enum Sign { Minus, NoSign, Plus }
 
 impl Neg for Sign {
@@ -1760,7 +1773,8 @@ impl Mul<Sign> for Sign {
 }
 
 /// A big signed integer type.
-#[derive(Clone, RustcEncodable, RustcDecodable, Debug, Hash)]
+#[derive(Clone, Debug, Hash)]
+#[cfg_attr(feature = "rustc-serialize", derive(RustcEncodable, RustcDecodable))]
 pub struct BigInt {
     sign: Sign,
     data: BigUint
@@ -2387,6 +2401,7 @@ pub trait RandBigInt {
     fn gen_bigint_range(&mut self, lbound: &BigInt, ubound: &BigInt) -> BigInt;
 }
 
+#[cfg(any(feature = "rand", test))]
 impl<R: Rng> RandBigInt for R {
     fn gen_biguint(&mut self, bit_size: usize) -> BigUint {
         let (digits, rem) = bit_size.div_rem(&big_digit::BITS);

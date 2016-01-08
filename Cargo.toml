@@ -17,12 +17,17 @@ complex, rational, range iterators, generic integers, and more!
 rustc-serialize = { version = "0.3.13", optional = true }
 rand = { version = "0.3.8", optional = true }
 
+[dev-dependencies]
+# Some tests of non-rand functionality still use rand because the tests
+# themselves are randomized.
+rand = { version = "0.3.8" }
+
 [features]
 
 complex = []
 rational = []
-bigint = ["rustc-serialize", "rand"]
-default = ["complex", "rational", "bigint"]
+bigint = []
+default = ["bigint", "complex", "rand", "rational", "rustc-serialize"]
 
 [[bench]]
 name = "bigint"
