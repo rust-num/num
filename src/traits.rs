@@ -206,12 +206,6 @@ int_trait_impl!(Num for usize u8 u16 u32 u64 isize i8 i16 i32 i64);
 float_trait_impl!(Num for f32 f64);
 
 /// Defines an additive identity element for `Self`.
-///
-/// # Deriving
-///
-/// This trait can be automatically be derived using `#[deriving(Zero)]`
-/// attribute. If you choose to use this, make sure that the laws outlined in
-/// the documentation for `Zero::zero` still hold.
 pub trait Zero: Sized + Add<Self, Output = Self> {
     /// Returns the additive identity element of `Self`, `0`.
     ///
