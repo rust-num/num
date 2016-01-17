@@ -242,6 +242,18 @@ impl fmt::Display for BigUint {
     }
 }
 
+impl fmt::LowerHex for BigUint {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.to_str_radix(16))
+    }
+}
+
+impl fmt::UpperHex for BigUint {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.to_str_radix(16).to_uppercase())
+    }
+}
+
 impl FromStr for BigUint {
     type Err = ParseBigIntError;
 
