@@ -3724,6 +3724,24 @@ mod biguint_tests {
     }
 
     #[test]
+    fn test_upper_hex() {
+        let a = BigUint::parse_bytes(b"A", 16).unwrap();
+        let hello = BigUint::parse_bytes("22405534230753963835153736737".as_bytes(), 10).unwrap();
+
+        assert_eq!(format!("{:x}", a), "a");
+        assert_eq!(format!("{:x}", hello), "48656c6c6f20776f726c6421");
+    }
+
+    #[test]
+    fn test_lower_hex() {
+        let a = BigUint::parse_bytes(b"A", 16).unwrap();
+        let hello = BigUint::parse_bytes("22405534230753963835153736737".as_bytes(), 10).unwrap();
+
+        assert_eq!(format!("{:X}", a), "A");
+        assert_eq!(format!("{:X}", hello), "48656C6C6F20776F726C6421");
+    }
+
+    #[test]
     fn test_factor() {
         fn factor(n: usize) -> BigUint {
             let mut f: BigUint = One::one();
