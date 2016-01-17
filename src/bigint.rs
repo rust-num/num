@@ -76,6 +76,7 @@ use std::fmt;
 use std::cmp::Ordering::{self, Less, Greater, Equal};
 use std::{f32, f64};
 use std::{u8, i64, u64};
+use std::ascii::AsciiExt;
 
 // Some of the tests of non-RNG-based functionality are randomized using the
 // RNG-based functionality, so the RNG-based functionality needs to be enabled
@@ -250,7 +251,7 @@ impl fmt::LowerHex for BigUint {
 
 impl fmt::UpperHex for BigUint {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.to_str_radix(16).to_uppercase())
+        write!(f, "{}", self.to_str_radix(16).to_ascii_uppercase())
     }
 }
 
