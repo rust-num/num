@@ -3724,7 +3724,7 @@ mod biguint_tests {
     }
 
     #[test]
-    fn test_upper_hex() {
+    fn test_lower_hex() {
         let a = BigUint::parse_bytes(b"A", 16).unwrap();
         let hello = BigUint::parse_bytes("22405534230753963835153736737".as_bytes(), 10).unwrap();
 
@@ -3733,7 +3733,7 @@ mod biguint_tests {
     }
 
     #[test]
-    fn test_lower_hex() {
+    fn test_upper_hex() {
         let a = BigUint::parse_bytes(b"A", 16).unwrap();
         let hello = BigUint::parse_bytes("22405534230753963835153736737".as_bytes(), 10).unwrap();
 
