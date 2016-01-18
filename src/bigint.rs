@@ -76,6 +76,7 @@ use std::fmt;
 use std::cmp::Ordering::{self, Less, Greater, Equal};
 use std::{f32, f64};
 use std::{u8, i64, u64};
+use std::ascii::AsciiExt;
 
 // Some of the tests of non-RNG-based functionality are randomized using the
 // RNG-based functionality, so the RNG-based functionality needs to be enabled
@@ -239,6 +240,18 @@ impl Default for BigUint {
 impl fmt::Display for BigUint {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.to_str_radix(10))
+    }
+}
+
+impl fmt::LowerHex for BigUint {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.to_str_radix(16))
+    }
+}
+
+impl fmt::UpperHex for BigUint {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.to_str_radix(16).to_ascii_uppercase())
     }
 }
 
@@ -3708,6 +3721,24 @@ mod biguint_tests {
             let x = BigUint::from_str_radix(&s, radix);
             assert_eq!(x.unwrap(), n);
         }
+    }
+
+    #[test]
+    fn test_lower_hex() {
+        let a = BigUint::parse_bytes(b"A", 16).unwrap();
+        let hello = BigUint::parse_bytes("22405534230753963835153736737".as_bytes(), 10).unwrap();
+
+        assert_eq!(format!("{:x}", a), "a");
+        assert_eq!(format!("{:x}", hello), "48656c6c6f20776f726c6421");
+    }
+
+    #[test]
+    fn test_upper_hex() {
+        let a = BigUint::parse_bytes(b"A", 16).unwrap();
+        let hello = BigUint::parse_bytes("22405534230753963835153736737".as_bytes(), 10).unwrap();
+
+        assert_eq!(format!("{:X}", a), "A");
+        assert_eq!(format!("{:X}", hello), "48656C6C6F20776F726C6421");
     }
 
     #[test]
