@@ -255,6 +255,18 @@ impl fmt::UpperHex for BigUint {
     }
 }
 
+impl fmt::Binary for BigUint {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.to_str_radix(2))
+    }
+}
+
+impl fmt::Octal for BigUint {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.to_str_radix(8))
+    }
+}
+
 impl FromStr for BigUint {
     type Err = ParseBigIntError;
 
@@ -1835,6 +1847,30 @@ impl Default for BigInt {
 impl fmt::Display for BigInt {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.to_str_radix(10))
+    }
+}
+
+impl fmt::Binary for BigInt {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.to_str_radix(2))
+    }
+}
+
+impl fmt::Octal for BigInt {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.to_str_radix(8))
+    }
+}
+
+impl fmt::LowerHex for BigInt {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.to_str_radix(16))
+    }
+}
+
+impl fmt::UpperHex for BigInt {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.to_str_radix(16).to_ascii_uppercase())
     }
 }
 
@@ -3742,6 +3778,24 @@ mod biguint_tests {
     }
 
     #[test]
+    fn test_binary() {
+        let a = BigUint::parse_bytes(b"A", 16).unwrap();
+        let hello = BigUint::parse_bytes("224055342307539".as_bytes(), 10).unwrap();
+
+        assert_eq!(format!("{:b}", a), "1010");
+        assert_eq!(format!("{:b}", hello), "110010111100011011110011000101101001100011010011");
+    }
+
+    #[test]
+    fn test_octal() {
+        let a = BigUint::parse_bytes(b"A", 16).unwrap();
+        let hello = BigUint::parse_bytes("22405534230753963835153736737".as_bytes(), 10).unwrap();
+
+        assert_eq!(format!("{:o}", a), "12");
+        assert_eq!(format!("{:o}", hello), "22062554330674403566756233062041");
+    }
+
+    #[test]
     fn test_factor() {
         fn factor(n: usize) -> BigUint {
             let mut f: BigUint = One::one();
@@ -4026,6 +4080,7 @@ mod bigint_tests {
             }
         }
     }
+
 
     #[test]
     fn test_hash() {
@@ -4702,6 +4757,42 @@ mod bigint_tests {
         let x: BigInt =
             format!("1{}", repeat("0").take(36).collect::<String>()).parse().unwrap();
         let _y = x.to_string();
+    }
+
+    #[test]
+    fn test_lower_hex() {
+        let a = BigInt::parse_bytes(b"A", 16).unwrap();
+        let hello = BigInt::parse_bytes("-22405534230753963835153736737".as_bytes(), 10).unwrap();
+
+        assert_eq!(format!("{:x}", a), "a");
+        assert_eq!(format!("{:x}", hello), "-48656c6c6f20776f726c6421");
+    }
+
+    #[test]
+    fn test_upper_hex() {
+        let a = BigInt::parse_bytes(b"A", 16).unwrap();
+        let hello = BigInt::parse_bytes("-22405534230753963835153736737".as_bytes(), 10).unwrap();
+
+        assert_eq!(format!("{:X}", a), "A");
+        assert_eq!(format!("{:X}", hello), "-48656C6C6F20776F726C6421");
+    }
+
+    #[test]
+    fn test_binary() {
+        let a = BigInt::parse_bytes(b"A", 16).unwrap();
+        let hello = BigInt::parse_bytes("-224055342307539".as_bytes(), 10).unwrap();
+
+        assert_eq!(format!("{:b}", a), "1010");
+        assert_eq!(format!("{:b}", hello), "-110010111100011011110011000101101001100011010011");
+    }
+
+    #[test]
+    fn test_octal() {
+        let a = BigInt::parse_bytes(b"A", 16).unwrap();
+        let hello = BigInt::parse_bytes("-22405534230753963835153736737".as_bytes(), 10).unwrap();
+
+        assert_eq!(format!("{:o}", a), "12");
+        assert_eq!(format!("{:o}", hello), "-22062554330674403566756233062041");
     }
 
     #[test]
