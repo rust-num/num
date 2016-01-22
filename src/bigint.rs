@@ -239,31 +239,31 @@ impl Default for BigUint {
 
 impl fmt::Display for BigUint {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.to_str_radix(10))
+        f.pad_integral(true, "", &self.to_str_radix(10))
     }
 }
 
 impl fmt::LowerHex for BigUint {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.to_str_radix(16))
+        f.pad_integral(true, "0x", &self.to_str_radix(16))
     }
 }
 
 impl fmt::UpperHex for BigUint {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.to_str_radix(16).to_ascii_uppercase())
+        f.pad_integral(true, "0x", &self.to_str_radix(16).to_ascii_uppercase())
     }
 }
 
 impl fmt::Binary for BigUint {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.to_str_radix(2))
+        f.pad_integral(true, "0b", &self.to_str_radix(2))
     }
 }
 
 impl fmt::Octal for BigUint {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.to_str_radix(8))
+        f.pad_integral(true, "0o", &self.to_str_radix(8))
     }
 }
 
@@ -1846,31 +1846,31 @@ impl Default for BigInt {
 
 impl fmt::Display for BigInt {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.to_str_radix(10))
+        f.pad_integral(!self.is_negative(), "", &self.data.to_str_radix(10))
     }
 }
 
 impl fmt::Binary for BigInt {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.to_str_radix(2))
+        f.pad_integral(!self.is_negative(), "0b", &self.data.to_str_radix(2))
     }
 }
 
 impl fmt::Octal for BigInt {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.to_str_radix(8))
+        f.pad_integral(!self.is_negative(), "0o", &self.data.to_str_radix(8))
     }
 }
 
 impl fmt::LowerHex for BigInt {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.to_str_radix(16))
+        f.pad_integral(!self.is_negative(), "0x", &self.data.to_str_radix(16))
     }
 }
 
 impl fmt::UpperHex for BigInt {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.to_str_radix(16).to_ascii_uppercase())
+        f.pad_integral(!self.is_negative(), "0x", &self.data.to_str_radix(16).to_ascii_uppercase())
     }
 }
 
@@ -3766,6 +3766,7 @@ mod biguint_tests {
 
         assert_eq!(format!("{:x}", a), "a");
         assert_eq!(format!("{:x}", hello), "48656c6c6f20776f726c6421");
+        assert_eq!(format!("{:♥>+#8x}", a), "♥♥♥♥+0xa");
     }
 
     #[test]
@@ -3775,6 +3776,7 @@ mod biguint_tests {
 
         assert_eq!(format!("{:X}", a), "A");
         assert_eq!(format!("{:X}", hello), "48656C6C6F20776F726C6421");
+        assert_eq!(format!("{:♥>+#8X}", a), "♥♥♥♥+0xA");
     }
 
     #[test]
@@ -3784,6 +3786,7 @@ mod biguint_tests {
 
         assert_eq!(format!("{:b}", a), "1010");
         assert_eq!(format!("{:b}", hello), "110010111100011011110011000101101001100011010011");
+        assert_eq!(format!("{:♥>+#8b}", a), "♥+0b1010");
     }
 
     #[test]
@@ -3793,6 +3796,17 @@ mod biguint_tests {
 
         assert_eq!(format!("{:o}", a), "12");
         assert_eq!(format!("{:o}", hello), "22062554330674403566756233062041");
+        assert_eq!(format!("{:♥>+#8o}", a), "♥♥♥+0o12");
+    }
+
+    #[test]
+    fn test_display() {
+        let a = BigUint::parse_bytes(b"A", 16).unwrap();
+        let hello = BigUint::parse_bytes("22405534230753963835153736737".as_bytes(), 10).unwrap();
+
+        assert_eq!(format!("{}", a), "10");
+        assert_eq!(format!("{}", hello), "22405534230753963835153736737");
+        assert_eq!(format!("{:♥>+#8}", a), "♥♥♥♥♥+10");
     }
 
     #[test]
@@ -4766,6 +4780,7 @@ mod bigint_tests {
 
         assert_eq!(format!("{:x}", a), "a");
         assert_eq!(format!("{:x}", hello), "-48656c6c6f20776f726c6421");
+        assert_eq!(format!("{:♥>+#8x}", a), "♥♥♥♥+0xa");
     }
 
     #[test]
@@ -4775,6 +4790,7 @@ mod bigint_tests {
 
         assert_eq!(format!("{:X}", a), "A");
         assert_eq!(format!("{:X}", hello), "-48656C6C6F20776F726C6421");
+        assert_eq!(format!("{:♥>+#8X}", a), "♥♥♥♥+0xA");
     }
 
     #[test]
@@ -4784,6 +4800,7 @@ mod bigint_tests {
 
         assert_eq!(format!("{:b}", a), "1010");
         assert_eq!(format!("{:b}", hello), "-110010111100011011110011000101101001100011010011");
+        assert_eq!(format!("{:♥>+#8b}", a), "♥+0b1010");
     }
 
     #[test]
@@ -4793,6 +4810,17 @@ mod bigint_tests {
 
         assert_eq!(format!("{:o}", a), "12");
         assert_eq!(format!("{:o}", hello), "-22062554330674403566756233062041");
+        assert_eq!(format!("{:♥>+#8o}", a), "♥♥♥+0o12");
+    }
+
+    #[test]
+    fn test_display() {
+        let a = BigInt::parse_bytes(b"A", 16).unwrap();
+        let hello = BigInt::parse_bytes("-22405534230753963835153736737".as_bytes(), 10).unwrap();
+
+        assert_eq!(format!("{}", a), "10");
+        assert_eq!(format!("{}", hello), "-22405534230753963835153736737");
+        assert_eq!(format!("{:♥>+#8}", a), "♥♥♥♥♥+10");
     }
 
     #[test]
