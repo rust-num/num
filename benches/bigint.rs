@@ -168,12 +168,23 @@ fn from_str_radix_36(b: &mut Bencher) {
 }
 
 #[bench]
-fn shr(b: &mut Bencher) {
-    let n = { let one : BigUint = One::one(); one << 1000 };
+fn shl(b: &mut Bencher) {
+    let n = BigUint::one() << 1000;
     b.iter(|| {
         let mut m = n.clone();
-        for _ in 0..10 {
-            m = m >> 1;
+        for i in 0..50 {
+            m = m << i;
+        }
+    })
+}
+
+#[bench]
+fn shr(b: &mut Bencher) {
+    let n = BigUint::one() << 2000;
+    b.iter(|| {
+        let mut m = n.clone();
+        for i in 0..50 {
+            m = m >> i;
         }
     })
 }
