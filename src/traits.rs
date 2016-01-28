@@ -742,6 +742,74 @@ pub trait PrimInt
     /// ```
     fn rotate_right(self, n: u32) -> Self;
 
+    /// Shifts the bits to the left by a specified amount amount, `n`, filling
+    /// zeros in the least significant bits.
+    ///
+    /// This is bitwise equivalent to signed `Shl`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use num::traits::PrimInt;
+    ///
+    /// let n = 0x0123456789ABCDEFu64;
+    /// let m = 0x3456789ABCDEF000u64;
+    ///
+    /// assert_eq!(n.arithmetic_shl(12), m);
+    /// ```
+    fn arithmetic_shl(self, n: u32) -> Self;
+
+    /// Shifts the bits to the right by a specified amount amount, `n`, copying
+    /// the "sign bit" in the most significant bits even for unsigned types.
+    ///
+    /// This is bitwise equivalent to signed `Shr`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use num::traits::PrimInt;
+    ///
+    /// let n = 0xFEDCBA9876543210u64;
+    /// let m = 0xFFFFEDCBA9876543u64;
+    ///
+    /// assert_eq!(n.arithmetic_shr(12), m);
+    /// ```
+    fn arithmetic_shr(self, n: u32) -> Self;
+
+    /// Shifts the bits to the left by a specified amount amount, `n`, filling
+    /// zeros in the least significant bits.
+    ///
+    /// This is bitwise equivalent to unsigned `Shl`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use num::traits::PrimInt;
+    ///
+    /// let n = 0x0123456789ABCDEFi64;
+    /// let m = 0x3456789ABCDEF000i64;
+    ///
+    /// assert_eq!(n.logical_shl(12), m);
+    /// ```
+    fn logical_shl(self, n: u32) -> Self;
+
+    /// Shifts the bits to the right by a specified amount amount, `n`, filling
+    /// zeros in the most significant bits.
+    ///
+    /// This is bitwise equivalent to unsigned `Shr`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use num::traits::PrimInt;
+    ///
+    /// let n = 0xFEDCBA9876543210i64;
+    /// let m = 0x000FEDCBA9876543i64;
+    ///
+    /// assert_eq!(n.logical_shr(12), m);
+    /// ```
+    fn logical_shr(self, n: u32) -> Self;
+
     /// Reverses the byte order of the integer.
     ///
     /// # Examples
@@ -845,7 +913,7 @@ pub trait PrimInt
 }
 
 macro_rules! prim_int_impl {
-    ($($T:ty)*) => ($(
+    ($T:ty, $S:ty, $U:ty) => (
         impl PrimInt for $T {
             fn count_ones(self) -> u32 {
                 <$T>::count_ones(self)
@@ -869,6 +937,22 @@ macro_rules! prim_int_impl {
 
             fn rotate_right(self, n: u32) -> Self {
                 <$T>::rotate_right(self, n)
+            }
+
+            fn arithmetic_shl(self, n: u32) -> Self {
+                ((self as $S) << n) as $T
+            }
+
+            fn arithmetic_shr(self, n: u32) -> Self {
+                ((self as $S) >> n) as $T
+            }
+
+            fn logical_shl(self, n: u32) -> Self {
+                ((self as $U) << n) as $T
+            }
+
+            fn logical_shr(self, n: u32) -> Self {
+                ((self as $U) >> n) as $T
             }
 
             fn swap_bytes(self) -> Self {
@@ -895,10 +979,20 @@ macro_rules! prim_int_impl {
                 <$T>::pow(self, exp)
             }
         }
-    )*)
+    )
 }
 
-prim_int_impl!(u8 u16 u32 u64 usize i8 i16 i32 i64 isize);
+// prim_int_impl!(type, signed, unsigned);
+prim_int_impl!(u8,    i8,    u8);
+prim_int_impl!(u16,   i16,   u16);
+prim_int_impl!(u32,   i32,   u32);
+prim_int_impl!(u64,   i64,   u64);
+prim_int_impl!(usize, isize, usize);
+prim_int_impl!(i8,    i8,    u8);
+prim_int_impl!(i16,   i16,   u16);
+prim_int_impl!(i32,   i32,   u32);
+prim_int_impl!(i64,   i64,   u64);
+prim_int_impl!(isize, isize, usize);
 
 /// A generic trait for converting a value to a number.
 pub trait ToPrimitive {
