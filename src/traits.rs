@@ -755,9 +755,9 @@ pub trait PrimInt
     /// let n = 0x0123456789ABCDEFu64;
     /// let m = 0x3456789ABCDEF000u64;
     ///
-    /// assert_eq!(n.arithmetic_shl(12), m);
+    /// assert_eq!(n.signed_shl(12), m);
     /// ```
-    fn arithmetic_shl(self, n: u32) -> Self;
+    fn signed_shl(self, n: u32) -> Self;
 
     /// Shifts the bits to the right by a specified amount amount, `n`, copying
     /// the "sign bit" in the most significant bits even for unsigned types.
@@ -772,9 +772,9 @@ pub trait PrimInt
     /// let n = 0xFEDCBA9876543210u64;
     /// let m = 0xFFFFEDCBA9876543u64;
     ///
-    /// assert_eq!(n.arithmetic_shr(12), m);
+    /// assert_eq!(n.signed_shr(12), m);
     /// ```
-    fn arithmetic_shr(self, n: u32) -> Self;
+    fn signed_shr(self, n: u32) -> Self;
 
     /// Shifts the bits to the left by a specified amount amount, `n`, filling
     /// zeros in the least significant bits.
@@ -789,9 +789,9 @@ pub trait PrimInt
     /// let n = 0x0123456789ABCDEFi64;
     /// let m = 0x3456789ABCDEF000i64;
     ///
-    /// assert_eq!(n.logical_shl(12), m);
+    /// assert_eq!(n.unsigned_shl(12), m);
     /// ```
-    fn logical_shl(self, n: u32) -> Self;
+    fn unsigned_shl(self, n: u32) -> Self;
 
     /// Shifts the bits to the right by a specified amount amount, `n`, filling
     /// zeros in the most significant bits.
@@ -806,9 +806,9 @@ pub trait PrimInt
     /// let n = 0xFEDCBA9876543210i64;
     /// let m = 0x000FEDCBA9876543i64;
     ///
-    /// assert_eq!(n.logical_shr(12), m);
+    /// assert_eq!(n.unsigned_shr(12), m);
     /// ```
-    fn logical_shr(self, n: u32) -> Self;
+    fn unsigned_shr(self, n: u32) -> Self;
 
     /// Reverses the byte order of the integer.
     ///
@@ -939,19 +939,19 @@ macro_rules! prim_int_impl {
                 <$T>::rotate_right(self, n)
             }
 
-            fn arithmetic_shl(self, n: u32) -> Self {
+            fn signed_shl(self, n: u32) -> Self {
                 ((self as $S) << n) as $T
             }
 
-            fn arithmetic_shr(self, n: u32) -> Self {
+            fn signed_shr(self, n: u32) -> Self {
                 ((self as $S) >> n) as $T
             }
 
-            fn logical_shl(self, n: u32) -> Self {
+            fn unsigned_shl(self, n: u32) -> Self {
                 ((self as $U) << n) as $T
             }
 
-            fn logical_shr(self, n: u32) -> Self {
+            fn unsigned_shr(self, n: u32) -> Self {
                 ((self as $U) >> n) as $T
             }
 
