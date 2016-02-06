@@ -164,7 +164,7 @@ pub fn pow<T: Clone + One + Mul<T, Output = T>>(mut base: T, mut exp: usize) -> 
     acc
 }
 
-/// Raises a value to the power of exp, returning `None` if an overflow occured.
+/// Raises a value to the power of exp, returning `None` if an overflow occurred.
 ///
 /// Otherwise same as the `pow` function.
 ///
