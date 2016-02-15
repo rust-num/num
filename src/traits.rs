@@ -1224,30 +1224,43 @@ macro_rules! impl_to_primitive_float_to_float {
     )
 }
 
+macro_rules! impl_to_primitive_float_to_integer {
+    ($SrcT:ident, $DstT:ident, $slf:expr) => (
+        {
+            let t = $slf.trunc();
+            if t >= $DstT::MIN as $SrcT && t <= $DstT::MAX as $SrcT {
+                Some($slf as $DstT)
+            } else {
+                None
+            }
+        }
+    )
+}
+
 macro_rules! impl_to_primitive_float {
     ($T:ident) => (
         impl ToPrimitive for $T {
             #[inline]
-            fn to_isize(&self) -> Option<isize> { Some(*self as isize) }
+            fn to_isize(&self) -> Option<isize> { impl_to_primitive_float_to_integer!($T, isize, *self) }
             #[inline]
-            fn to_i8(&self) -> Option<i8> { Some(*self as i8) }
+            fn to_i8(&self) -> Option<i8> { impl_to_primitive_float_to_integer!($T, i8, *self) }
             #[inline]
-            fn to_i16(&self) -> Option<i16> { Some(*self as i16) }
+            fn to_i16(&self) -> Option<i16> { impl_to_primitive_float_to_integer!($T, i16, *self) }
             #[inline]
-            fn to_i32(&self) -> Option<i32> { Some(*self as i32) }
+            fn to_i32(&self) -> Option<i32> { impl_to_primitive_float_to_integer!($T, i32, *self) }
             #[inline]
-            fn to_i64(&self) -> Option<i64> { Some(*self as i64) }
+            fn to_i64(&self) -> Option<i64> { impl_to_primitive_float_to_integer!($T, i64, *self) }
 
             #[inline]
-            fn to_usize(&self) -> Option<usize> { Some(*self as usize) }
+            fn to_usize(&self) -> Option<usize> { impl_to_primitive_float_to_integer!($T, usize, *self) }
             #[inline]
-            fn to_u8(&self) -> Option<u8> { Some(*self as u8) }
+            fn to_u8(&self) -> Option<u8> { impl_to_primitive_float_to_integer!($T, u8, *self) }
             #[inline]
-            fn to_u16(&self) -> Option<u16> { Some(*self as u16) }
+            fn to_u16(&self) -> Option<u16> { impl_to_primitive_float_to_integer!($T, u16, *self) }
             #[inline]
-            fn to_u32(&self) -> Option<u32> { Some(*self as u32) }
+            fn to_u32(&self) -> Option<u32> { impl_to_primitive_float_to_integer!($T, u32, *self) }
             #[inline]
-            fn to_u64(&self) -> Option<u64> { Some(*self as u64) }
+            fn to_u64(&self) -> Option<u64> { impl_to_primitive_float_to_integer!($T, u64, *self) }
 
             #[inline]
             fn to_f32(&self) -> Option<f32> { impl_to_primitive_float_to_float!($T, f32, *self) }
@@ -2536,3 +2549,51 @@ fn integer_decode_f64(f: f64) -> (u64, i16, i8) {
 
 float_impl!(f32 integer_decode_f32);
 float_impl!(f64 integer_decode_f64);
+
+#[test]
+fn test_cast_to_int() {
+    let big_f: f64 = 1.0e123;
+    let normal_f: f64 = 1.0;
+    let small_f: f64 = -1.0e123;
+    assert_eq!(None, cast::<f64, isize>(big_f));
+    assert_eq!(None, cast::<f64, i8>(big_f));
+    assert_eq!(None, cast::<f64, i16>(big_f));
+    assert_eq!(None, cast::<f64, i32>(big_f));
+    assert_eq!(None, cast::<f64, i64>(big_f));
+
+    assert_eq!(Some(normal_f as isize), cast::<f64, isize>(normal_f));
+    assert_eq!(Some(normal_f as i8), cast::<f64, i8>(normal_f));
+    assert_eq!(Some(normal_f as i16), cast::<f64, i16>(normal_f));
+    assert_eq!(Some(normal_f as i32), cast::<f64, i32>(normal_f));
+    assert_eq!(Some(normal_f as i64), cast::<f64, i64>(normal_f));
+
+    assert_eq!(None, cast::<f64, isize>(small_f));
+    assert_eq!(None, cast::<f64, i8>(small_f));
+    assert_eq!(None, cast::<f64, i16>(small_f));
+    assert_eq!(None, cast::<f64, i32>(small_f));
+    assert_eq!(None, cast::<f64, i64>(small_f));
+}
+
+#[test]
+fn test_cast_to_unsigned_int() {
+    let big_f: f64 = 1.0e123;
+    let normal_f: f64 = 1.0;
+    let small_f: f64 = -1.0e123;
+    assert_eq!(None, cast::<f64, usize>(big_f));
+    assert_eq!(None, cast::<f64, u8>(big_f));
+    assert_eq!(None, cast::<f64, u16>(big_f));
+    assert_eq!(None, cast::<f64, u32>(big_f));
+    assert_eq!(None, cast::<f64, u64>(big_f));
+
+    assert_eq!(Some(normal_f as usize), cast::<f64, usize>(normal_f));
+    assert_eq!(Some(normal_f as u8), cast::<f64, u8>(normal_f));
+    assert_eq!(Some(normal_f as u16), cast::<f64, u16>(normal_f));
+    assert_eq!(Some(normal_f as u32), cast::<f64, u32>(normal_f));
+    assert_eq!(Some(normal_f as u64), cast::<f64, u64>(normal_f));
+
+    assert_eq!(None, cast::<f64, usize>(small_f));
+    assert_eq!(None, cast::<f64, u8>(small_f));
+    assert_eq!(None, cast::<f64, u16>(small_f));
+    assert_eq!(None, cast::<f64, u32>(small_f));
+    assert_eq!(None, cast::<f64, u64>(small_f));
+}
