@@ -57,6 +57,8 @@
        html_root_url = "http://rust-num.github.io/num/",
        html_playground_url = "http://play.rust-lang.org/")]
 
+extern crate num_traits;
+
 #[cfg(feature = "rustc-serialize")]
 extern crate rustc_serialize;
 
@@ -92,7 +94,7 @@ pub mod bigint;
 pub mod complex;
 pub mod integer;
 pub mod iter;
-pub mod traits;
+pub mod traits { pub use num_traits::*; }
 #[cfg(feature = "rational")]
 pub mod rational;
 

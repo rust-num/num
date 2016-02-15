@@ -88,8 +88,7 @@ use serde;
 #[cfg(any(feature = "rand", test))]
 use rand::Rng;
 
-use traits::{ToPrimitive, FromPrimitive};
-use traits::Float;
+use traits::{ToPrimitive, FromPrimitive, Float};
 
 use {Num, Unsigned, CheckedAdd, CheckedSub, CheckedMul, CheckedDiv, Signed, Zero, One};
 use self::Sign::{Minus, NoSign, Plus};
@@ -364,7 +363,7 @@ fn from_radix_digits_be(v: &[u8], radix: u32) -> BigUint {
 }
 
 impl Num for BigUint {
-    type FromStrRadixErr = ParseBigIntError;
+    type Error = ParseBigIntError;
 
     /// Creates and initializes a `BigUint`.
     fn from_str_radix(s: &str, radix: u32) -> Result<BigUint, ParseBigIntError> {
@@ -1946,7 +1945,7 @@ impl FromStr for BigInt {
 }
 
 impl Num for BigInt {
-    type FromStrRadixErr = ParseBigIntError;
+    type Error = ParseBigIntError;
 
     /// Creates and initializes a BigInt.
     #[inline]

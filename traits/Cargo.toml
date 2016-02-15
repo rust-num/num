@@ -1,0 +1,6 @@
+[package]
+name = "num-traits"
+version = "0.1.0"
+authors = ["Łukasz Jan Niemier <lukasz@niemier.pl>"]
+
+[dependencies]
