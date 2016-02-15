@@ -14,7 +14,7 @@ extern crate syntax;
 extern crate syntax_ext;
 extern crate rustc_plugin;
 
-use syntax::ast::{MetaItem, Expr};
+use syntax::ast::{MetaItem, Expr, BinOpKind};
 use syntax::ast;
 use syntax::codemap::Span;
 use syntax::ext::base::{ExtCtxt, Annotatable};
@@ -142,7 +142,7 @@ fn cs_from(name: &str, cx: &mut ExtCtxt, trait_span: Span, substr: &Substructure
                         let variant = cx.expr_path(path);
                         let ty = cx.ty_ident(span, cx.ident_of(name));
                         let cast = cx.expr_cast(span, variant.clone(), ty);
-                        let guard = cx.expr_binary(span, ast::BiEq, n.clone(), cast);
+                        let guard = cx.expr_binary(span, BinOpKind::Eq, n.clone(), cast);
 
                         // expr for `Some($variant)`
                         let body = cx.expr_some(span, variant);
