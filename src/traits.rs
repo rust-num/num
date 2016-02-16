@@ -43,14 +43,16 @@ macro_rules! int_trait_impl {
     )*)
 }
 
-// FIXME: Temporary replacements for unstable ::std::num::ParseFloatError and
-// ::std::num::FloatErrorKind. These can be removed once the std float implementation of
-// from_str_radix stabilises.
-pub enum FloatErrorKind { Empty, Invalid }
+// FIXME: std::num::ParseFloatError is stable in 1.0, but opaque to us,
+// so there's not really any way for us to reuse it.
+#[derive(Debug)]
 pub struct ParseFloatError { pub kind: FloatErrorKind }
+#[derive(Debug)]
+pub enum FloatErrorKind { Empty, Invalid }
 
-// FIXME: This should be removed and replaced with the std implementation of from_str_radix once
-// it is stabilised.
+// FIXME: The standard library from_str_radix on floats was deprecated, so we're stuck
+// with this implementation ourselves until we want to make a breaking change.
+// (would have to drop it from `Num` though)
 macro_rules! float_trait_impl {
     ($name:ident for $($t:ty)*) => ($(
         impl $name for $t {
@@ -2536,3 +2538,15 @@ fn integer_decode_f64(f: f64) -> (u64, i16, i8) {
 
 float_impl!(f32 integer_decode_f32);
 float_impl!(f64 integer_decode_f64);
+
+
+#[test]
+fn from_str_radix_unwrap() {
+    // The Result error must impl Debug to allow unwrap()
+
+    let i: i32 = Num::from_str_radix("0", 10).unwrap();
+    assert_eq!(i, 0);
+
+    let f: f32 = Num::from_str_radix("0.0", 10).unwrap();
+    assert_eq!(f, 0.0);
+}
