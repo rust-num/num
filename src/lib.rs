@@ -58,6 +58,7 @@
        html_playground_url = "http://play.rust-lang.org/")]
 
 extern crate num_traits;
+extern crate num_integer;
 
 #[cfg(feature = "rustc-serialize")]
 extern crate rustc_serialize;
@@ -92,7 +93,7 @@ use std::ops::{Mul};
 #[cfg(feature = "bigint")]
 pub mod bigint;
 pub mod complex;
-pub mod integer;
+pub mod integer { pub use num_integer::*; }
 pub mod iter;
 pub mod traits { pub use num_traits::*; }
 #[cfg(feature = "rational")]

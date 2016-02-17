@@ -21,6 +21,9 @@ serde = { version = "^0.7.0", optional = true }
 [dependencies.num-traits]
 path = "./traits"
 
+[dependencies.num-integer]
+path = "./integer"
+
 [dev-dependencies]
 # Some tests of non-rand functionality still use rand because the tests
 # themselves are randomized.

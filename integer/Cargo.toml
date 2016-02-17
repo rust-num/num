@@ -1,6 +1,7 @@
 [package]
-name = "integer"
+name = "num-integer"
 version = "0.1.0"
 authors = ["Łukasz Jan Niemier <lukasz@niemier.pl>"]
 
-[dependencies]
+[dependencies.num-traits]
+path = "../traits"
