@@ -259,7 +259,7 @@ macro_rules! impl_integer_for_isize {
             #[inline]
             fn lcm(&self, other: &$T) -> $T {
                 // should not have to recalculate abs
-                ((*self * *other) / self.gcd(other)).abs()
+                (*self * (*other / self.gcd(other))).abs()
             }
 
             /// Deprecated, use `is_multiple_of` instead.
@@ -508,7 +508,7 @@ macro_rules! impl_integer_for_usize {
             /// Calculates the Lowest Common Multiple (LCM) of the number and `other`.
             #[inline]
             fn lcm(&self, other: &$T) -> $T {
-                (*self * *other) / self.gcd(other)
+                *self * (*other / self.gcd(other))
             }
 
             /// Deprecated, use `is_multiple_of` instead.
@@ -628,3 +628,31 @@ impl_integer_for_usize!(u16,  test_integer_u16);
 impl_integer_for_usize!(u32,  test_integer_u32);
 impl_integer_for_usize!(u64,  test_integer_u64);
 impl_integer_for_usize!(usize, test_integer_usize);
+
+#[test]
+fn test_lcm_overflow() {
+    macro_rules! check {
+        ($t:ty, $x:expr, $y:expr, $r:expr) => { {
+            let x: $t = $x;
+            let y: $t = $y;
+            let o = x.checked_mul(y);
+            assert!(o.is_none(),
+                    "sanity checking that {} input {} * {} overflows",
+                    stringify!($t), x, y);
+            assert_eq!(x.lcm(&y), $r);
+            assert_eq!(y.lcm(&x), $r);
+        } }
+    }
+
+    // Original bug (Issue #166)
+    check!(i64, 46656000000000000, 600, 46656000000000000);
+
+    check!(i8, 0x40, 0x04, 0x40);
+    check!(u8, 0x80, 0x02, 0x80);
+    check!(i16, 0x40_00, 0x04, 0x40_00);
+    check!(u16, 0x80_00, 0x02, 0x80_00);
+    check!(i32, 0x4000_0000, 0x04, 0x4000_0000);
+    check!(u32, 0x8000_0000, 0x02, 0x8000_0000);
+    check!(i64, 0x4000_0000_0000_0000, 0x04, 0x4000_0000_0000_0000);
+    check!(u64, 0x8000_0000_0000_0000, 0x02, 0x8000_0000_0000_0000);
+}
