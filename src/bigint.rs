@@ -366,6 +366,12 @@ impl Num for BigUint {
     /// Creates and initializes a `BigUint`.
     fn from_str_radix(s: &str, radix: u32) -> Result<BigUint, ParseBigIntError> {
         assert!(2 <= radix && radix <= 36, "The radix must be within 2...36");
+        let mut s = s;
+        if s.starts_with('+') {
+            let tail = &s[1..];
+            if !tail.starts_with('+') { s = tail }
+        }
+
         if s.is_empty() {
             // create ParseIntError::Empty
             let e = u64::from_str_radix(s, radix).unwrap_err();
@@ -1891,7 +1897,11 @@ impl Num for BigInt {
     /// Creates and initializes a BigInt.
     #[inline]
     fn from_str_radix(mut s: &str, radix: u32) -> Result<BigInt, ParseBigIntError> {
-        let sign = if s.starts_with('-') { s = &s[1..]; Minus } else { Plus };
+        let sign = if s.starts_with('-') {
+            let tail = &s[1..];
+            if !tail.starts_with('+') { s = tail }
+            Minus
+        } else { Plus };
         let bu = try!(BigUint::from_str_radix(s, radix));
         Ok(BigInt::from_biguint(sign, bu))
     }
@@ -3743,6 +3753,10 @@ mod biguint_tests {
         assert_eq!(zed, None);
         let blank = BigUint::from_str_radix("_", 2).ok();
         assert_eq!(blank, None);
+        let plus_one = BigUint::from_str_radix("+1", 10).ok();
+        assert_eq!(plus_one, Some(BigUint::from_slice(&[1])));
+        let plus_plus_one = BigUint::from_str_radix("++1", 10).ok();
+        assert_eq!(plus_plus_one, None);
         let minus_one = BigUint::from_str_radix("-1", 10).ok();
         assert_eq!(minus_one, None);
     }
@@ -4767,6 +4781,11 @@ mod bigint_tests {
         check("0", Some(0));
         check("-1", Some(-1));
         check("-10", Some(-10));
+        check("+10", Some(10));
+        check("--7", None);
+        check("++5", None);
+        check("+-9", None);
+        check("-+3", None);
         check("Z", None);
         check("_", None);
 
