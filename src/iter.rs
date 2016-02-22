@@ -96,7 +96,7 @@ impl<A> Iterator for Range<A>
 /// `Integer` is required to ensure the range will be the same regardless of
 /// the direction it is consumed.
 impl<A> DoubleEndedIterator for Range<A>
-    where A: Integer + PartialOrd + Clone + ToPrimitive
+    where A: Integer + Clone + ToPrimitive
 {
     #[inline]
     fn next_back(&mut self) -> Option<A> {
@@ -161,7 +161,7 @@ impl<A> Iterator for RangeInclusive<A>
 }
 
 impl<A> DoubleEndedIterator for RangeInclusive<A>
-    where A: Sub<A, Output = A> + Integer + PartialOrd + Clone + ToPrimitive
+    where A: Sub<A, Output = A> + Integer + Clone + ToPrimitive
 {
     #[inline]
     fn next_back(&mut self) -> Option<A> {

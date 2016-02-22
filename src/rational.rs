@@ -41,7 +41,7 @@ pub type Rational64 = Ratio<i64>;
 /// Alias for arbitrary precision rationals.
 pub type BigRational = Ratio<BigInt>;
 
-impl<T: Clone + Integer + PartialOrd> Ratio<T> {
+impl<T: Clone + Integer> Ratio<T> {
     /// Creates a ratio representing the integer `t`.
     #[inline]
     pub fn from_integer(t: T) -> Ratio<T> {
@@ -187,7 +187,7 @@ impl<T: Clone + Integer + PartialOrd> Ratio<T> {
     }
 }
 
-impl<T: Clone + Integer + PartialOrd + PrimInt> Ratio<T> {
+impl<T: Clone + Integer + PrimInt> Ratio<T> {
     /// Raises the ratio to the power of an exponent
     #[inline]
     pub fn pow(&self, expon: i32) -> Ratio<T> {
@@ -254,7 +254,7 @@ cmp_impl!(impl Ord, cmp -> cmp::Ordering);
 
 macro_rules! forward_val_val_binop {
     (impl $imp:ident, $method:ident) => {
-        impl<T: Clone + Integer + PartialOrd> $imp<Ratio<T>> for Ratio<T> {
+        impl<T: Clone + Integer> $imp<Ratio<T>> for Ratio<T> {
             type Output = Ratio<T>;
 
             #[inline]
@@ -268,7 +268,7 @@ macro_rules! forward_val_val_binop {
 macro_rules! forward_ref_val_binop {
     (impl $imp:ident, $method:ident) => {
         impl<'a, T> $imp<Ratio<T>> for &'a Ratio<T> where
-            T: Clone + Integer + PartialOrd
+            T: Clone + Integer
         {
             type Output = Ratio<T>;
 
@@ -283,7 +283,7 @@ macro_rules! forward_ref_val_binop {
 macro_rules! forward_val_ref_binop {
     (impl $imp:ident, $method:ident) => {
         impl<'a, T> $imp<&'a Ratio<T>> for Ratio<T> where
-            T: Clone + Integer + PartialOrd
+            T: Clone + Integer
         {
             type Output = Ratio<T>;
 
@@ -307,7 +307,7 @@ macro_rules! forward_all_binop {
 forward_all_binop!(impl Mul, mul);
 // a/b * c/d = (a*c)/(b*d)
 impl<'a, 'b, T> Mul<&'b Ratio<T>> for &'a Ratio<T>
-    where T: Clone + Integer + PartialOrd
+    where T: Clone + Integer
 {
 
         type Output = Ratio<T>;
@@ -320,7 +320,7 @@ impl<'a, 'b, T> Mul<&'b Ratio<T>> for &'a Ratio<T>
 forward_all_binop!(impl Div, div);
 // (a/b) / (c/d) = (a*d)/(b*c)
 impl<'a, 'b, T> Div<&'b Ratio<T>> for &'a Ratio<T>
-    where T: Clone + Integer + PartialOrd
+    where T: Clone + Integer
 {
     type Output = Ratio<T>;
 
@@ -334,7 +334,7 @@ impl<'a, 'b, T> Div<&'b Ratio<T>> for &'a Ratio<T>
 macro_rules! arith_impl {
     (impl $imp:ident, $method:ident) => {
         forward_all_binop!(impl $imp, $method);
-        impl<'a, 'b, T: Clone + Integer + PartialOrd>
+        impl<'a, 'b, T: Clone + Integer>
             $imp<&'b Ratio<T>> for &'a Ratio<T> {
             type Output = Ratio<T>;
             #[inline]
@@ -356,7 +356,7 @@ arith_impl!(impl Sub, sub);
 arith_impl!(impl Rem, rem);
 
 impl<T> Neg for Ratio<T>
-    where T: Clone + Integer + PartialOrd + Neg<Output = T>
+    where T: Clone + Integer + Neg<Output = T>
 {
     type Output = Ratio<T>;
 
@@ -365,7 +365,7 @@ impl<T> Neg for Ratio<T>
 }
 
 impl<'a, T> Neg for &'a Ratio<T>
-    where T: Clone + Integer + PartialOrd + Neg<Output = T>
+    where T: Clone + Integer + Neg<Output = T>
 {
     type Output = Ratio<T>;
 
@@ -376,7 +376,7 @@ impl<'a, T> Neg for &'a Ratio<T>
 }
 
 /* Constants */
-impl<T: Clone + Integer + PartialOrd>
+impl<T: Clone + Integer>
     Zero for Ratio<T> {
     #[inline]
     fn zero() -> Ratio<T> {
@@ -389,7 +389,7 @@ impl<T: Clone + Integer + PartialOrd>
     }
 }
 
-impl<T: Clone + Integer + PartialOrd>
+impl<T: Clone + Integer>
     One for Ratio<T> {
     #[inline]
     fn one() -> Ratio<T> {
@@ -397,7 +397,7 @@ impl<T: Clone + Integer + PartialOrd>
     }
 }
 
-impl<T: Clone + Integer + PartialOrd> Num for Ratio<T> {
+impl<T: Clone + Integer> Num for Ratio<T> {
     type FromStrRadixErr = ParseRatioError;
 
     /// Parses `numer/denom` where the numbers are in base `radix`.
@@ -423,7 +423,7 @@ impl<T: Clone + Integer + PartialOrd> Num for Ratio<T> {
     }
 }
 
-impl<T: Clone + Integer + PartialOrd + Signed> Signed for Ratio<T> {
+impl<T: Clone + Integer + Signed> Signed for Ratio<T> {
     #[inline]
     fn abs(&self) -> Ratio<T> {
         if self.is_negative() { -self.clone() } else { self.clone() }
@@ -466,7 +466,7 @@ impl<T> fmt::Display for Ratio<T> where
     }
 }
 
-impl<T: FromStr + Clone + Integer + PartialOrd> FromStr for Ratio<T> {
+impl<T: FromStr + Clone + Integer> FromStr for Ratio<T> {
     type Err = ParseRatioError;
 
     /// Parses `numer/denom` or just `numer`.

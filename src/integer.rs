@@ -13,9 +13,7 @@
 use {Num, Signed};
 
 pub trait Integer
-    : Sized
-    + Num
-    + PartialOrd + Ord + Eq
+    : Sized + Num + Ord
 {
     /// Floored integer division.
     ///
