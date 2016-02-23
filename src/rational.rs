@@ -224,33 +224,67 @@ impl Ratio<BigInt> {
 
 /* Comparisons */
 
-// comparing a/b and c/d is the same as comparing a*d and b*c, so we
-// abstract that pattern. The following macro takes a trait and either
-// a comma-separated list of "method name -> return value" or just
-// "method name" (return value is bool in that case)
-macro_rules! cmp_impl {
-    (impl $imp:ident, $($method:ident),+) => {
-        cmp_impl!(impl $imp, $($method -> bool),+);
-    };
-    // return something other than a Ratio<T>
-    (impl $imp:ident, $($method:ident -> $res:ty),*) => {
-        impl<T> $imp for Ratio<T> where
-            T: Clone + Mul<T, Output = T> + $imp
-        {
-            $(
-                #[inline]
-                fn $method(&self, other: &Ratio<T>) -> $res {
-                    (self.numer.clone() * other.denom.clone()). $method (&(self.denom.clone()*other.numer.clone()))
-                }
-            )*
+// Mathematically, comparing a/b and c/d is the same as comparing a*d and b*c, but it's very easy
+// for those multiplications to overflow fixed-size integers, so we need to take care.
+
+impl<T: Clone + Integer> Ord for Ratio<T> {
+    #[inline]
+    fn cmp(&self, other: &Self) -> cmp::Ordering {
+        // With equal denominators, the numerators can be directly compared
+        if self.denom == other.denom {
+            let ord = self.numer.cmp(&other.numer);
+            return if self.denom < T::zero() { ord.reverse() } else { ord };
         }
-    };
+
+        // With equal numerators, the denominators can be inversely compared
+        if self.numer == other.numer {
+            let ord = self.denom.cmp(&other.denom);
+            return if self.numer < T::zero() { ord } else { ord.reverse() };
+        }
+
+        // Unfortunately, we don't have CheckedMul to try.  That could sometimes avoid all the
+        // division below, or even always avoid it for BigInt and BigUint.
+        // FIXME- future breaking change to add Checked* to Integer?
+
+        // Compare as floored integers and remainders
+        let (self_int, self_rem) = self.numer.div_mod_floor(&self.denom);
+        let (other_int, other_rem) = other.numer.div_mod_floor(&other.denom);
+        match self_int.cmp(&other_int) {
+            cmp::Ordering::Greater => cmp::Ordering::Greater,
+            cmp::Ordering::Less => cmp::Ordering::Less,
+            cmp::Ordering::Equal => {
+                match (self_rem.is_zero(), other_rem.is_zero()) {
+                    (true, true) => cmp::Ordering::Equal,
+                    (true, false) => cmp::Ordering::Less,
+                    (false, true) => cmp::Ordering::Greater,
+                    (false, false) => {
+                        // Compare the reciprocals of the remaining fractions in reverse
+                        let self_recip = Ratio::new_raw(self.denom.clone(), self_rem);
+                        let other_recip = Ratio::new_raw(other.denom.clone(), other_rem);
+                        self_recip.cmp(&other_recip).reverse()
+                    }
+                }
+            },
+        }
+    }
 }
-cmp_impl!(impl PartialEq, eq, ne);
-cmp_impl!(impl PartialOrd, lt -> bool, gt -> bool, le -> bool, ge -> bool,
-          partial_cmp -> Option<cmp::Ordering>);
-cmp_impl!(impl Eq, );
-cmp_impl!(impl Ord, cmp -> cmp::Ordering);
+
+impl<T: Clone + Integer> PartialOrd for Ratio<T> {
+    #[inline]
+    fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl<T: Clone + Integer> PartialEq for Ratio<T> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.cmp(other) == cmp::Ordering::Equal
+    }
+}
+
+impl<T: Clone + Integer> Eq for Ratio<T> {}
+
 
 macro_rules! forward_val_val_binop {
     (impl $imp:ident, $method:ident) => {
@@ -597,6 +631,43 @@ mod test {
         assert!(_1 >= _0 && !(_0 >= _1));
     }
 
+    #[test]
+    fn test_cmp_overflow() {
+        use std::cmp::Ordering;
+
+        // issue #7 example:
+        let big = Ratio::new(128u8, 1);
+        let small = big.recip();
+        assert!(big > small);
+
+        // try a few that are closer together
+        // (some matching numer, some matching denom, some neither)
+        let ratios = vec![
+            Ratio::new(125_i8, 127_i8),
+            Ratio::new(63_i8, 64_i8),
+            Ratio::new(124_i8, 125_i8),
+            Ratio::new(125_i8, 126_i8),
+            Ratio::new(126_i8, 127_i8),
+            Ratio::new(127_i8, 126_i8),
+        ];
+
+        fn check_cmp(a: Ratio<i8>, b: Ratio<i8>, ord: Ordering) {
+            println!("comparing {} and {}", a, b);
+            assert_eq!(a.cmp(&b), ord);
+            assert_eq!(b.cmp(&a), ord.reverse());
+        }
+
+        for (i, &a) in ratios.iter().enumerate() {
+            check_cmp(a, a, Ordering::Equal);
+            check_cmp(-a, a, Ordering::Less);
+            for &b in &ratios[i+1..] {
+                check_cmp(a, b, Ordering::Less);
+                check_cmp(-a, -b, Ordering::Greater);
+                check_cmp(a.recip(), b.recip(), Ordering::Greater);
+                check_cmp(-a.recip(), -b.recip(), Ordering::Less);
+            }
+        }
+    }
 
     #[test]
     fn test_to_integer() {
