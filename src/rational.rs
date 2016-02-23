@@ -361,7 +361,9 @@ impl<T> Neg for Ratio<T>
     type Output = Ratio<T>;
 
     #[inline]
-    fn neg(self) -> Ratio<T> { -&self }
+    fn neg(self) -> Ratio<T> {
+        Ratio::new_raw(-self.numer, self.denom)
+    }
 }
 
 impl<'a, T> Neg for &'a Ratio<T>
@@ -371,7 +373,7 @@ impl<'a, T> Neg for &'a Ratio<T>
 
     #[inline]
     fn neg(self) -> Ratio<T> {
-        Ratio::new_raw(-self.numer.clone(), self.denom.clone())
+        -self.clone()
     }
 }
 
@@ -385,7 +387,7 @@ impl<T: Clone + Integer>
 
     #[inline]
     fn is_zero(&self) -> bool {
-        *self == Zero::zero()
+        self.numer.is_zero()
     }
 }
 
@@ -436,20 +438,22 @@ impl<T: Clone + Integer + Signed> Signed for Ratio<T> {
 
     #[inline]
     fn signum(&self) -> Ratio<T> {
-        if *self > Zero::zero() {
-            One::one()
+        if self.is_positive() {
+            Self::one()
         } else if self.is_zero() {
-            Zero::zero()
+            Self::zero()
         } else {
-            - ::one::<Ratio<T>>()
+            - Self::one()
         }
     }
 
     #[inline]
-    fn is_positive(&self) -> bool { *self > Zero::zero() }
+    fn is_positive(&self) -> bool { !self.is_negative() }
 
     #[inline]
-    fn is_negative(&self) -> bool { *self < Zero::zero() }
+    fn is_negative(&self) -> bool {
+        self.numer.is_negative() ^ self.denom.is_negative()
+    }
 }
 
 /* String conversions */
