@@ -79,6 +79,9 @@ use std::{f32, f64};
 use std::{u8, i64, u64};
 use std::ascii::AsciiExt;
 
+#[cfg(feature = "serde")]
+use serde;
+
 // Some of the tests of non-RNG-based functionality are randomized using the
 // RNG-based functionality, so the RNG-based functionality needs to be enabled
 // for tests.
@@ -1723,6 +1726,27 @@ impl BigUint {
     }
 }
 
+#[cfg(feature = "serde")]
+impl serde::Serialize for BigUint {
+    fn serialize<S>(&self, serializer: &mut S) -> Result<(), S::Error> where
+        S: serde::Serializer
+    {
+        self.data.serialize(serializer)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl serde::Deserialize for BigUint {
+    fn deserialize<D>(deserializer: &mut D) -> Result<Self, D::Error> where
+        D: serde::Deserializer,
+    {
+        let data = try!(Vec::deserialize(deserializer));
+        Ok(BigUint {
+            data: data,
+        })
+    }
+}
+
 // `DoubleBigDigit` size dependent
 /// Returns the greatest power of the radix <= big_digit::BASE
 #[inline]
@@ -1805,6 +1829,36 @@ impl Mul<Sign> for Sign {
             (NoSign, _) | (_, NoSign)  => NoSign,
             (Plus, Plus) | (Minus, Minus) => Plus,
             (Plus, Minus) | (Minus, Plus) => Minus,
+        }
+    }
+}
+
+#[cfg(feature = "serde")]
+impl serde::Serialize for Sign {
+    fn serialize<S>(&self, serializer: &mut S) -> Result<(), S::Error> where
+        S: serde::Serializer
+    {
+        match *self {
+            Sign::Minus => (-1i8).serialize(serializer),
+            Sign::NoSign => 0i8.serialize(serializer),
+            Sign::Plus => 1i8.serialize(serializer),
+        }
+    }
+}
+
+#[cfg(feature = "serde")]
+impl serde::Deserialize for Sign {
+    fn deserialize<D>(deserializer: &mut D) -> Result<Self, D::Error> where
+        D: serde::Deserializer,
+    {
+        use serde::de::Error;
+
+        let sign: i8 = try!(serde::Deserialize::deserialize(deserializer));
+        match sign {
+            -1 => Ok(Sign::Minus),
+            0 => Ok(Sign::NoSign),
+            1 => Ok(Sign::Plus),
+            _ => Err(D::Error::invalid_value("sign must be -1, 0, or 1")),
         }
     }
 }
@@ -2395,6 +2449,28 @@ impl From<BigUint> for BigInt {
         } else {
             BigInt { sign: Plus, data: n }
         }
+    }
+}
+
+#[cfg(feature = "serde")]
+impl serde::Serialize for BigInt {
+    fn serialize<S>(&self, serializer: &mut S) -> Result<(), S::Error> where
+        S: serde::Serializer
+    {
+        (self.sign, &self.data).serialize(serializer)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl serde::Deserialize for BigInt {
+    fn deserialize<D>(deserializer: &mut D) -> Result<Self, D::Error> where
+        D: serde::Deserializer,
+    {
+        let (sign, data) = try!(serde::Deserialize::deserialize(deserializer));
+        Ok(BigInt {
+            sign: sign,
+            data: data,
+        })
     }
 }
 

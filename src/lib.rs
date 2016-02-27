@@ -66,6 +66,9 @@ extern crate rustc_serialize;
 #[cfg(any(feature = "rand", all(feature = "bigint", test)))]
 extern crate rand;
 
+#[cfg(feature = "serde")]
+extern crate serde;
+
 #[cfg(feature = "bigint")]
 pub use bigint::{BigInt, BigUint};
 #[cfg(feature = "rational")]

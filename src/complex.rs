@@ -14,6 +14,9 @@
 use std::fmt;
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
+#[cfg(feature = "serde")]
+use serde;
+
 use {Zero, One, Num, Float};
 
 // FIXME #1284: handle complex NaN & infinity etc. This
@@ -564,6 +567,29 @@ impl<T> fmt::Display for Complex<T> where
         } else {
             write!(f, "{}+{}i", self.re, self.im)
         }
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<T> serde::Serialize for Complex<T>
+    where T: serde::Serialize
+{
+    fn serialize<S>(&self, serializer: &mut S) -> Result<(), S::Error> where
+        S: serde::Serializer
+    {
+        (&self.re, &self.im).serialize(serializer)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<T> serde::Deserialize for Complex<T> where
+    T: serde::Deserialize + Num + Clone
+{
+    fn deserialize<D>(deserializer: &mut D) -> Result<Self, D::Error> where
+        D: serde::Deserializer,
+    {
+        let (re, im) = try!(serde::Deserialize::deserialize(deserializer));
+        Ok(Complex::new(re, im))
     }
 }
 

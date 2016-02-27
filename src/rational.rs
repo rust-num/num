@@ -18,6 +18,9 @@ use std::fmt;
 use std::ops::{Add, Div, Mul, Neg, Rem, Sub};
 use std::str::FromStr;
 
+#[cfg(feature = "serde")]
+use serde;
+
 #[cfg(feature = "bigint")]
 use bigint::{BigInt, BigUint, Sign};
 use traits::{FromPrimitive, Float, PrimInt};
@@ -524,6 +527,33 @@ impl<T: FromStr + Clone + Integer> FromStr for Ratio<T> {
             Err(ParseRatioError{kind: RatioErrorKind::ZeroDenominator})
         } else {
             Ok(Ratio::new(num, den))
+        }
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<T> serde::Serialize for Ratio<T>
+    where T: serde::Serialize + Clone + Integer + PartialOrd
+{
+    fn serialize<S>(&self, serializer: &mut S) -> Result<(), S::Error> where
+        S: serde::Serializer
+    {
+        (self.numer(), self.denom()).serialize(serializer)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<T> serde::Deserialize for Ratio<T>
+    where T: serde::Deserialize + Clone + Integer + PartialOrd
+{
+    fn deserialize<D>(deserializer: &mut D) -> Result<Self, D::Error> where
+        D: serde::Deserializer,
+    {
+        let (numer, denom) = try!(serde::Deserialize::deserialize(deserializer));
+        if denom == Zero::zero() {
+            Err(serde::de::Error::invalid_value("denominator is zero"))
+        } else {
+            Ok(Ratio::new_raw(numer, denom))
         }
     }
 }
