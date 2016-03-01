@@ -34,16 +34,16 @@ pub trait Num: PartialEq + Zero + One
     + Add<Output = Self> + Sub<Output = Self>
     + Mul<Output = Self> + Div<Output = Self> + Rem<Output = Self>
 {
-    type Error;
+    type FromStrRadixErr;
 
     /// Convert from a string and radix <= 36.
-    fn from_str_radix(str: &str, radix: u32) -> Result<Self, Self::Error>;
+    fn from_str_radix(str: &str, radix: u32) -> Result<Self, Self::FromStrRadixErr>;
 }
 
 macro_rules! int_trait_impl {
     ($name:ident for $($t:ty)*) => ($(
         impl $name for $t {
-            type Error = ::std::num::ParseIntError;
+            type FromStrRadixErr = ::std::num::ParseIntError;
             fn from_str_radix(s: &str, radix: u32)
                               -> Result<Self, ::std::num::ParseIntError>
             {
@@ -65,10 +65,10 @@ pub struct ParseFloatError {
 macro_rules! float_trait_impl {
     ($name:ident for $($t:ty)*) => ($(
         impl $name for $t {
-            type Error = ParseFloatError;
+            type FromStrRadixErr = ParseFloatError;
 
             fn from_str_radix(src: &str, radix: u32)
-                              -> Result<Self, Self::Error>
+                              -> Result<Self, Self::FromStrRadixErr>
             {
                 use self::FloatErrorKind::*;
                 use self::ParseFloatError as PFE;

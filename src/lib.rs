@@ -59,6 +59,7 @@
 
 extern crate num_traits;
 extern crate num_integer;
+extern crate num_bigint;
 
 #[cfg(feature = "rustc-serialize")]
 extern crate rustc_serialize;
@@ -91,7 +92,7 @@ pub use traits::{Num, Zero, One, Signed, Unsigned, Bounded,
 use std::ops::{Mul};
 
 #[cfg(feature = "bigint")]
-pub mod bigint;
+pub mod bigint { pub use num_bigint::*; }
 pub mod complex;
 pub mod integer { pub use num_integer::*; }
 pub mod iter;

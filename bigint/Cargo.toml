@@ -1,0 +1,22 @@
+[package]
+authors = ["Łukasz Jan Niemier <lukasz@niemier.pl>"]
+name = "num-bigint"
+version = "0.1.0"
+
+[dependencies]
+
+[dependencies.num-integer]
+optional = false
+path = "../integer"
+
+[dependencies.num-traits]
+optional = false
+path = "../traits"
+
+[dependencies.rand]
+optional = true
+version = "0.3.14"
+
+[dependencies.serde]
+optional = true
+version = "0.7.0"
