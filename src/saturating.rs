@@ -8,7 +8,7 @@ use traits::Saturating as SaturatingOps;
 pub struct Saturating<T>(pub T);
 
 macro_rules! impl_saturating {
-    ( $t:ident ) => {
+    ( $t:ty ) => {
         impl Add for Saturating<$t> {
             type Output = Saturating<$t>;
 
@@ -103,19 +103,19 @@ macro_rules! impl_saturating {
         impl Bounded for Saturating<$t> {
             #[inline(always)]
             fn min_value() -> Self {
-                Saturating($t::min_value())
+                Saturating(<$t>::min_value())
             }
 
             #[inline(always)]
             fn max_value() -> Self {
-                Saturating($t::min_value())
+                Saturating(<$t>::min_value())
             }
         }
     };
 }
 
 macro_rules! impl_saturating_unsigned {
-    ( $t:ident ) => {
+    ( $t:ty ) => {
         impl_saturating!{$t}
 
         impl Unsigned for Saturating<$t> {}
@@ -125,7 +125,7 @@ macro_rules! impl_saturating_unsigned {
 
             #[inline(always)]
             fn mul(self, rhs: Saturating<$t>) -> Self::Output {
-                Saturating(self.0.checked_mul(rhs.0).unwrap_or($t::max_value()))
+                Saturating(self.0.checked_mul(rhs.0).unwrap_or(<$t>::max_value()))
             }
         }
 
@@ -135,18 +135,18 @@ macro_rules! impl_saturating_unsigned {
             #[inline(always)]
             fn rem(self, rhs: Saturating<$t>) -> Self::Output {
                 if rhs.0 == 0 {
-                    Saturating($t::max_value())
+                    Saturating(<$t>::max_value())
                 } else {
                     Saturating(self.0 % rhs.0)
                 }
             }
         }
     };
-    ( $($t:ident)* ) => { $(impl_saturating_unsigned!{$t})* };
+    ( $($t:ty)* ) => { $(impl_saturating_unsigned!{$t})* };
 }
 
 macro_rules! impl_saturating_signed {
-    ( $t:ident ) => {
+    ( $t:ty ) => {
         impl_saturating!{$t}
 
         impl Mul for Saturating<$t> {
@@ -156,9 +156,9 @@ macro_rules! impl_saturating_signed {
             fn mul(self, rhs: Saturating<$t>) -> Self::Output {
                 Saturating(self.0.checked_mul(rhs.0).unwrap_or_else(||
                     if self.0 < 0 && rhs.0 < 0 || self.0 > 0 && rhs.0 > 0 {
-                        $t::max_value()
+                        <$t>::max_value()
                     } else {
-                        $t::min_value()
+                        <$t>::min_value()
                     }))
             }
         }
@@ -169,8 +169,8 @@ macro_rules! impl_saturating_signed {
             #[inline(always)]
             fn rem(self, rhs: Saturating<$t>) -> Self::Output {
                 if rhs.0 == 0 {
-                    Saturating($t::max_value())
-                } else if self.0 == $t::min_value() && rhs.0 == -1 {
+                    Saturating(<$t>::max_value())
+                } else if self.0 == <$t>::min_value() && rhs.0 == -1 {
                     Saturating(self.0)
                 } else {
                     Saturating(self.0 % rhs.0)
@@ -184,8 +184,8 @@ macro_rules! impl_saturating_signed {
             #[inline(always)]
             fn neg(self) -> Self::Output {
                 // Negating minimum causes overflow
-                if self.0 == $t::min_value() {
-                    Saturating($t::max_value())
+                if self.0 == <$t>::min_value() {
+                    Saturating(<$t>::max_value())
                 } else {
                     Saturating(-self.0)
                 }
@@ -196,7 +196,7 @@ macro_rules! impl_saturating_signed {
             #[inline(always)]
             fn abs(&self) -> Self {
                 // According to documentation abs(::MIN) -> ::MIN
-                if self.0 == $t::min_value() {
+                if self.0 == <$t>::min_value() {
                     Saturating(self.0)
                 }
                 else if self.is_negative() {
@@ -232,11 +232,11 @@ macro_rules! impl_saturating_signed {
             }
         }
     };
-    ( $($t:ident)* ) => { $(impl_saturating_signed!{$t})* };
+    ( $($t:ty)* ) => { $(impl_saturating_signed!{$t})* };
 }
 
 macro_rules! impl_saturating_sh_unsigned {
-    ( $t:ident, $bits:expr, $f:ident ) => {
+    ( $t:ty, $bits:expr, $f:ty ) => {
         impl Shl<$f> for Saturating<$t> {
             type Output = Saturating<$t>;
 
@@ -246,7 +246,7 @@ macro_rules! impl_saturating_sh_unsigned {
                     Saturating(0)
                 }
                 else if rhs > $bits - 1 {
-                    Saturating($t::max_value())
+                    Saturating(<$t>::max_value())
                 }
                 else {
                     Saturating(self.0 << rhs)
@@ -263,7 +263,7 @@ macro_rules! impl_saturating_sh_unsigned {
                     Saturating(0)
                 }
                 else if rhs > $bits - 1 {
-                    Saturating($t::min_value())
+                    Saturating(<$t>::min_value())
                 }
                 else {
                     Saturating(self.0 >> rhs)
@@ -271,13 +271,13 @@ macro_rules! impl_saturating_sh_unsigned {
             }
         }
     };
-    ( $t:ident, $bits:expr, ( $($f:ident)* ) ) => {
+    ( $t:ty, $bits:expr, ( $($f:ty)* ) ) => {
         $(impl_saturating_shl_unsigned!{$t, $bits, $f})*
     };
 }
 
 macro_rules! impl_saturating_sh_signed {
-    ( $t:ident, $bits:expr, $f:ident ) => {
+    ( $t:ty, $bits:expr, $f:ty ) => {
         impl Shl<$f> for Saturating<$t> {
             type Output = Saturating<$t>;
 
@@ -288,12 +288,12 @@ macro_rules! impl_saturating_sh_signed {
                 }
                 // sign bit is kept when shifting left at most $bits - 1 on negative number
                 else if self.0 < 0 && rhs > $bits - 1 {
-                    Saturating($t::min_value())
+                    Saturating(<$t>::min_value())
                 }
                 // shifting $bits - 1 results in negative number, only allow $bits - 2 shifts on
                 // nonnegative numbers
                 else if rhs > $bits - 2 {
-                    Saturating($t::max_value())
+                    Saturating(<$t>::max_value())
                 } else {
                     Saturating(self.0 << rhs)
                 }
@@ -322,7 +322,7 @@ macro_rules! impl_saturating_sh_signed {
             }
         }
     };
-    ( $t:ident, $bits:expr, ( $($f:ident)* ) ) => {
+    ( $t:ty, $bits:expr, ( $($f:ty)* ) ) => {
         $(impl_saturating_shl_unsigned!{$t, $bits, $f})*
     };
 }
