@@ -311,24 +311,41 @@ macro_rules! impl_saturating_sh_unsigned {
 }
 
 macro_rules! impl_saturating_sh_signed {
-    ( $t:ty, $bits:expr, $f:ty ) => {
+    ( $t:ty, $bits:expr, $f:ty, $unsigned:ty ) => {
         impl Shl<$f> for Saturating<$t> {
             type Output = Saturating<$t>;
 
             #[inline(always)]
             fn shl(self, rhs: $f) -> Self::Output {
+                /// Returns the number of leading zeros of a signed number excluding the sign-bit.
+                fn signed_leading_zeros(n: $t) -> $f {
+                    debug_assert!(n != 0);
+
+                    // According to two's complement representation, we can get the positive
+                    // representation by negating and adding 1 in the case of the sign bit being
+                    // set. In this case we can just remove 1 from the number of leading zeros
+                    // instead:
+                    if n > 0 {
+                        // sign bit never set, at least one leading zero
+                        (n.leading_zeros() - 1) as $f
+                    } else {
+                        // always < 0 here, sign bit always set => leading zeros on bitwise not is
+                        // always > 0:
+                        ((!n).leading_zeros() - 1) as $f
+                    }
+                }
+
+                // Shifting zero any numer of bits is still zero
                 if self.0 == 0 {
-                    Saturating(0)
+                    self
                 }
-                // sign bit is kept when shifting left at most $bits - 1 on negative number
-                else if self.0 < 0 && rhs > $bits - 1 {
-                    Saturating(<$t>::min_value())
+                // We can only shift left at most the same as the number of leading zeros excluding
+                // the sign bit.
+                else if rhs > signed_leading_zeros(self.0) {
+                    // Use correct saturation
+                    Saturating(if self.0 < 0 { <$t>::min_value() } else { <$t>::max_value() })
                 }
-                // shifting $bits - 1 results in negative number, only allow $bits - 2 shifts on
-                // nonnegative numbers
-                else if rhs > $bits - 2 {
-                    Saturating(<$t>::max_value())
-                } else {
+                else {
                     Saturating(self.0 << rhs)
                 }
             }
@@ -342,13 +359,14 @@ macro_rules! impl_saturating_sh_signed {
                 if self.0 == 0 {
                     Saturating(0)
                 }
-                // Negative values always keep sign bit on right shift
-                else if self.0 < 0 && rhs > $bits - 1 {
-                    Saturating(-1)
-                }
-                // Positive values saturate to zero
                 else if rhs > $bits - 1 {
-                    Saturating(0)
+                    // Negative values always keep sign bit on right shift
+                    if self.0 < 0 {
+                        Saturating(-1)
+                    } else {
+                        // Positive values saturate to zero
+                        Saturating(0)
+                    }
                 }
                 else {
                     Saturating(self.0 >> rhs)
@@ -368,11 +386,11 @@ impl_saturating_sh_unsigned!{u16, 16, usize}
 impl_saturating_sh_unsigned!{u32, 32, usize}
 impl_saturating_sh_unsigned!{u64, 64, usize}
 impl_saturating_sh_unsigned!{usize, size_of::<usize>() * 8, usize}
-impl_saturating_sh_signed!{i8,  8,  usize}
-impl_saturating_sh_signed!{i16, 16, usize}
-impl_saturating_sh_signed!{i32, 32, usize}
-impl_saturating_sh_signed!{i64, 64, usize}
-impl_saturating_sh_signed!{isize, size_of::<isize>() * 8, usize}
+impl_saturating_sh_signed!{i8,  8,  usize, u8}
+impl_saturating_sh_signed!{i16, 16, usize, u16}
+impl_saturating_sh_signed!{i32, 32, usize, u32}
+impl_saturating_sh_signed!{i64, 64, usize, u64}
+impl_saturating_sh_signed!{isize, size_of::<isize>() * 8, usize, usize}
 
 #[cfg(test)]
 mod test {
