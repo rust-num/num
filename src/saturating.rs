@@ -1,3 +1,5 @@
+//! Module containing a saturating wrapper type.
+//!
 //! Rust's integer types are defined to overflow with two's complement by default if checking is not
 //! enabled (see https://github.com/rust-lang/rfcs/blob/master/text/0560-integer-overflow.md). To
 //! intentionally cause wrappng the type `Wrapping<T>` is used.
@@ -164,6 +166,10 @@ macro_rules! impl_saturating_unsigned {
     };
 }
 
+// Implementation of traits for signed types.
+//
+// We can rely on two's complement for these signed machine types:
+// https://doc.rust-lang.org/reference.html#machine-types
 macro_rules! impl_saturating_signed {
     ( $t:ty ) => {
         impl Mul for Saturating<$t> {
@@ -262,7 +268,6 @@ macro_rules! impl_saturating_signed {
             }
         }
     };
-    ( $($t:ty)* ) => { $(impl_saturating_signed!{$t})* };
 }
 
 macro_rules! impl_saturating_sh_unsigned {
@@ -313,10 +318,14 @@ macro_rules! impl_saturating_sh_signed {
                 fn signed_leading_zeros(n: $t) -> $f {
                     debug_assert!(n != 0);
 
+                    // According to https://doc.rust-lang.org/reference.html#unary-operator-expressions
+                    // rust negates the two's complement representation in negation of signed integer
+                    // types.
+
                     // According to two's complement representation, we can get the positive
-                    // representation by negating and adding 1 in the case of the sign bit being
-                    // set. In this case we can just remove 1 from the number of leading zeros
-                    // instead:
+                    // representation by bitwise negating and adding 1 in the case of the sign bit
+                    // being set. In this case we can just remove 1 from the number of leading
+                    // zeros instead:
                     if n > 0 {
                         // sign bit never set, at least one leading zero
                         (n.leading_zeros() - 1) as $f
