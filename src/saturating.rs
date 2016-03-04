@@ -13,7 +13,9 @@
 //!   making `MIN % -1 = MAX + 1`.
 //!
 //! * `<<` and `>>` for unsigned non-zero values saturate to `MAX` and `MIN` respectively, zero
-//!   cannot saturate.
+//!   cannot saturate. For signed non-zero positive values saturate to `MAX` and `0` respectively,
+//!   signed non-zero negative values saturate to `MIN` and `-1` respectively (carrying the two's
+//!   complement sign flag in right shift). Zero cannot saturate.
 //!
 //! * Bitwise operators (`!`, `^`, `|` and `&`) behave like the wrapped type.
 use std::mem::size_of;
@@ -413,6 +415,8 @@ mod test {
             assert_eq!(Saturating(<$t>::max_value() / 2) << 2, Saturating(<$t>::max_value()));
             // MAX << 1 overflows
             assert_eq!(Saturating(<$t>::max_value()) << 1, Saturating(<$t>::max_value()));
+            // (MAX - 1) << 1 overflows
+            assert_eq!(Saturating(<$t>::max_value() - 1) << 1, Saturating(<$t>::max_value()));
             // 1 << $bits - 1 does not overflow, checking for correctness
             assert_eq!(Saturating(1 as $t) << ($bits - 1) as usize, Saturating(1 << ($bits - 1) as $t));
             // 1 << $bits overflows
@@ -423,6 +427,12 @@ mod test {
             assert_eq!(Saturating(0 as $t) << ($bits - 1) as usize, Saturating(0));
             assert_eq!(Saturating(0 as $t) << $bits as usize, Saturating(0));
             assert_eq!(Saturating(0 as $t) << ($bits + 1) as usize, Saturating(0));
+
+            // Zero shift for correctness:
+            assert_eq!(Saturating(<$t>::max_value()) << 0, Saturating(<$t>::max_value()));
+            assert_eq!(Saturating(<$t>::min_value()) << 0, Saturating(<$t>::min_value()));
+            assert_eq!(Saturating(<$t>::max_value() / 2) << 0, Saturating(<$t>::max_value() / 2));
+            assert_eq!(Saturating(<$t>::max_value() - 1) << 0, Saturating(<$t>::max_value() - 1));
         } }
 
         test!(u8, 8);
@@ -447,6 +457,12 @@ mod test {
             assert_eq!(Saturating(<$t>::max_value()) >> $bits as usize, Saturating(0));
             // MAX >> bits + 1 overflows
             assert_eq!(Saturating(<$t>::max_value()) >> ($bits + 1) as usize, Saturating(0));
+
+            // Zero shift for correctness:
+            assert_eq!(Saturating(<$t>::max_value()) >> 0, Saturating(<$t>::max_value()));
+            assert_eq!(Saturating(<$t>::min_value()) >> 0, Saturating(<$t>::min_value()));
+            assert_eq!(Saturating(<$t>::max_value() / 2) >> 0, Saturating(<$t>::max_value() / 2));
+            assert_eq!(Saturating(<$t>::max_value() - 1) >> 0, Saturating(<$t>::max_value() - 1));
         } }
 
         test!(u8, 8);
@@ -454,5 +470,123 @@ mod test {
         test!(u32, 32);
         test!(u64, 64);
         test!(usize, size_of::<usize>() * 8);
+    }
+
+    #[test]
+    fn signed_shl_saturation() {
+        macro_rules! test { ( $t:ty, $bits:expr ) => {
+            // (MAX / 2) << 2 overflows
+            assert_eq!(Saturating(<$t>::max_value() / 2) << 2, Saturating(<$t>::max_value()));
+            // MAX << 1 overflows
+            assert_eq!(Saturating(<$t>::max_value()) << 1, Saturating(<$t>::max_value()));
+            // (MAX - 1) << 1 overflows
+            assert_eq!(Saturating(<$t>::max_value() - 1) << 1, Saturating(<$t>::max_value()));
+            // 2 << $bits - 2 does not overflow, checking for correctness
+            assert_eq!(Saturating(2 as $t) << ($bits - 3) as usize, Saturating(2 << ($bits - 3) as $t));
+            // 2 << $bits - 2 overflows
+            assert_eq!(Saturating(2 as $t) << ($bits - 2) as usize, Saturating(<$t>::max_value()));
+            // 2 << $bits - 1 overflows
+            assert_eq!(Saturating(2 as $t) << ($bits - 1) as usize, Saturating(<$t>::max_value()));
+            // 2 << $bits overflows
+            assert_eq!(Saturating(2 as $t) << $bits as usize, Saturating(<$t>::max_value()));
+            // 2 << $bits + 1 overflows
+            assert_eq!(Saturating(2 as $t) << ($bits + 1) as usize, Saturating(<$t>::max_value()));
+            // 1 << $bits - 2 does not overflow, checking for correctness
+            assert_eq!(Saturating(1 as $t) << ($bits - 2) as usize, Saturating(1 << ($bits - 2) as $t));
+            // 1 << $bits - 1 overflows
+            assert_eq!(Saturating(1 as $t) << ($bits - 1) as usize, Saturating(<$t>::max_value()));
+            // 1 << $bits overflows
+            assert_eq!(Saturating(1 as $t) << $bits as usize, Saturating(<$t>::max_value()));
+            // 1 << $bits + 1 overflows
+            assert_eq!(Saturating(1 as $t) << ($bits + 1) as usize, Saturating(<$t>::max_value()));
+            // zero for correctness
+            assert_eq!(Saturating(0 as $t) << ($bits - 2) as usize, Saturating(0));
+            assert_eq!(Saturating(0 as $t) << ($bits - 1) as usize, Saturating(0));
+            assert_eq!(Saturating(0 as $t) << $bits as usize, Saturating(0));
+            assert_eq!(Saturating(0 as $t) << ($bits + 1) as usize, Saturating(0));
+            // -1 << $bits = MIN
+            assert_eq!(Saturating(-1 as $t) << $bits as usize, Saturating(<$t>::min_value()));
+            // -2 << $bits - 1 = MIN
+            assert_eq!(Saturating(-2 as $t) << ($bits - 1) as usize, Saturating(<$t>::min_value()));
+            // -2 << $bits overflows
+            assert_eq!(Saturating(-2 as $t) << $bits as usize, Saturating(<$t>::min_value()));
+            // MIN << 1 overflows
+            assert_eq!(Saturating(<$t>::min_value()) << 1 as usize, Saturating(<$t>::min_value()));
+            // MIN / 2 << 2 overflows
+            assert_eq!(Saturating(<$t>::min_value() / 2) << 2 as usize, Saturating(<$t>::min_value()));
+            // (MIN + 1) << 1 overflows
+            assert_eq!(Saturating(<$t>::min_value() + 1) << 1 as usize, Saturating(<$t>::min_value()));
+
+            // Zero shift for correctness:
+            assert_eq!(Saturating(<$t>::max_value())     << 0, Saturating(<$t>::max_value()));
+            assert_eq!(Saturating(<$t>::min_value())     << 0, Saturating(<$t>::min_value()));
+            assert_eq!(Saturating(<$t>::max_value() / 2) << 0, Saturating(<$t>::max_value() / 2));
+            assert_eq!(Saturating(<$t>::min_value() / 2) << 0, Saturating(<$t>::min_value() / 2));
+            assert_eq!(Saturating(<$t>::max_value() - 1) << 0, Saturating(<$t>::max_value() - 1));
+            assert_eq!(Saturating(<$t>::min_value() + 1) << 0, Saturating(<$t>::min_value() + 1));
+            assert_eq!(Saturating(-2 as $t)              << 0, Saturating(-2));
+            assert_eq!(Saturating(-1 as $t)              << 0, Saturating(-1));
+            assert_eq!(Saturating(1 as $t)               << 0, Saturating(1));
+            assert_eq!(Saturating(0 as $t)               << 0, Saturating(0));
+        } }
+
+        test!(i8, 8);
+        test!(i16, 16);
+        test!(i32, 32);
+        test!(i64, 64);
+        test!(isize, size_of::<isize>() * 8);
+    }
+
+    #[test]
+    fn signed_shr_saturation() {
+        macro_rules! test { ( $t:ty, $bits:expr ) => {
+            assert_eq!(Saturating(0 as $t) >> $bits as usize, Saturating(0));
+            assert_eq!(Saturating(0 as $t) >> ($bits + 1) as usize, Saturating(0));
+            // MAX >> 1 = MAX / 2
+            assert_eq!(Saturating(<$t>::max_value()) >> 1, Saturating(<$t>::max_value() / 2));
+            // MAX >> bits - 3 = 3
+            assert_eq!(Saturating(<$t>::max_value()) >> ($bits - 3) as usize, Saturating(3));
+            // MAX >> bits - 2 = 1
+            assert_eq!(Saturating(<$t>::max_value()) >> ($bits - 2) as usize, Saturating(1));
+            // MAX >> bits - 1 overflows
+            assert_eq!(Saturating(<$t>::max_value()) >> ($bits - 1) as usize, Saturating(0));
+            // MAX >> bits overflows
+            assert_eq!(Saturating(<$t>::max_value()) >> $bits as usize, Saturating(0));
+            // MAX >> bits + 1 overflows
+            assert_eq!(Saturating(<$t>::max_value()) >> ($bits + 1) as usize, Saturating(0));
+
+            assert_eq!(Saturating(1 as $t) >> 1, Saturating(0));
+            assert_eq!(Saturating(1 as $t) >> $bits as usize, Saturating(0));
+            assert_eq!(Saturating(2 as $t) >> 1, Saturating(1));
+            assert_eq!(Saturating(2 as $t) >> 2, Saturating(0));
+
+            assert_eq!(Saturating(<$t>::min_value()) >> 1, Saturating(<$t>::min_value() / 2));
+            assert_eq!(Saturating(<$t>::min_value()) >> ($bits - 2) as usize, Saturating(-2));
+            assert_eq!(Saturating(<$t>::min_value()) >> ($bits - 1) as usize, Saturating(-1));
+            assert_eq!(Saturating(<$t>::min_value()) >> $bits as usize, Saturating(-1));
+            assert_eq!(Saturating(<$t>::min_value()) >> ($bits + 1) as usize, Saturating(-1));
+            assert_eq!(Saturating(<$t>::min_value() / 2) >> $bits as usize, Saturating(-1));
+            assert_eq!(Saturating(-1 as $t)          >> 1, Saturating(-1));
+            assert_eq!(Saturating(-1 as $t)          >> 2, Saturating(-1));
+            assert_eq!(Saturating(-1 as $t)          >> $bits as usize, Saturating(-1));
+
+            // Zero shift for correctness:
+            assert_eq!(Saturating(<$t>::max_value())     >> 0, Saturating(<$t>::max_value()));
+            assert_eq!(Saturating(<$t>::min_value())     >> 0, Saturating(<$t>::min_value()));
+            assert_eq!(Saturating(<$t>::max_value() / 2) >> 0, Saturating(<$t>::max_value() / 2));
+            assert_eq!(Saturating(<$t>::min_value() / 2) >> 0, Saturating(<$t>::min_value() / 2));
+            assert_eq!(Saturating(<$t>::max_value() - 1) >> 0, Saturating(<$t>::max_value() - 1));
+            assert_eq!(Saturating(<$t>::min_value() + 1) >> 0, Saturating(<$t>::min_value() + 1));
+            assert_eq!(Saturating(-2 as $t)              >> 0, Saturating(-2));
+            assert_eq!(Saturating(-1 as $t)              >> 0, Saturating(-1));
+            assert_eq!(Saturating(1 as $t)               >> 0, Saturating(1));
+            assert_eq!(Saturating(0 as $t)               >> 0, Saturating(0));
+        } }
+
+        test!(i8, 8);
+        test!(i16, 16);
+        test!(i32, 32);
+        test!(i64, 64);
+        test!(isize, size_of::<isize>() * 8);
     }
 }
