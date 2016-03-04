@@ -31,7 +31,7 @@ use traits::{Bounded, Num, One, Signed, Unsigned, Zero};
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Debug, Default)]
 pub struct Saturating<T>(pub T);
 
-macro_rules! impl_saturating {
+macro_rules! impl_saturating_base {
     ( $t:ty ) => {
         impl Add for Saturating<$t> {
             type Output = Saturating<$t>;
@@ -131,8 +131,6 @@ macro_rules! impl_saturating {
 
 macro_rules! impl_saturating_unsigned {
     ( $t:ty ) => {
-        impl_saturating!{$t}
-
         impl Unsigned for Saturating<$t> {}
 
         impl Mul for Saturating<$t> {
@@ -164,13 +162,10 @@ macro_rules! impl_saturating_unsigned {
             }
         }
     };
-    ( $($t:ty)* ) => { $(impl_saturating_unsigned!{$t})* };
 }
 
 macro_rules! impl_saturating_signed {
     ( $t:ty ) => {
-        impl_saturating!{$t}
-
         impl Mul for Saturating<$t> {
             type Output = Saturating<$t>;
 
@@ -305,9 +300,6 @@ macro_rules! impl_saturating_sh_unsigned {
             }
         }
     };
-    ( $t:ty, $bits:expr, ( $($f:ty)* ) ) => {
-        $(impl_saturating_shl_unsigned!{$t, $bits, $f})*
-    };
 }
 
 macro_rules! impl_saturating_sh_signed {
@@ -374,23 +366,31 @@ macro_rules! impl_saturating_sh_signed {
             }
         }
     };
-    ( $t:ty, $bits:expr, ( $($f:ty)* ) ) => {
-        $(impl_saturating_shl_unsigned!{$t, $bits, $f})*
+}
+
+macro_rules! impl_saturating {
+    ( signed $t:ty, $bits:expr, $unsigned:ty, shift: $($shift:ty)* ) => {
+        impl_saturating_base!{$t}
+        impl_saturating_signed!{$t}
+        $(impl_saturating_sh_signed!{$t, $bits, $shift, $unsigned})*
+    };
+    ( unsigned $t:ty, $bits:expr, shift: $($shift:ty)* ) => {
+        impl_saturating_base!{$t}
+        impl_saturating_unsigned!{$t}
+        $(impl_saturating_sh_unsigned!{$t, $bits, $shift})*
     };
 }
 
-impl_saturating_unsigned!{u8 u16 u32 u64 usize}
-impl_saturating_signed!{i8 i16 i32 i64 isize}
-impl_saturating_sh_unsigned!{u8,  8,  usize}
-impl_saturating_sh_unsigned!{u16, 16, usize}
-impl_saturating_sh_unsigned!{u32, 32, usize}
-impl_saturating_sh_unsigned!{u64, 64, usize}
-impl_saturating_sh_unsigned!{usize, size_of::<usize>() * 8, usize}
-impl_saturating_sh_signed!{i8,  8,  usize, u8}
-impl_saturating_sh_signed!{i16, 16, usize, u16}
-impl_saturating_sh_signed!{i32, 32, usize, u32}
-impl_saturating_sh_signed!{i64, 64, usize, u64}
-impl_saturating_sh_signed!{isize, size_of::<isize>() * 8, usize, usize}
+impl_saturating!{unsigned u8,    8,                      shift: usize}
+impl_saturating!{unsigned u16,   16,                     shift: usize}
+impl_saturating!{unsigned u32,   32,                     shift: usize}
+impl_saturating!{unsigned u64,   64,                     shift: usize}
+impl_saturating!{unsigned usize, size_of::<usize>() * 8, shift: usize}
+impl_saturating!{signed i8,    8,                      u8,    shift: usize}
+impl_saturating!{signed i16,   16,                     u16,   shift: usize}
+impl_saturating!{signed i32,   32,                     u32,   shift: usize}
+impl_saturating!{signed i64,   64,                     u64,   shift: usize}
+impl_saturating!{signed isize, size_of::<isize>() * 8, usize, shift: usize}
 
 #[cfg(test)]
 mod test {
