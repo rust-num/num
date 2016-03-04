@@ -20,7 +20,6 @@ use std::mem::size_of;
 use std::ops::{Add, Sub, Mul, Div, Rem, Not, Neg, BitXor, BitOr, BitAnd, Shl, Shr};
 
 use traits::{Bounded, Num, One, Signed, Unsigned, Zero};
-use traits::Saturating as SaturatingOps;
 
 /// Provides saturating arithmetic on `T` based on two's complement.
 ///
@@ -276,10 +275,11 @@ macro_rules! impl_saturating_sh_unsigned {
 
             #[inline(always)]
             fn shl(self, rhs: $f) -> Self::Output {
+                // Shifting zero any numer of bits is still zero
                 if self.0 == 0 {
-                    Saturating(0)
+                    self
                 }
-                else if rhs > $bits - 1 {
+                else if rhs > self.0.leading_zeros() as $f {
                     Saturating(<$t>::max_value())
                 }
                 else {
@@ -361,33 +361,98 @@ macro_rules! impl_saturating_sh_signed {
 
 impl_saturating_unsigned!{u8 u16 u32 u64 usize}
 impl_saturating_signed!{i8 i16 i32 i64 isize}
-impl_saturating_sh_unsigned!{u8, 8, usize}
+impl_saturating_sh_unsigned!{u8,  8,  usize}
 impl_saturating_sh_unsigned!{u16, 16, usize}
-impl_saturating_sh_unsigned!{u32, 16, usize}
-impl_saturating_sh_unsigned!{u64, 16, usize}
+impl_saturating_sh_unsigned!{u32, 32, usize}
+impl_saturating_sh_unsigned!{u64, 64, usize}
 impl_saturating_sh_unsigned!{usize, size_of::<usize>() * 8, usize}
-impl_saturating_sh_signed!{i8, 8, usize}
+impl_saturating_sh_signed!{i8,  8,  usize}
 impl_saturating_sh_signed!{i16, 16, usize}
-impl_saturating_sh_signed!{i32, 16, usize}
-impl_saturating_sh_signed!{i64, 16, usize}
+impl_saturating_sh_signed!{i32, 32, usize}
+impl_saturating_sh_signed!{i64, 64, usize}
 impl_saturating_sh_signed!{isize, size_of::<isize>() * 8, usize}
 
 #[cfg(test)]
 mod test {
-    use super::Saturating;
+    use std::mem::size_of;
 
     use traits::Bounded;
 
-    macro_rules! tests {
-        ( $($t:ty)* ) => { $(test!{$t})* };
-    }
+    use super::Saturating;
 
     #[test]
-    fn signed_div_overflow() {
+    fn signed_div_saturation() {
         macro_rules! test { ( $t:ty ) => {
             assert_eq!(Saturating(<$t>::min_value()) / Saturating(-1), Saturating(<$t>::max_value()));
         } }
 
-        tests!(i8 i16 i32 i64 isize);
+        test!(i8);
+        test!(i16);
+        test!(i32);
+        test!(i64);
+        test!(isize);
+    }
+
+    #[test]
+    fn signed_mul_saturation() {
+        macro_rules! test { ( $t:ty ) => {
+            assert_eq!(Saturating(<$t>::min_value()) * Saturating(-1), Saturating(<$t>::max_value()));
+        } }
+
+        test!(i8);
+        test!(i16);
+        test!(i32);
+        test!(i64);
+        test!(isize);
+    }
+
+    #[test]
+    fn unsigned_shl_saturation() {
+        macro_rules! test { ( $t:ty, $bits:expr ) => {
+            // (MAX / 2) << 2 overflows
+            assert_eq!(Saturating(<$t>::max_value() / 2) << 2, Saturating(<$t>::max_value()));
+            // MAX << 1 overflows
+            assert_eq!(Saturating(<$t>::max_value()) << 1, Saturating(<$t>::max_value()));
+            // 1 << $bits - 1 does not overflow, checking for correctness
+            assert_eq!(Saturating(1 as $t) << ($bits - 1) as usize, Saturating(1 << ($bits - 1) as $t));
+            // 1 << $bits overflows
+            assert_eq!(Saturating(1 as $t) << $bits as usize, Saturating(<$t>::max_value()));
+            // 1 << $bits + 1 overflows
+            assert_eq!(Saturating(1 as $t) << ($bits + 1) as usize, Saturating(<$t>::max_value()));
+            // zero for correctness
+            assert_eq!(Saturating(0 as $t) << ($bits - 1) as usize, Saturating(0));
+            assert_eq!(Saturating(0 as $t) << $bits as usize, Saturating(0));
+            assert_eq!(Saturating(0 as $t) << ($bits + 1) as usize, Saturating(0));
+        } }
+
+        test!(u8, 8);
+        test!(u16, 16);
+        test!(u32, 32);
+        test!(u64, 64);
+        test!(usize, size_of::<usize>() * 8);
+    }
+
+    #[test]
+    fn unsigned_shr_saturation() {
+        macro_rules! test { ( $t:ty, $bits:expr ) => {
+            assert_eq!(Saturating(0 as $t) >> $bits as usize, Saturating(0));
+            assert_eq!(Saturating(0 as $t) >> ($bits + 1) as usize, Saturating(0));
+            // MAX >> 1 = MAX / 2
+            assert_eq!(Saturating(<$t>::max_value()) >> 1, Saturating(<$t>::max_value() / 2));
+            // MAX >> bits - 2 = 3
+            assert_eq!(Saturating(<$t>::max_value()) >> ($bits - 2) as usize, Saturating(3));
+            // MAX >> bits - 1 = 1
+            assert_eq!(Saturating(<$t>::max_value()) >> ($bits - 1) as usize, Saturating(1));
+            // MAX >> bits overflows
+            assert_eq!(Saturating(<$t>::max_value()) >> $bits as usize, Saturating(0));
+            // MAX >> bits + 1 overflows
+            assert_eq!(Saturating(<$t>::max_value()) >> ($bits + 1) as usize, Saturating(0));
+        } }
+
+        test!(u8, 8);
+        test!(u16, 16);
+        test!(u32, 32);
+        test!(u64, 64);
+        test!(usize, size_of::<usize>() * 8);
     }
 }
