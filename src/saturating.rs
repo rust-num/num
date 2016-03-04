@@ -1,9 +1,32 @@
+//! Rust's integer types are defined to overflow with two's complement by default if checking is not
+//! enabled (see https://github.com/rust-lang/rfcs/blob/master/text/0560-integer-overflow.md). To
+//! intentionally cause wrappng the type `Wrapping<T>` is used.
+//!
+//! This module contains a `Saturating<T>` which causes the contained type to saturate its value
+//! instead of overflowing, according to two's complement.
+//!
+//! * `+`, `-` and `*` saturate to `MAX` and `MIN` value for both signed and unsigned integers.
+//!
+//! * `/` and `%` cannot overflow for unsigned integers, for signed integers `/` can overflow with
+//!   `MIN / -1` since according to two's complement `MIN / -1 = MAX + 1`, this will saturate to
+//!   `MAX`. Same goes for `MIN % -1` since according to two's complement `MIN` is always even,
+//!   making `MIN % -1 = MAX + 1`.
+//!
+//! * `<<` and `>>` for unsigned non-zero values saturate to `MAX` and `MIN` respectively, zero
+//!   cannot saturate.
+//!
+//! * Bitwise operators (`!`, `^`, `|` and `&`) behave like the wrapped type.
 use std::mem::size_of;
 use std::ops::{Add, Sub, Mul, Div, Rem, Not, Neg, BitXor, BitOr, BitAnd, Shl, Shr};
 
 use traits::{Bounded, Num, One, Signed, Unsigned, Zero};
 use traits::Saturating as SaturatingOps;
 
+/// Provides saturating arithmetic on `T` based on two's complement.
+///
+/// Saturating arithmetic can be provided either by methods like `saturating_add`, or through the
+/// `Saturating<T>` type, which says that all standard arithmetic operations are intended to have
+/// saturating semantics.
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Debug, Default)]
 pub struct Saturating<T>(pub T);
 
@@ -194,7 +217,7 @@ macro_rules! impl_saturating_signed {
 
             #[inline(always)]
             fn neg(self) -> Self::Output {
-                // Negating minimum causes overflow
+                // -MIN = MAX + 1 according to two's complement
                 if self.0 == <$t>::min_value() {
                     Saturating(<$t>::max_value())
                 } else {
