@@ -253,10 +253,8 @@ macro_rules! impl_saturating_sh_unsigned {
 
             #[inline(always)]
             fn shr(self, rhs: $f) -> Self::Output {
-                if self.0 == 0 {
-                    Saturating(0)
-                }
-                else if rhs > $bits - 1 {
+                // Fine for unsigned, 0 is smallest value
+                if rhs > $bits - 1 {
                     Saturating(<$t>::min_value())
                 }
                 else {
