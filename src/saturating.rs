@@ -27,15 +27,6 @@ macro_rules! impl_saturating {
             }
         }
 
-        impl Div for Saturating<$t> {
-            type Output = Saturating<$t>;
-
-            #[inline(always)]
-            fn div(self, rhs: Saturating<$t>) -> Self::Output {
-                Saturating(self.0 / rhs.0)
-            }
-        }
-
         impl Not for Saturating<$t> {
             type Output = Saturating<$t>;
 
@@ -129,6 +120,16 @@ macro_rules! impl_saturating_unsigned {
             }
         }
 
+        impl Div for Saturating<$t> {
+            type Output = Saturating<$t>;
+
+            #[inline(always)]
+            fn div(self, rhs: Saturating<$t>) -> Self::Output {
+                // Cannot overflow in unsigned
+                Saturating(self.0 / rhs.0)
+            }
+        }
+
         impl Rem for Saturating<$t> {
             type Output = Saturating<$t>;
 
@@ -156,6 +157,20 @@ macro_rules! impl_saturating_signed {
                     } else {
                         <$t>::min_value()
                     }))
+            }
+        }
+
+        impl Div for Saturating<$t> {
+            type Output = Saturating<$t>;
+
+            #[inline(always)]
+            fn div(self, rhs: Saturating<$t>) -> Self::Output {
+                // Can overflow since MIN / -1 = MAX + 1
+                if self.0 == <$t>::min_value() && rhs.0 == -1 {
+                    Saturating(<$t>::max_value())
+                } else {
+                    Saturating(self.0 / rhs.0)
+                }
             }
         }
 
@@ -189,7 +204,7 @@ macro_rules! impl_saturating_signed {
         impl Signed for Saturating<$t> {
             #[inline(always)]
             fn abs(&self) -> Self {
-                // According to documentation abs(::MIN) -> ::MIN
+                // According to trait-documentation abs(::MIN) -> ::MIN
                 if self.0 == <$t>::min_value() {
                     Saturating(self.0)
                 }
@@ -331,3 +346,23 @@ impl_saturating_sh_signed!{i16, 16, usize}
 impl_saturating_sh_signed!{i32, 16, usize}
 impl_saturating_sh_signed!{i64, 16, usize}
 impl_saturating_sh_signed!{isize, size_of::<isize>() * 8, usize}
+
+#[cfg(test)]
+mod test {
+    use super::Saturating;
+
+    use traits::Bounded;
+
+    macro_rules! tests {
+        ( $($t:ty)* ) => { $(test!{$t})* };
+    }
+
+    #[test]
+    fn signed_div_overflow() {
+        macro_rules! test { ( $t:ty ) => {
+            assert_eq!(Saturating(<$t>::min_value()) / Saturating(-1), Saturating(<$t>::max_value()));
+        } }
+
+        tests!(i8 i16 i32 i64 isize);
+    }
+}
