@@ -20,7 +20,7 @@ pub trait Integer: Sized + Num + PartialOrd + Ord + Eq {
     /// # Examples
     ///
     /// ~~~
-    /// # use num::Integer;
+    /// # use num_integer::Integer;
     /// assert!(( 8).div_floor(& 3) ==  2);
     /// assert!(( 8).div_floor(&-3) == -3);
     /// assert!((-8).div_floor(& 3) == -3);
@@ -36,7 +36,7 @@ pub trait Integer: Sized + Num + PartialOrd + Ord + Eq {
     /// Floored integer modulo, satisfying:
     ///
     /// ~~~
-    /// # use num::Integer;
+    /// # use num_integer::Integer;
     /// # let n = 1; let d = 1;
     /// assert!(n.div_floor(&d) * d + n.mod_floor(&d) == n)
     /// ~~~
@@ -44,7 +44,7 @@ pub trait Integer: Sized + Num + PartialOrd + Ord + Eq {
     /// # Examples
     ///
     /// ~~~
-    /// # use num::Integer;
+    /// # use num_integer::Integer;
     /// assert!(( 8).mod_floor(& 3) ==  2);
     /// assert!(( 8).mod_floor(&-3) == -1);
     /// assert!((-8).mod_floor(& 3) ==  1);
@@ -62,7 +62,7 @@ pub trait Integer: Sized + Num + PartialOrd + Ord + Eq {
     /// # Examples
     ///
     /// ~~~
-    /// # use num::Integer;
+    /// # use num_integer::Integer;
     /// assert_eq!(6.gcd(&8), 2);
     /// assert_eq!(7.gcd(&3), 1);
     /// ~~~
@@ -73,7 +73,7 @@ pub trait Integer: Sized + Num + PartialOrd + Ord + Eq {
     /// # Examples
     ///
     /// ~~~
-    /// # use num::Integer;
+    /// # use num_integer::Integer;
     /// assert_eq!(7.lcm(&3), 21);
     /// assert_eq!(2.lcm(&4), 4);
     /// ~~~
@@ -87,7 +87,7 @@ pub trait Integer: Sized + Num + PartialOrd + Ord + Eq {
     /// # Examples
     ///
     /// ~~~
-    /// # use num::Integer;
+    /// # use num_integer::Integer;
     /// assert_eq!(9.is_multiple_of(&3), true);
     /// assert_eq!(3.is_multiple_of(&9), false);
     /// ~~~
@@ -98,7 +98,7 @@ pub trait Integer: Sized + Num + PartialOrd + Ord + Eq {
     /// # Examples
     ///
     /// ~~~
-    /// # use num::Integer;
+    /// # use num_integer::Integer;
     /// assert_eq!(3.is_even(), false);
     /// assert_eq!(4.is_even(), true);
     /// ~~~
@@ -109,7 +109,7 @@ pub trait Integer: Sized + Num + PartialOrd + Ord + Eq {
     /// # Examples
     ///
     /// ~~~
-    /// # use num::Integer;
+    /// # use num_integer::Integer;
     /// assert_eq!(3.is_odd(), true);
     /// assert_eq!(4.is_odd(), false);
     /// ~~~
@@ -121,7 +121,7 @@ pub trait Integer: Sized + Num + PartialOrd + Ord + Eq {
     /// # Examples
     ///
     /// ~~~
-    /// # use num::Integer;
+    /// # use num_integer::Integer;
     /// assert_eq!(( 8).div_rem( &3), ( 2,  2));
     /// assert_eq!(( 8).div_rem(&-3), (-2,  2));
     /// assert_eq!((-8).div_rem( &3), (-2, -2));
@@ -141,7 +141,7 @@ pub trait Integer: Sized + Num + PartialOrd + Ord + Eq {
     /// # Examples
     ///
     /// ~~~
-    /// # use num::Integer;
+    /// # use num_integer::Integer;
     /// assert_eq!(( 8).div_mod_floor( &3), ( 2,  2));
     /// assert_eq!(( 8).div_mod_floor(&-3), (-3, -1));
     /// assert_eq!((-8).div_mod_floor( &3), (-3,  1));

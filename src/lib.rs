@@ -59,7 +59,10 @@
 
 extern crate num_traits;
 extern crate num_integer;
+#[cfg(feature = "num-bigint")]
 extern crate num_bigint;
+#[cfg(feature = "num-rational")]
+extern crate num_rational;
 
 #[cfg(feature = "rustc-serialize")]
 extern crate rustc_serialize;
@@ -73,11 +76,11 @@ extern crate rand;
 #[cfg(feature = "serde")]
 extern crate serde;
 
-#[cfg(feature = "bigint")]
+#[cfg(feature = "num-bigint")]
 pub use bigint::{BigInt, BigUint};
-#[cfg(feature = "rational")]
+#[cfg(feature = "num-rational")]
 pub use rational::Rational;
-#[cfg(all(feature = "rational", feature="bigint"))]
+#[cfg(all(feature = "num-rational", feature="num-bigint"))]
 pub use rational::BigRational;
 #[cfg(feature = "complex")]
 pub use complex::Complex;
@@ -91,14 +94,14 @@ pub use traits::{Num, Zero, One, Signed, Unsigned, Bounded,
 
 use std::ops::{Mul};
 
-#[cfg(feature = "bigint")]
-pub mod bigint { pub use num_bigint::*; }
+#[cfg(feature = "num-bigint")]
+pub use num_bigint as bigint;
 pub mod complex;
-pub mod integer { pub use num_integer::*; }
+pub use num_integer as integers;
 pub mod iter;
-pub mod traits { pub use num_traits::*; }
-#[cfg(feature = "rational")]
-pub mod rational;
+pub use num_traits as traits;
+#[cfg(feature = "num-rational")]
+pub use num_rational as rational;
 
 /// Returns the additive identity, `0`.
 #[inline(always)] pub fn zero<T: Zero>() -> T { Zero::zero() }
@@ -209,12 +212,4 @@ pub fn checked_pow<T: Clone + One + CheckedMul>(mut base: T, mut exp: usize) -> 
         }
     }
     Some(acc)
-}
-
-#[cfg(test)]
-fn hash<T: hash::Hash>(x: &T) -> u64 {
-    use std::hash::Hasher;
-    let mut hasher = hash::SipHasher::new();
-    x.hash(&mut hasher);
-    hasher.finish()
 }

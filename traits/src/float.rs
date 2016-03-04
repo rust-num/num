@@ -14,7 +14,7 @@ pub trait Float
     /// Returns the `NaN` value.
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     ///
     /// let nan: f32 = Float::nan();
     ///
@@ -24,7 +24,7 @@ pub trait Float
     /// Returns the infinite value.
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     /// use std::f32;
     ///
     /// let infinity: f32 = Float::infinity();
@@ -37,7 +37,7 @@ pub trait Float
     /// Returns the negative infinite value.
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     /// use std::f32;
     ///
     /// let neg_infinity: f32 = Float::neg_infinity();
@@ -50,7 +50,7 @@ pub trait Float
     /// Returns `-0.0`.
     ///
     /// ```
-    /// use num::traits::{Zero, Float};
+    /// use num_traits::{Zero, Float};
     ///
     /// let inf: f32 = Float::infinity();
     /// let zero: f32 = Zero::zero();
@@ -65,7 +65,7 @@ pub trait Float
     /// Returns the smallest finite value that this type can represent.
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     /// use std::f64;
     ///
     /// let x: f64 = Float::min_value();
@@ -77,7 +77,7 @@ pub trait Float
     /// Returns the smallest positive, normalized value that this type can represent.
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     /// use std::f64;
     ///
     /// let x: f64 = Float::min_positive_value();
@@ -89,7 +89,7 @@ pub trait Float
     /// Returns the largest finite value that this type can represent.
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     /// use std::f64;
     ///
     /// let x: f64 = Float::max_value();
@@ -100,7 +100,7 @@ pub trait Float
     /// Returns `true` if this value is `NaN` and false otherwise.
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     /// use std::f64;
     ///
     /// let nan = f64::NAN;
@@ -115,7 +115,7 @@ pub trait Float
     /// false otherwise.
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     /// use std::f32;
     ///
     /// let f = 7.0f32;
@@ -134,7 +134,7 @@ pub trait Float
     /// Returns `true` if this number is neither infinite nor `NaN`.
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     /// use std::f32;
     ///
     /// let f = 7.0f32;
@@ -154,7 +154,7 @@ pub trait Float
     /// [subnormal][subnormal], or `NaN`.
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     /// use std::f32;
     ///
     /// let min = f32::MIN_POSITIVE; // 1.17549435e-38f32
@@ -179,7 +179,7 @@ pub trait Float
     /// predicate instead.
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     /// use std::num::FpCategory;
     /// use std::f32;
     ///
@@ -194,7 +194,7 @@ pub trait Float
     /// Returns the largest integer less than or equal to a number.
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     ///
     /// let f = 3.99;
     /// let g = 3.0;
@@ -207,7 +207,7 @@ pub trait Float
     /// Returns the smallest integer greater than or equal to a number.
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     ///
     /// let f = 3.01;
     /// let g = 4.0;
@@ -221,7 +221,7 @@ pub trait Float
     /// `0.0`.
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     ///
     /// let f = 3.3;
     /// let g = -3.3;
@@ -234,7 +234,7 @@ pub trait Float
     /// Return the integer part of a number.
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     ///
     /// let f = 3.3;
     /// let g = -3.7;
@@ -247,7 +247,7 @@ pub trait Float
     /// Returns the fractional part of a number.
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     ///
     /// let x = 3.5;
     /// let y = -3.5;
@@ -263,7 +263,7 @@ pub trait Float
     /// number is `Float::nan()`.
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     /// use std::f64;
     ///
     /// let x = 3.5;
@@ -286,7 +286,7 @@ pub trait Float
     /// - `Float::nan()` if the number is `Float::nan()`
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     /// use std::f64;
     ///
     /// let f = 3.5;
@@ -302,7 +302,7 @@ pub trait Float
     /// `Float::infinity()`.
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     /// use std::f64;
     ///
     /// let nan: f64 = f64::NAN;
@@ -321,7 +321,7 @@ pub trait Float
     /// `Float::neg_infinity()`.
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     /// use std::f64;
     ///
     /// let nan = f64::NAN;
@@ -341,7 +341,7 @@ pub trait Float
     /// a separate multiplication operation followed by an add.
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     ///
     /// let m = 10.0;
     /// let x = 4.0;
@@ -356,7 +356,7 @@ pub trait Float
     /// Take the reciprocal (inverse) of a number, `1/x`.
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     ///
     /// let x = 2.0;
     /// let abs_difference = (x.recip() - (1.0/x)).abs();
@@ -370,7 +370,7 @@ pub trait Float
     /// Using this function is generally faster than using `powf`
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     ///
     /// let x = 2.0;
     /// let abs_difference = (x.powi(2) - x*x).abs();
@@ -382,7 +382,7 @@ pub trait Float
     /// Raise a number to a floating point power.
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     ///
     /// let x = 2.0;
     /// let abs_difference = (x.powf(2.0) - x*x).abs();
@@ -396,7 +396,7 @@ pub trait Float
     /// Returns NaN if `self` is a negative number.
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     ///
     /// let positive = 4.0;
     /// let negative = -4.0;
@@ -411,7 +411,7 @@ pub trait Float
     /// Returns `e^(self)`, (the exponential function).
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     ///
     /// let one = 1.0;
     /// // e^1
@@ -427,7 +427,7 @@ pub trait Float
     /// Returns `2^(self)`.
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     ///
     /// let f = 2.0;
     ///
@@ -441,7 +441,7 @@ pub trait Float
     /// Returns the natural logarithm of the number.
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     ///
     /// let one = 1.0;
     /// // e^1
@@ -457,7 +457,7 @@ pub trait Float
     /// Returns the logarithm of the number with respect to an arbitrary base.
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     ///
     /// let ten = 10.0;
     /// let two = 2.0;
@@ -476,7 +476,7 @@ pub trait Float
     /// Returns the base 2 logarithm of the number.
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     ///
     /// let two = 2.0;
     ///
@@ -490,7 +490,7 @@ pub trait Float
     /// Returns the base 10 logarithm of the number.
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     ///
     /// let ten = 10.0;
     ///
@@ -504,7 +504,7 @@ pub trait Float
     /// Returns the maximum of the two numbers.
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     ///
     /// let x = 1.0;
     /// let y = 2.0;
@@ -516,7 +516,7 @@ pub trait Float
     /// Returns the minimum of the two numbers.
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     ///
     /// let x = 1.0;
     /// let y = 2.0;
@@ -531,7 +531,7 @@ pub trait Float
     /// * Else: `self - other`
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     ///
     /// let x = 3.0;
     /// let y = -3.0;
@@ -547,7 +547,7 @@ pub trait Float
     /// Take the cubic root of a number.
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     ///
     /// let x = 8.0;
     ///
@@ -562,7 +562,7 @@ pub trait Float
     /// legs of length `x` and `y`.
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     ///
     /// let x = 2.0;
     /// let y = 3.0;
@@ -577,7 +577,7 @@ pub trait Float
     /// Computes the sine of a number (in radians).
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     /// use std::f64;
     ///
     /// let x = f64::consts::PI/2.0;
@@ -591,7 +591,7 @@ pub trait Float
     /// Computes the cosine of a number (in radians).
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     /// use std::f64;
     ///
     /// let x = 2.0*f64::consts::PI;
@@ -605,7 +605,7 @@ pub trait Float
     /// Computes the tangent of a number (in radians).
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     /// use std::f64;
     ///
     /// let x = f64::consts::PI/4.0;
@@ -620,7 +620,7 @@ pub trait Float
     /// [-1, 1].
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     /// use std::f64;
     ///
     /// let f = f64::consts::PI / 2.0;
@@ -637,7 +637,7 @@ pub trait Float
     /// [-1, 1].
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     /// use std::f64;
     ///
     /// let f = f64::consts::PI / 4.0;
@@ -653,7 +653,7 @@ pub trait Float
     /// range [-pi/2, pi/2];
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     ///
     /// let f = 1.0;
     ///
@@ -672,7 +672,7 @@ pub trait Float
     /// * `y < 0`: `arctan(y/x) - pi` -> `(-pi, -pi/2)`
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     /// use std::f64;
     ///
     /// let pi = f64::consts::PI;
@@ -697,7 +697,7 @@ pub trait Float
     /// `(sin(x), cos(x))`.
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     /// use std::f64;
     ///
     /// let x = f64::consts::PI/4.0;
@@ -715,7 +715,7 @@ pub trait Float
     /// number is close to zero.
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     ///
     /// let x = 7.0;
     ///
@@ -730,7 +730,7 @@ pub trait Float
     /// the operations were performed separately.
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     /// use std::f64;
     ///
     /// let x = f64::consts::E - 1.0;
@@ -745,7 +745,7 @@ pub trait Float
     /// Hyperbolic sine function.
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     /// use std::f64;
     ///
     /// let e = f64::consts::E;
@@ -763,7 +763,7 @@ pub trait Float
     /// Hyperbolic cosine function.
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     /// use std::f64;
     ///
     /// let e = f64::consts::E;
@@ -781,7 +781,7 @@ pub trait Float
     /// Hyperbolic tangent function.
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     /// use std::f64;
     ///
     /// let e = f64::consts::E;
@@ -799,7 +799,7 @@ pub trait Float
     /// Inverse hyperbolic sine function.
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     ///
     /// let x = 1.0;
     /// let f = x.sinh().asinh();
@@ -813,7 +813,7 @@ pub trait Float
     /// Inverse hyperbolic cosine function.
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     ///
     /// let x = 1.0;
     /// let f = x.cosh().acosh();
@@ -827,7 +827,7 @@ pub trait Float
     /// Inverse hyperbolic tangent function.
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     /// use std::f64;
     ///
     /// let e = f64::consts::E;
@@ -845,7 +845,7 @@ pub trait Float
     /// The floating point encoding is documented in the [Reference][floating-point].
     ///
     /// ```
-    /// use num::traits::Float;
+    /// use num_traits::Float;
     ///
     /// let num = 2.0f32;
     ///

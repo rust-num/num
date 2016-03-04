@@ -18,8 +18,9 @@
 //!
 //! ## Example
 //!
-//! ```rust
-//! use num::{BigUint, Zero, One};
+//! ```rust,ignore
+//! use num_bigint::BigUint;
+//! use num_traits::{Zero, One};
 //! use std::mem::replace;
 //!
 //! // Calculate large fibonacci numbers.
@@ -42,11 +43,11 @@
 //!
 //! ```rust
 //! extern crate rand;
-//! extern crate num;
+//! extern crate num_bigint as bigint;
 //!
 //! # #[cfg(feature = "rand")]
 //! # fn main() {
-//! use num::bigint::{ToBigInt, RandBigInt};
+//! use bigint::{ToBigInt, RandBigInt};
 //!
 //! let mut rng = rand::thread_rng();
 //! let a = rng.gen_bigint(1000);
@@ -64,6 +65,9 @@
 //! # }
 //! ```
 
+#[cfg(any(feature = "rand", test))]
+extern crate rand;
+
 extern crate num_integer as integer;
 extern crate num_traits as traits;
 
@@ -75,6 +79,7 @@ use std::num::ParseIntError;
 use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Rem, Shl, Shr, Sub};
 use std::str::{self, FromStr};
 use std::fmt;
+use std::hash;
 use std::cmp::Ordering::{self, Less, Greater, Equal};
 use std::{f32, f64};
 use std::{u8, i64, u64};
@@ -1655,7 +1660,7 @@ impl BigUint {
     /// # Examples
     ///
     /// ```
-    /// use num::bigint::BigUint;
+    /// use num_bigint::BigUint;
     ///
     /// assert_eq!(BigUint::from_bytes_be(b"A"),
     ///            BigUint::parse_bytes(b"65", 10).unwrap());
@@ -1694,7 +1699,7 @@ impl BigUint {
     /// # Examples
     ///
     /// ```
-    /// use num::bigint::BigUint;
+    /// use num_bigint::BigUint;
     ///
     /// let i = BigUint::parse_bytes(b"1125", 10).unwrap();
     /// assert_eq!(i.to_bytes_le(), vec![101, 4]);
@@ -1713,7 +1718,7 @@ impl BigUint {
     /// # Examples
     ///
     /// ```
-    /// use num::bigint::BigUint;
+    /// use num_bigint::BigUint;
     ///
     /// let i = BigUint::parse_bytes(b"1125", 10).unwrap();
     /// assert_eq!(i.to_bytes_be(), vec![4, 101]);
@@ -1731,7 +1736,7 @@ impl BigUint {
     /// # Examples
     ///
     /// ```
-    /// use num::bigint::BigUint;
+    /// use num_bigint::BigUint;
     ///
     /// let i = BigUint::parse_bytes(b"ff", 16).unwrap();
     /// assert_eq!(i.to_str_radix(16), "ff");
@@ -1748,7 +1753,7 @@ impl BigUint {
     /// # Examples
     ///
     /// ```
-    /// use num::bigint::{BigUint, ToBigUint};
+    /// use num_bigint::{BigUint, ToBigUint};
     ///
     /// assert_eq!(BigUint::parse_bytes(b"1234", 10), ToBigUint::to_biguint(&1234));
     /// assert_eq!(BigUint::parse_bytes(b"ABCD", 16), ToBigUint::to_biguint(&0xABCD));
@@ -2764,7 +2769,7 @@ impl BigInt {
     /// # Examples
     ///
     /// ```
-    /// use num::bigint::{BigInt, Sign};
+    /// use num_bigint::{BigInt, Sign};
     ///
     /// assert_eq!(BigInt::from_bytes_be(Sign::Plus, b"A"),
     ///            BigInt::parse_bytes(b"65", 10).unwrap());
@@ -2793,7 +2798,7 @@ impl BigInt {
     /// # Examples
     ///
     /// ```
-    /// use num::bigint::{ToBigInt, Sign};
+    /// use num_bigint::{ToBigInt, Sign};
     ///
     /// let i = -1125.to_bigint().unwrap();
     /// assert_eq!(i.to_bytes_le(), (Sign::Minus, vec![101, 4]));
@@ -2808,7 +2813,7 @@ impl BigInt {
     /// # Examples
     ///
     /// ```
-    /// use num::bigint::{ToBigInt, Sign};
+    /// use num_bigint::{ToBigInt, Sign};
     ///
     /// let i = -1125.to_bigint().unwrap();
     /// assert_eq!(i.to_bytes_be(), (Sign::Minus, vec![4, 101]));
@@ -2824,7 +2829,7 @@ impl BigInt {
     /// # Examples
     ///
     /// ```
-    /// use num::bigint::BigInt;
+    /// use num_bigint::BigInt;
     ///
     /// let i = BigInt::parse_bytes(b"ff", 16).unwrap();
     /// assert_eq!(i.to_str_radix(16), "ff");
@@ -2846,7 +2851,7 @@ impl BigInt {
     /// # Examples
     ///
     /// ```
-    /// use num::bigint::{ToBigInt, Sign};
+    /// use num_bigint::{ToBigInt, Sign};
     ///
     /// assert_eq!(ToBigInt::to_bigint(&1234).unwrap().sign(), Sign::Plus);
     /// assert_eq!(ToBigInt::to_bigint(&-4321).unwrap().sign(), Sign::Minus);
@@ -2862,7 +2867,7 @@ impl BigInt {
     /// # Examples
     ///
     /// ```
-    /// use num::bigint::{BigInt, ToBigInt};
+    /// use num_bigint::{BigInt, ToBigInt};
     ///
     /// assert_eq!(BigInt::parse_bytes(b"1234", 10), ToBigInt::to_bigint(&1234));
     /// assert_eq!(BigInt::parse_bytes(b"ABCD", 16), ToBigInt::to_bigint(&0xABCD));
@@ -2936,8 +2941,16 @@ impl From<ParseIntError> for ParseBigIntError {
 }
 
 #[cfg(test)]
+fn hash<T: hash::Hash>(x: &T) -> u64 {
+    use std::hash::Hasher;
+    let mut hasher = hash::SipHasher::new();
+    x.hash(&mut hasher);
+    hasher.finish()
+}
+
+#[cfg(test)]
 mod biguint_tests {
-    use Integer;
+    use integer::Integer;
     use super::{BigDigit, BigUint, ToBigUint, big_digit};
     use super::{BigInt, RandBigInt, ToBigInt};
     use super::Sign::Plus;
@@ -2950,9 +2963,9 @@ mod biguint_tests {
     use std::{u8, u16, u32, u64, usize};
 
     use rand::thread_rng;
-    use {Num, Zero, One, CheckedAdd, CheckedSub, CheckedMul, CheckedDiv};
-    use {ToPrimitive, FromPrimitive};
-    use Float;
+    use traits::{Num, Zero, One, CheckedAdd, CheckedSub, CheckedMul, CheckedDiv, ToPrimitive,
+                 FromPrimitive, Float};
+
 
     /// Assert that an op works for all val/ref combinations
     macro_rules! assert_op {
@@ -3083,10 +3096,10 @@ mod biguint_tests {
         let c = BigUint::new(vec![1]);
         let d = BigUint::new(vec![1, 0, 0, 0, 0, 0]);
         let e = BigUint::new(vec![0, 0, 0, 0, 0, 1]);
-        assert!(::hash(&a) == ::hash(&b));
-        assert!(::hash(&b) != ::hash(&c));
-        assert!(::hash(&c) == ::hash(&d));
-        assert!(::hash(&d) != ::hash(&e));
+        assert!(super::hash(&a) == super::hash(&b));
+        assert!(super::hash(&b) != super::hash(&c));
+        assert!(super::hash(&c) == super::hash(&d));
+        assert!(super::hash(&d) != super::hash(&e));
     }
 
     const BIT_TESTS: &'static [(&'static [BigDigit],
@@ -4173,7 +4186,6 @@ mod biguint_tests {
 
 #[cfg(test)]
 mod bigint_tests {
-    use Integer;
     use super::{BigDigit, BigUint, ToBigUint};
     use super::{Sign, BigInt, RandBigInt, ToBigInt, big_digit};
     use super::Sign::{Minus, NoSign, Plus};
@@ -4187,8 +4199,8 @@ mod bigint_tests {
 
     use rand::thread_rng;
 
-    use {Zero, One, Signed, ToPrimitive, FromPrimitive, Num};
-    use Float;
+    use integer::Integer;
+    use traits::{Zero, One, Signed, ToPrimitive, FromPrimitive, Num, Float};
 
     /// Assert that an op works for all val/ref combinations
     macro_rules! assert_op {
@@ -4334,11 +4346,11 @@ mod bigint_tests {
         let d = BigInt::new(Plus, vec![1, 0, 0, 0, 0, 0]);
         let e = BigInt::new(Plus, vec![0, 0, 0, 0, 0, 1]);
         let f = BigInt::new(Minus, vec![1]);
-        assert!(::hash(&a) == ::hash(&b));
-        assert!(::hash(&b) != ::hash(&c));
-        assert!(::hash(&c) == ::hash(&d));
-        assert!(::hash(&d) != ::hash(&e));
-        assert!(::hash(&c) != ::hash(&f));
+        assert!(super::hash(&a) == super::hash(&b));
+        assert!(super::hash(&b) != super::hash(&c));
+        assert!(super::hash(&c) == super::hash(&d));
+        assert!(super::hash(&d) != super::hash(&e));
+        assert!(super::hash(&c) != super::hash(&f));
     }
 
     #[test]

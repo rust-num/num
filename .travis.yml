@@ -5,12 +5,9 @@ rust:
   - nightly
 sudo: false
 script:
-  - cargo build --verbose
-  - cargo test --verbose
-  - .travis/test_features.sh
+  - make test
   - |
-    [ $TRAVIS_RUST_VERSION != nightly ] ||
-    .travis/test_nightly.sh
+    [ $TRAVIS_RUST_VERSION != nightly ] || .travis/test_nightly.sh
   - cargo doc
 after_success: |
   [ $TRAVIS_BRANCH = master ] &&

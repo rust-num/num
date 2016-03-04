@@ -388,8 +388,7 @@ impl_from_primitive!(f64,   to_f64);
 /// # Examples
 ///
 /// ```
-/// use num;
-///
+/// # use num_traits as num;
 /// let twenty: f32 = num::cast(0x14).unwrap();
 /// assert_eq!(twenty, 20f32);
 /// ```

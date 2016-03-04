@@ -19,11 +19,15 @@ name = "shootout-pidigits"
 [dependencies]
 
 [dependencies.num-bigint]
-optional = false
+optional = true
 path = "bigint"
 
 [dependencies.num-integer]
 path = "./integer"
+
+[dependencies.num-rational]
+optional = true
+path = "rational"
 
 [dependencies.num-traits]
 path = "./traits"
@@ -46,7 +50,7 @@ version = "^0.7.0"
 version = "0.3.8"
 
 [features]
-bigint = []
+bigint = ["num-bigint"]
 complex = []
 default = ["bigint", "complex", "rand", "rational", "rustc-serialize"]
-rational = []
+rational = ["num-rational"]

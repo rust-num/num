@@ -28,7 +28,7 @@ pub trait PrimInt
     /// # Examples
     ///
     /// ```
-    /// use num::traits::PrimInt;
+    /// use num_traits::PrimInt;
     ///
     /// let n = 0b01001100u8;
     ///
@@ -41,7 +41,7 @@ pub trait PrimInt
     /// # Examples
     ///
     /// ```
-    /// use num::traits::PrimInt;
+    /// use num_traits::PrimInt;
     ///
     /// let n = 0b01001100u8;
     ///
@@ -55,7 +55,7 @@ pub trait PrimInt
     /// # Examples
     ///
     /// ```
-    /// use num::traits::PrimInt;
+    /// use num_traits::PrimInt;
     ///
     /// let n = 0b0101000u16;
     ///
@@ -69,7 +69,7 @@ pub trait PrimInt
     /// # Examples
     ///
     /// ```
-    /// use num::traits::PrimInt;
+    /// use num_traits::PrimInt;
     ///
     /// let n = 0b0101000u16;
     ///
@@ -83,7 +83,7 @@ pub trait PrimInt
     /// # Examples
     ///
     /// ```
-    /// use num::traits::PrimInt;
+    /// use num_traits::PrimInt;
     ///
     /// let n = 0x0123456789ABCDEFu64;
     /// let m = 0x3456789ABCDEF012u64;
@@ -98,7 +98,7 @@ pub trait PrimInt
     /// # Examples
     ///
     /// ```
-    /// use num::traits::PrimInt;
+    /// use num_traits::PrimInt;
     ///
     /// let n = 0x0123456789ABCDEFu64;
     /// let m = 0xDEF0123456789ABCu64;
@@ -115,7 +115,7 @@ pub trait PrimInt
     /// # Examples
     ///
     /// ```
-    /// use num::traits::PrimInt;
+    /// use num_traits::PrimInt;
     ///
     /// let n = 0x0123456789ABCDEFu64;
     /// let m = 0x3456789ABCDEF000u64;
@@ -132,7 +132,7 @@ pub trait PrimInt
     /// # Examples
     ///
     /// ```
-    /// use num::traits::PrimInt;
+    /// use num_traits::PrimInt;
     ///
     /// let n = 0xFEDCBA9876543210u64;
     /// let m = 0xFFFFEDCBA9876543u64;
@@ -149,7 +149,7 @@ pub trait PrimInt
     /// # Examples
     ///
     /// ```
-    /// use num::traits::PrimInt;
+    /// use num_traits::PrimInt;
     ///
     /// let n = 0x0123456789ABCDEFi64;
     /// let m = 0x3456789ABCDEF000i64;
@@ -166,7 +166,7 @@ pub trait PrimInt
     /// # Examples
     ///
     /// ```
-    /// use num::traits::PrimInt;
+    /// use num_traits::PrimInt;
     ///
     /// let n = 0xFEDCBA9876543210i64;
     /// let m = 0x000FEDCBA9876543i64;
@@ -180,7 +180,7 @@ pub trait PrimInt
     /// # Examples
     ///
     /// ```
-    /// use num::traits::PrimInt;
+    /// use num_traits::PrimInt;
     ///
     /// let n = 0x0123456789ABCDEFu64;
     /// let m = 0xEFCDAB8967452301u64;
@@ -196,7 +196,7 @@ pub trait PrimInt
     /// # Examples
     ///
     /// ```
-    /// use num::traits::PrimInt;
+    /// use num_traits::PrimInt;
     ///
     /// let n = 0x0123456789ABCDEFu64;
     ///
@@ -215,7 +215,7 @@ pub trait PrimInt
     /// # Examples
     ///
     /// ```
-    /// use num::traits::PrimInt;
+    /// use num_traits::PrimInt;
     ///
     /// let n = 0x0123456789ABCDEFu64;
     ///
@@ -234,7 +234,7 @@ pub trait PrimInt
     /// # Examples
     ///
     /// ```
-    /// use num::traits::PrimInt;
+    /// use num_traits::PrimInt;
     ///
     /// let n = 0x0123456789ABCDEFu64;
     ///
@@ -253,7 +253,7 @@ pub trait PrimInt
     /// # Examples
     ///
     /// ```
-    /// use num::traits::PrimInt;
+    /// use num_traits::PrimInt;
     ///
     /// let n = 0x0123456789ABCDEFu64;
     ///
@@ -270,7 +270,7 @@ pub trait PrimInt
     /// # Examples
     ///
     /// ```
-    /// use num::traits::PrimInt;
+    /// use num_traits::PrimInt;
     ///
     /// assert_eq!(2i32.pow(4), 16);
     /// ```
