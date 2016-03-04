@@ -135,6 +135,7 @@ macro_rules! impl_saturating_unsigned {
 
             #[inline(always)]
             fn rem(self, rhs: Saturating<$t>) -> Self::Output {
+                // Cannot overflow in unsigned
                 Saturating(self.0 % rhs.0)
             }
         }
@@ -179,8 +180,9 @@ macro_rules! impl_saturating_signed {
 
             #[inline(always)]
             fn rem(self, rhs: Saturating<$t>) -> Self::Output {
+                // Overflow when MIN % -1 = MAX + 1 (since MIN is even in two's complement)
                 if self.0 == <$t>::min_value() && rhs.0 == -1 {
-                    Saturating(self.0)
+                    Saturating(<$t>::max_value())
                 } else {
                     Saturating(self.0 % rhs.0)
                 }
