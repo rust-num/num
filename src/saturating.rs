@@ -125,7 +125,7 @@ macro_rules! impl_saturating_base {
 
             #[inline(always)]
             fn max_value() -> Self {
-                Saturating(<$t>::min_value())
+                Saturating(<$t>::max_value())
             }
         }
     };
