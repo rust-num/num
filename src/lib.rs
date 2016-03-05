@@ -69,6 +69,10 @@ extern crate rand;
 #[cfg(feature = "serde")]
 extern crate serde;
 
+extern crate num_traits;
+// Allow existing code to access traits without changes.
+pub use num_traits as traits;
+
 #[cfg(feature = "bigint")]
 pub use bigint::{BigInt, BigUint};
 #[cfg(feature = "rational")]
@@ -92,7 +96,6 @@ pub mod bigint;
 pub mod complex;
 pub mod integer;
 pub mod iter;
-pub mod traits;
 #[cfg(feature = "rational")]
 pub mod rational;
 
