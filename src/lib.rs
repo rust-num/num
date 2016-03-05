@@ -93,6 +93,7 @@ pub mod complex;
 pub mod integer;
 pub mod iter;
 pub mod traits;
+pub mod saturating;
 #[cfg(feature = "rational")]
 pub mod rational;
 
