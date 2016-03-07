@@ -996,7 +996,17 @@ prim_int_impl!(i32,   i32,   u32);
 prim_int_impl!(i64,   i64,   u64);
 prim_int_impl!(isize, isize, usize);
 
-/// A generic trait for converting a value to a number.
+/// A generic trait for converting a value to a primitive number type.
+///
+/// Return `Some` with the value if the new type can represent the value,
+/// otherwise return `None`.
+///
+/// Conversion details:
+///
+/// - Integers are converted to integers with the `as` operator if the
+///   result can be represented in the new type without wrapping.
+/// - Floats to and from integer conversions simply use `as` with
+///   no error cases. (May change in the future.)
 pub trait ToPrimitive {
     /// Converts the value of `self` to an `isize`.
     #[inline]
@@ -1393,6 +1403,9 @@ pub fn cast<T: NumCast,U: NumCast>(n: T) -> Option<U> {
 }
 
 /// An interface for casting between machine scalars.
+///
+/// Return `Some` with the value if the conversion succeeded, otherwise `None`.
+/// See `ToPrimitive` for more information.
 pub trait NumCast: Sized + ToPrimitive {
     /// Creates a number from another value that can be converted into
     /// a primitive via the `ToPrimitive` trait.
