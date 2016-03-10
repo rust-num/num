@@ -8,8 +8,9 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-
 //! Complex numbers.
+
+extern crate num_traits as traits;
 
 use std::fmt;
 use std::ops::{Add, Div, Mul, Neg, Sub};
@@ -17,7 +18,7 @@ use std::ops::{Add, Div, Mul, Neg, Sub};
 #[cfg(feature = "serde")]
 use serde;
 
-use {Zero, One, Num, Float};
+use traits::{Zero, One, Num, Float};
 
 // FIXME #1284: handle complex NaN & infinity etc. This
 // probably doesn't map to C's _Complex correctly.

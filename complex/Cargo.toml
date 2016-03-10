@@ -1,0 +1,10 @@
+[package]
+authors = ["Łukasz Jan Niemier <lukasz@niemier.pl>"]
+name = "num-complex"
+version = "0.1.0"
+
+[dependencies]
+
+[dependencies.num-traits]
+optional = false
+path = "../traits"

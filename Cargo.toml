@@ -22,6 +22,10 @@ name = "shootout-pidigits"
 optional = true
 path = "bigint"
 
+[dependencies.num-complex]
+optional = false
+path = "complex"
+
 [dependencies.num-integer]
 path = "./integer"
 

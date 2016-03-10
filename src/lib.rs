@@ -59,6 +59,8 @@
 
 extern crate num_traits;
 extern crate num_integer;
+#[cfg(feature = "complex")]
+extern crate num_complex;
 #[cfg(feature = "num-bigint")]
 extern crate num_bigint;
 #[cfg(feature = "num-rational")]
@@ -96,7 +98,7 @@ use std::ops::{Mul};
 
 #[cfg(feature = "num-bigint")]
 pub use num_bigint as bigint;
-pub mod complex;
+pub use num_complex as complex;
 pub use num_integer as integers;
 pub mod iter;
 pub use num_traits as traits;
