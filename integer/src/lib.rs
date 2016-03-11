@@ -275,7 +275,7 @@ macro_rules! impl_integer_for_isize {
             #[inline]
             fn lcm(&self, other: &Self) -> Self {
                 // should not have to recalculate abs
-                ((*self * *other) / self.gcd(other)).abs()
+                (*self * (*other / self.gcd(other))).abs()
             }
 
             /// Deprecated, use `is_multiple_of` instead.
