@@ -5,8 +5,8 @@ documentation = "http://rust-num.github.io/num"
 homepage = "https://github.com/rust-num/num"
 keywords = ["mathematics", "numerics"]
 license = "MIT/Apache-2.0"
-name = "num"
 repository = "https://github.com/rust-num/num"
+name = "num"
 version = "0.1.31"
 
 [[bench]]
