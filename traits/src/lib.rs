@@ -21,13 +21,13 @@ pub use sign::{Signed, Unsigned};
 pub use int::PrimInt;
 pub use cast::*;
 
-mod identities;
-mod sign;
-mod ops;
-mod bounds;
-mod float;
-mod int;
-mod cast;
+pub mod identities;
+pub mod sign;
+pub mod ops;
+pub mod bounds;
+pub mod float;
+pub mod int;
+pub mod cast;
 
 /// The base trait for numeric types
 pub trait Num: PartialEq + Zero + One

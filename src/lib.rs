@@ -57,14 +57,15 @@
        html_root_url = "http://rust-num.github.io/num/",
        html_playground_url = "http://play.rust-lang.org/")]
 
-extern crate num_traits;
-extern crate num_integer;
-#[cfg(feature = "complex")]
-extern crate num_complex;
+pub extern crate num_traits;
+pub extern crate num_integer;
+pub extern crate num_iter;
+#[cfg(feature = "num-complex")]
+pub extern crate num_complex;
 #[cfg(feature = "num-bigint")]
-extern crate num_bigint;
+pub extern crate num_bigint;
 #[cfg(feature = "num-rational")]
-extern crate num_rational;
+pub extern crate num_rational;
 
 #[cfg(feature = "rustc-serialize")]
 extern crate rustc_serialize;
@@ -84,7 +85,7 @@ pub use bigint::{BigInt, BigUint};
 pub use rational::Rational;
 #[cfg(all(feature = "num-rational", feature="num-bigint"))]
 pub use rational::BigRational;
-#[cfg(feature = "complex")]
+#[cfg(feature = "num-complex")]
 pub use complex::Complex;
 pub use integer::Integer;
 pub use iter::{range, range_inclusive, range_step, range_step_inclusive};
@@ -99,8 +100,8 @@ use std::ops::{Mul};
 #[cfg(feature = "num-bigint")]
 pub use num_bigint as bigint;
 pub use num_complex as complex;
-pub use num_integer as integers;
-pub mod iter;
+pub use num_integer as integer;
+pub use num_iter as iter;
 pub use num_traits as traits;
 #[cfg(feature = "num-rational")]
 pub use num_rational as rational;

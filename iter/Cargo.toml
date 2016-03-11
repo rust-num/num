@@ -1,0 +1,14 @@
+[package]
+authors = ["Łukasz Jan Niemier <lukasz@niemier.pl>"]
+name = "num-iter"
+version = "0.1.0"
+
+[dependencies]
+
+[dependencies.num-integer]
+optional = false
+path = "../integer"
+
+[dependencies.num-traits]
+optional = false
+path = "../traits"

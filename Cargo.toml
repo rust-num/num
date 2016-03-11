@@ -23,11 +23,15 @@ optional = true
 path = "bigint"
 
 [dependencies.num-complex]
-optional = false
+optional = true
 path = "complex"
 
 [dependencies.num-integer]
 path = "./integer"
+
+[dependencies.num-iter]
+optional = false
+path = "iter"
 
 [dependencies.num-rational]
 optional = true
@@ -55,6 +59,6 @@ version = "0.3.8"
 
 [features]
 bigint = ["num-bigint"]
-complex = []
-default = ["bigint", "complex", "rand", "rational", "rustc-serialize"]
+complex = ["num-complex"]
 rational = ["num-rational"]
+default = ["bigint", "complex", "rand", "rational", "rustc-serialize"]
