@@ -31,11 +31,9 @@ pub struct Range<A> {
 /// # Example
 ///
 /// ```rust
-/// use num::iter;
-///
 /// let array = [0, 1, 2, 3, 4];
 ///
-/// for i in iter::range(0, 5) {
+/// for i in num_iter::range(0, 5) {
 ///     println!("{}", i);
 ///     assert_eq!(i,  array[i]);
 /// }
@@ -265,7 +263,7 @@ mod tests {
     use std::usize;
     use std::ops::{Add, Mul};
     use std::cmp::Ordering;
-    use {One, ToPrimitive};
+    use traits::{One, ToPrimitive};
 
     #[test]
     fn test_range() {
