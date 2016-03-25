@@ -80,18 +80,18 @@ extern crate rand;
 extern crate serde;
 
 #[cfg(feature = "num-bigint")]
-pub use bigint::{BigInt, BigUint};
+pub use num_bigint::{BigInt, BigUint};
 #[cfg(feature = "num-rational")]
-pub use rational::Rational;
+pub use num_rational::Rational;
 #[cfg(all(feature = "num-rational", feature="num-bigint"))]
-pub use rational::BigRational;
+pub use num_rational::BigRational;
 #[cfg(feature = "num-complex")]
-pub use complex::Complex;
-pub use integer::Integer;
-pub use iter::{range, range_inclusive, range_step, range_step_inclusive};
-pub use traits::{Num, Zero, One, Signed, Unsigned, Bounded,
-                 Saturating, CheckedAdd, CheckedSub, CheckedMul, CheckedDiv,
-                 PrimInt, Float, ToPrimitive, FromPrimitive, NumCast, cast};
+pub use num_complex::Complex;
+pub use num_integer::Integer;
+pub use num_iter::{range, range_inclusive, range_step, range_step_inclusive};
+pub use num_traits::{Num, Zero, One, Signed, Unsigned, Bounded,
+                     Saturating, CheckedAdd, CheckedSub, CheckedMul, CheckedDiv,
+                     PrimInt, Float, ToPrimitive, FromPrimitive, NumCast, cast};
 
 #[cfg(test)] use std::hash;
 
