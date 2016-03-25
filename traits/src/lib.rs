@@ -18,16 +18,16 @@ pub use identities::{Zero, One};
 pub use ops::checked::*;
 pub use ops::saturating::Saturating;
 pub use sign::{Signed, Unsigned};
-pub use int::PrimInt;
 pub use cast::*;
+pub use int::PrimInt;
 
 pub mod identities;
 pub mod sign;
 pub mod ops;
 pub mod bounds;
 pub mod float;
-pub mod int;
 pub mod cast;
+pub mod int;
 
 /// The base trait for numeric types
 pub trait Num: PartialEq + Zero + One
