@@ -79,6 +79,7 @@ use std::num::ParseIntError;
 use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Rem, Shl, Shr, Sub};
 use std::str::{self, FromStr};
 use std::fmt;
+#[cfg(test)]
 use std::hash;
 use std::cmp::Ordering::{self, Less, Greater, Equal};
 use std::{f32, f64};

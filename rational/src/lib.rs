@@ -21,6 +21,7 @@ extern crate num_integer as integer;
 use std::cmp;
 use std::error::Error;
 use std::fmt;
+#[cfg(test)]
 use std::hash;
 use std::ops::{Add, Div, Mul, Neg, Rem, Sub};
 use std::str::FromStr;
