@@ -1,6 +1,6 @@
 CARGO_CMD ?= cargo
 
-packages = bigint integer rational traits
+packages = bigint complex integer iter rational traits
 
 test:
 	$(MAKE) run-all TASK="test"
