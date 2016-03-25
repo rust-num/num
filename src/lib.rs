@@ -93,8 +93,6 @@ pub use num_traits::{Num, Zero, One, Signed, Unsigned, Bounded,
                      Saturating, CheckedAdd, CheckedSub, CheckedMul, CheckedDiv,
                      PrimInt, Float, ToPrimitive, FromPrimitive, NumCast, cast};
 
-#[cfg(test)] use std::hash;
-
 use std::ops::{Mul};
 
 #[cfg(feature = "num-bigint")]
