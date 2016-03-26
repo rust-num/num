@@ -18,7 +18,11 @@
 //!
 //! ## Example
 //!
-//! ```rust,ignore
+//! ```rust
+//! extern crate num_bigint;
+//! extern crate num_traits;
+//!
+//! # fn main() {
 //! use num_bigint::BigUint;
 //! use num_traits::{Zero, One};
 //! use std::mem::replace;
@@ -37,6 +41,7 @@
 //!
 //! // This is a very large number.
 //! println!("fib(1000) = {}", fib(1000));
+//! # }
 //! ```
 //!
 //! It's easy to generate large random numbers:
