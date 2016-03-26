@@ -97,6 +97,7 @@ use std::ops::{Mul};
 
 #[cfg(feature = "num-bigint")]
 pub use num_bigint as bigint;
+#[cfg(feature = "num-complex")]
 pub use num_complex as complex;
 pub use num_integer as integer;
 pub use num_iter as iter;

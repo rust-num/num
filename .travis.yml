@@ -6,6 +6,7 @@ rust:
 sudo: false
 script:
   - make test
+  - .travis/test_features.sh
   - |
     [ $TRAVIS_RUST_VERSION != nightly ] || .travis/test_nightly.sh
   - cargo doc

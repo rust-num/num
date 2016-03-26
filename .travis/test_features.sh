@@ -3,5 +3,5 @@
 set -ex
 
 for feature in '' bigint rational complex; do
-  cargo test --verbose --no-default-features --features="$feature"
+  cargo build --verbose --no-default-features --features="$feature"
 done
