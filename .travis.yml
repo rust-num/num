@@ -5,6 +5,7 @@ rust:
   - nightly
 sudo: false
 script:
+  - cargo build --verbose
   - make test
   - .travis/test_features.sh
   - |
