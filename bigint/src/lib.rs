@@ -2884,6 +2884,11 @@ impl BigInt {
         str::from_utf8(buf).ok().and_then(|s| BigInt::from_str_radix(s, radix).ok())
     }
 
+    /// Determines the fewest bits necessary to express the `BigInt`,
+    /// not including the sign.
+    pub fn bits(&self) -> usize {
+        self.data.bits()
+    }
 
     /// Converts this `BigInt` into a `BigUint`, if it's not negative.
     #[inline]
