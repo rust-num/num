@@ -1,6 +1,6 @@
 [package]
 authors = ["The Rust Project Developers"]
-description = "A collection of numeric types and traits for Rust, including bigint,\ncomplex, rational, range iterators, generic integers, and more!\n"
+description = "Big integer implementation for Rust"
 documentation = "http://rust-num.github.io/num"
 homepage = "https://github.com/rust-num/num"
 keywords = ["mathematics", "numerics"]
