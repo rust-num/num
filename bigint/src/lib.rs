@@ -72,6 +72,8 @@
 
 #[cfg(any(feature = "rand", test))]
 extern crate rand;
+#[cfg(feature = "serde")]
+extern crate serde;
 
 extern crate num_integer as integer;
 extern crate num_traits as traits;
