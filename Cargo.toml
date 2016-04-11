@@ -1,6 +1,6 @@
 [package]
 authors = ["The Rust Project Developers"]
-description = "Metapackage exposing legacy interface of all `rust-num` crates"
+description = "A collection of numeric types and traits for Rust, including bigint,\ncomplex, rational, range iterators, generic integers, and more!\n"
 documentation = "http://rust-num.github.io/num"
 homepage = "https://github.com/rust-num/num"
 keywords = ["mathematics", "numerics"]
