@@ -67,18 +67,6 @@ pub extern crate num_bigint;
 #[cfg(feature = "num-rational")]
 pub extern crate num_rational;
 
-#[cfg(feature = "rustc-serialize")]
-extern crate rustc_serialize;
-
-// Some of the tests of non-RNG-based functionality are randomized using the
-// RNG-based functionality, so the RNG-based functionality needs to be enabled
-// for tests.
-#[cfg(any(feature = "rand", all(feature = "bigint", test)))]
-extern crate rand;
-
-#[cfg(feature = "serde")]
-extern crate serde;
-
 #[cfg(feature = "num-bigint")]
 pub use num_bigint::{BigInt, BigUint};
 #[cfg(feature = "num-rational")]

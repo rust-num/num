@@ -40,18 +40,6 @@ path = "rational"
 [dependencies.num-traits]
 path = "./traits"
 
-[dependencies.rand]
-optional = true
-version = "0.3.8"
-
-[dependencies.rustc-serialize]
-optional = true
-version = "0.3.13"
-
-[dependencies.serde]
-optional = true
-version = "^0.7.0"
-
 [dev-dependencies]
 
 [dev-dependencies.rand]
@@ -61,4 +49,15 @@ version = "0.3.8"
 bigint = ["num-bigint"]
 complex = ["num-complex"]
 rational = ["num-rational"]
-default = ["bigint", "complex", "rand", "rational", "rustc-serialize"]
+default = ["bigint", "complex", "rational", "rustc-serialize"]
+
+serde = [
+  "num-bigint/serde",
+  "num-complex/serde",
+  "num-rational/serde"
+]
+rustc-serialize = [
+  "num-bigint/rustc-serialize",
+  "num-complex/rustc-serialize",
+  "num-rational/rustc-serialize"
+]

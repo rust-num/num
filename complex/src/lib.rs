@@ -12,6 +12,12 @@
 
 extern crate num_traits as traits;
 
+#[cfg(feature = "rustc-serialize")]
+extern crate rustc_serialize;
+
+#[cfg(feature = "serde")]
+extern crate serde;
+
 use std::fmt;
 #[cfg(test)]
 use std::hash;

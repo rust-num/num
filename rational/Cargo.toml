@@ -5,8 +5,8 @@ documentation = "http://rust-num.github.io/num"
 homepage = "https://github.com/rust-num/num"
 keywords = ["mathematics", "numerics"]
 license = "MIT/Apache-2.0"
-repository = "https://github.com/rust-num/num"
 name = "num-rational"
+repository = "https://github.com/rust-num/num"
 version = "0.1.0"
 
 [dependencies]
@@ -21,10 +21,14 @@ path = "../integer"
 [dependencies.num-traits]
 path = "../traits"
 
+[dependencies.rustc-serialize]
+optional = true
+version = "0.3.19"
+
 [dependencies.serde]
 optional = true
 version = "0.7.0"
 
 [features]
-default = ["bigint"]
+default = ["bigint", "rustc-serialize"]
 bigint = ["num-bigint"]

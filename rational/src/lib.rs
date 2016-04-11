@@ -10,6 +10,8 @@
 
 //! Rational numbers
 
+#[cfg(feature = "rustc-serialize")]
+extern crate rustc_serialize;
 #[cfg(feature = "serde")]
 extern crate serde;
 #[cfg(feature = "num-bigint")]
