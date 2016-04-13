@@ -7,7 +7,7 @@ set -ex
 for toolchain in 1.0.0 beta nightly; do
     run="multirust run $toolchain"
     $run cargo build --verbose
-    $run cargo test --verbose
+    $run make test
     $run .travis/test_features.sh
     if [ $toolchain = nightly ]; then
         $run .travis/test_nightly.sh

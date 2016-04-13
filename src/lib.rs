@@ -57,44 +57,41 @@
        html_root_url = "http://rust-num.github.io/num/",
        html_playground_url = "http://play.rust-lang.org/")]
 
-#[cfg(feature = "rustc-serialize")]
-extern crate rustc_serialize;
+pub extern crate num_traits;
+pub extern crate num_integer;
+pub extern crate num_iter;
+#[cfg(feature = "num-complex")]
+pub extern crate num_complex;
+#[cfg(feature = "num-bigint")]
+pub extern crate num_bigint;
+#[cfg(feature = "num-rational")]
+pub extern crate num_rational;
 
-// Some of the tests of non-RNG-based functionality are randomized using the
-// RNG-based functionality, so the RNG-based functionality needs to be enabled
-// for tests.
-#[cfg(any(feature = "rand", all(feature = "bigint", test)))]
-extern crate rand;
-
-#[cfg(feature = "serde")]
-extern crate serde;
-
-#[cfg(feature = "bigint")]
-pub use bigint::{BigInt, BigUint};
-#[cfg(feature = "rational")]
-pub use rational::Rational;
-#[cfg(all(feature = "rational", feature="bigint"))]
-pub use rational::BigRational;
-#[cfg(feature = "complex")]
-pub use complex::Complex;
-pub use integer::Integer;
-pub use iter::{range, range_inclusive, range_step, range_step_inclusive};
-pub use traits::{Num, Zero, One, Signed, Unsigned, Bounded,
-                 Saturating, CheckedAdd, CheckedSub, CheckedMul, CheckedDiv,
-                 PrimInt, Float, ToPrimitive, FromPrimitive, NumCast, cast};
-
-#[cfg(test)] use std::hash;
+#[cfg(feature = "num-bigint")]
+pub use num_bigint::{BigInt, BigUint};
+#[cfg(feature = "num-rational")]
+pub use num_rational::Rational;
+#[cfg(all(feature = "num-rational", feature="num-bigint"))]
+pub use num_rational::BigRational;
+#[cfg(feature = "num-complex")]
+pub use num_complex::Complex;
+pub use num_integer::Integer;
+pub use num_iter::{range, range_inclusive, range_step, range_step_inclusive};
+pub use num_traits::{Num, Zero, One, Signed, Unsigned, Bounded,
+                     Saturating, CheckedAdd, CheckedSub, CheckedMul, CheckedDiv,
+                     PrimInt, Float, ToPrimitive, FromPrimitive, NumCast, cast};
 
 use std::ops::{Mul};
 
-#[cfg(feature = "bigint")]
-pub mod bigint;
-pub mod complex;
-pub mod integer;
-pub mod iter;
-pub mod traits;
-#[cfg(feature = "rational")]
-pub mod rational;
+#[cfg(feature = "num-bigint")]
+pub use num_bigint as bigint;
+#[cfg(feature = "num-complex")]
+pub use num_complex as complex;
+pub use num_integer as integer;
+pub use num_iter as iter;
+pub use num_traits as traits;
+#[cfg(feature = "num-rational")]
+pub use num_rational as rational;
 
 /// Returns the additive identity, `0`.
 #[inline(always)] pub fn zero<T: Zero>() -> T { Zero::zero() }
@@ -205,12 +202,4 @@ pub fn checked_pow<T: Clone + One + CheckedMul>(mut base: T, mut exp: usize) -> 
         }
     }
     Some(acc)
-}
-
-#[cfg(test)]
-fn hash<T: hash::Hash>(x: &T) -> u64 {
-    use std::hash::Hasher;
-    let mut hasher = hash::SipHasher::new();
-    x.hash(&mut hasher);
-    hasher.finish()
 }

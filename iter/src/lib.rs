@@ -10,7 +10,11 @@
 
 //! External iterators for generic mathematics
 
-use {Integer, Zero, One, CheckedAdd, ToPrimitive};
+extern crate num_traits as traits;
+extern crate num_integer as integer;
+
+use integer::Integer;
+use traits::{Zero, One, CheckedAdd, ToPrimitive};
 use std::ops::{Add, Sub};
 
 /// An iterator over the range [start, stop)
@@ -27,11 +31,9 @@ pub struct Range<A> {
 /// # Example
 ///
 /// ```rust
-/// use num::iter;
-///
 /// let array = [0, 1, 2, 3, 4];
 ///
-/// for i in iter::range(0, 5) {
+/// for i in num_iter::range(0, 5) {
 ///     println!("{}", i);
 ///     assert_eq!(i,  array[i]);
 /// }
@@ -261,7 +263,7 @@ mod tests {
     use std::usize;
     use std::ops::{Add, Mul};
     use std::cmp::Ordering;
-    use {One, ToPrimitive};
+    use traits::{One, ToPrimitive};
 
     #[test]
     fn test_range() {

@@ -8,16 +8,25 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-
 //! Complex numbers.
 
+extern crate num_traits as traits;
+
+#[cfg(feature = "rustc-serialize")]
+extern crate rustc_serialize;
+
+#[cfg(feature = "serde")]
+extern crate serde;
+
 use std::fmt;
+#[cfg(test)]
+use std::hash;
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
 #[cfg(feature = "serde")]
 use serde;
 
-use {Zero, One, Num, Float};
+use traits::{Zero, One, Num, Float};
 
 // FIXME #1284: handle complex NaN & infinity etc. This
 // probably doesn't map to C's _Complex correctly.
@@ -594,13 +603,21 @@ impl<T> serde::Deserialize for Complex<T> where
 }
 
 #[cfg(test)]
+fn hash<T: hash::Hash>(x: &T) -> u64 {
+    use std::hash::Hasher;
+    let mut hasher = hash::SipHasher::new();
+    x.hash(&mut hasher);
+    hasher.finish()
+}
+
+#[cfg(test)]
 mod test {
     #![allow(non_upper_case_globals)]
 
     use super::{Complex64, Complex};
     use std::f64;
 
-    use {Zero, One, Float};
+    use traits::{Zero, One, Float};
 
     pub const _0_0i : Complex64 = Complex { re: 0.0, im: 0.0 };
     pub const _1_0i : Complex64 = Complex { re: 1.0, im: 0.0 };
@@ -993,7 +1010,7 @@ mod test {
 
     mod complex_arithmetic {
         use super::{_0_0i, _1_0i, _1_1i, _0_1i, _neg1_1i, _05_05i, all_consts};
-        use Zero;
+        use traits::Zero;
 
         #[test]
         fn test_add() {

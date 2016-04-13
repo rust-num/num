@@ -10,17 +10,17 @@
 
 //! Integer trait and functions.
 
-use {Num, Signed};
+extern crate num_traits as traits;
 
-pub trait Integer
-    : Sized + Num + Ord
-{
+use traits::{Num, Signed};
+
+pub trait Integer: Sized + Num + PartialOrd + Ord + Eq {
     /// Floored integer division.
     ///
     /// # Examples
     ///
     /// ~~~
-    /// # use num::Integer;
+    /// # use num_integer::Integer;
     /// assert!(( 8).div_floor(& 3) ==  2);
     /// assert!(( 8).div_floor(&-3) == -3);
     /// assert!((-8).div_floor(& 3) == -3);
@@ -36,7 +36,7 @@ pub trait Integer
     /// Floored integer modulo, satisfying:
     ///
     /// ~~~
-    /// # use num::Integer;
+    /// # use num_integer::Integer;
     /// # let n = 1; let d = 1;
     /// assert!(n.div_floor(&d) * d + n.mod_floor(&d) == n)
     /// ~~~
@@ -44,7 +44,7 @@ pub trait Integer
     /// # Examples
     ///
     /// ~~~
-    /// # use num::Integer;
+    /// # use num_integer::Integer;
     /// assert!(( 8).mod_floor(& 3) ==  2);
     /// assert!(( 8).mod_floor(&-3) == -1);
     /// assert!((-8).mod_floor(& 3) ==  1);
@@ -62,7 +62,7 @@ pub trait Integer
     /// # Examples
     ///
     /// ~~~
-    /// # use num::Integer;
+    /// # use num_integer::Integer;
     /// assert_eq!(6.gcd(&8), 2);
     /// assert_eq!(7.gcd(&3), 1);
     /// ~~~
@@ -73,7 +73,7 @@ pub trait Integer
     /// # Examples
     ///
     /// ~~~
-    /// # use num::Integer;
+    /// # use num_integer::Integer;
     /// assert_eq!(7.lcm(&3), 21);
     /// assert_eq!(2.lcm(&4), 4);
     /// ~~~
@@ -87,7 +87,7 @@ pub trait Integer
     /// # Examples
     ///
     /// ~~~
-    /// # use num::Integer;
+    /// # use num_integer::Integer;
     /// assert_eq!(9.is_multiple_of(&3), true);
     /// assert_eq!(3.is_multiple_of(&9), false);
     /// ~~~
@@ -98,7 +98,7 @@ pub trait Integer
     /// # Examples
     ///
     /// ~~~
-    /// # use num::Integer;
+    /// # use num_integer::Integer;
     /// assert_eq!(3.is_even(), false);
     /// assert_eq!(4.is_even(), true);
     /// ~~~
@@ -109,7 +109,7 @@ pub trait Integer
     /// # Examples
     ///
     /// ~~~
-    /// # use num::Integer;
+    /// # use num_integer::Integer;
     /// assert_eq!(3.is_odd(), true);
     /// assert_eq!(4.is_odd(), false);
     /// ~~~
@@ -121,7 +121,7 @@ pub trait Integer
     /// # Examples
     ///
     /// ~~~
-    /// # use num::Integer;
+    /// # use num_integer::Integer;
     /// assert_eq!(( 8).div_rem( &3), ( 2,  2));
     /// assert_eq!(( 8).div_rem(&-3), (-2,  2));
     /// assert_eq!((-8).div_rem( &3), (-2, -2));
@@ -141,7 +141,7 @@ pub trait Integer
     /// # Examples
     ///
     /// ~~~
-    /// # use num::Integer;
+    /// # use num_integer::Integer;
     /// assert_eq!(( 8).div_mod_floor( &3), ( 2,  2));
     /// assert_eq!(( 8).div_mod_floor(&-3), (-3, -1));
     /// assert_eq!((-8).div_mod_floor( &3), (-3,  1));
@@ -158,26 +158,44 @@ pub trait Integer
 }
 
 /// Simultaneous integer division and modulus
-#[inline] pub fn div_rem<T: Integer>(x: T, y: T) -> (T, T) { x.div_rem(&y) }
+#[inline]
+pub fn div_rem<T: Integer>(x: T, y: T) -> (T, T) {
+    x.div_rem(&y)
+}
 /// Floored integer division
-#[inline] pub fn div_floor<T: Integer>(x: T, y: T) -> T { x.div_floor(&y) }
+#[inline]
+pub fn div_floor<T: Integer>(x: T, y: T) -> T {
+    x.div_floor(&y)
+}
 /// Floored integer modulus
-#[inline] pub fn mod_floor<T: Integer>(x: T, y: T) -> T { x.mod_floor(&y) }
+#[inline]
+pub fn mod_floor<T: Integer>(x: T, y: T) -> T {
+    x.mod_floor(&y)
+}
 /// Simultaneous floored integer division and modulus
-#[inline] pub fn div_mod_floor<T: Integer>(x: T, y: T) -> (T, T) { x.div_mod_floor(&y) }
+#[inline]
+pub fn div_mod_floor<T: Integer>(x: T, y: T) -> (T, T) {
+    x.div_mod_floor(&y)
+}
 
 /// Calculates the Greatest Common Divisor (GCD) of the number and `other`. The
 /// result is always positive.
-#[inline(always)] pub fn gcd<T: Integer>(x: T, y: T) -> T { x.gcd(&y) }
+#[inline(always)]
+pub fn gcd<T: Integer>(x: T, y: T) -> T {
+    x.gcd(&y)
+}
 /// Calculates the Lowest Common Multiple (LCM) of the number and `other`.
-#[inline(always)] pub fn lcm<T: Integer>(x: T, y: T) -> T { x.lcm(&y) }
+#[inline(always)]
+pub fn lcm<T: Integer>(x: T, y: T) -> T {
+    x.lcm(&y)
+}
 
 macro_rules! impl_integer_for_isize {
     ($T:ty, $test_mod:ident) => (
         impl Integer for $T {
             /// Floored integer division
             #[inline]
-            fn div_floor(&self, other: &$T) -> $T {
+            fn div_floor(&self, other: &Self) -> Self {
                 // Algorithm from [Daan Leijen. _Division and Modulus for Computer Scientists_,
                 // December 2001](http://research.microsoft.com/pubs/151917/divmodnote-letter.pdf)
                 match self.div_rem(other) {
@@ -189,7 +207,7 @@ macro_rules! impl_integer_for_isize {
 
             /// Floored integer modulo
             #[inline]
-            fn mod_floor(&self, other: &$T) -> $T {
+            fn mod_floor(&self, other: &Self) -> Self {
                 // Algorithm from [Daan Leijen. _Division and Modulus for Computer Scientists_,
                 // December 2001](http://research.microsoft.com/pubs/151917/divmodnote-letter.pdf)
                 match *self % *other {
@@ -201,7 +219,7 @@ macro_rules! impl_integer_for_isize {
 
             /// Calculates `div_floor` and `mod_floor` simultaneously
             #[inline]
-            fn div_mod_floor(&self, other: &$T) -> ($T,$T) {
+            fn div_mod_floor(&self, other: &Self) -> (Self, Self) {
                 // Algorithm from [Daan Leijen. _Division and Modulus for Computer Scientists_,
                 // December 2001](http://research.microsoft.com/pubs/151917/divmodnote-letter.pdf)
                 match self.div_rem(other) {
@@ -214,7 +232,7 @@ macro_rules! impl_integer_for_isize {
             /// Calculates the Greatest Common Divisor (GCD) of the number and
             /// `other`. The result is always positive.
             #[inline]
-            fn gcd(&self, other: &$T) -> $T {
+            fn gcd(&self, other: &Self) -> Self {
                 // Use Stein's algorithm
                 let mut m = *self;
                 let mut n = *other;
@@ -231,7 +249,7 @@ macro_rules! impl_integer_for_isize {
                 // Assuming two's complement, the number created by the shift
                 // is positive for all numbers except gcd = abs(min value)
                 // The call to .abs() causes a panic in debug mode
-                if m == <$T>::min_value() || n == <$T>::min_value() {
+                if m == Self::min_value() || n == Self::min_value() {
                     return (1 << shift).abs()
                 }
 
@@ -255,18 +273,22 @@ macro_rules! impl_integer_for_isize {
             /// Calculates the Lowest Common Multiple (LCM) of the number and
             /// `other`.
             #[inline]
-            fn lcm(&self, other: &$T) -> $T {
+            fn lcm(&self, other: &Self) -> Self {
                 // should not have to recalculate abs
                 (*self * (*other / self.gcd(other))).abs()
             }
 
             /// Deprecated, use `is_multiple_of` instead.
             #[inline]
-            fn divides(&self, other: &$T) -> bool { return self.is_multiple_of(other); }
+            fn divides(&self, other: &Self) -> bool {
+                self.is_multiple_of(other)
+            }
 
             /// Returns `true` if the number is a multiple of `other`.
             #[inline]
-            fn is_multiple_of(&self, other: &$T) -> bool { *self % *other == 0 }
+            fn is_multiple_of(&self, other: &Self) -> bool {
+                *self % *other == 0
+            }
 
             /// Returns `true` if the number is divisible by `2`
             #[inline]
@@ -278,7 +300,7 @@ macro_rules! impl_integer_for_isize {
 
             /// Simultaneous truncated integer division and modulus.
             #[inline]
-            fn div_rem(&self, other: &$T) -> ($T, $T) {
+            fn div_rem(&self, other: &Self) -> (Self, Self) {
                 (*self / *other, *self % *other)
             }
         }
@@ -293,7 +315,7 @@ macro_rules! impl_integer_for_isize {
             /// - `d`: denominator (divisor)
             /// - `qr`: quotient and remainder
             #[cfg(test)]
-            fn test_division_rule((n,d): ($T,$T), (q,r): ($T,$T)) {
+            fn test_division_rule((n,d): ($T, $T), (q,r): ($T, $T)) {
                 assert_eq!(d * q + r, n);
             }
 
@@ -462,26 +484,30 @@ macro_rules! impl_integer_for_isize {
     )
 }
 
-impl_integer_for_isize!(i8,   test_integer_i8);
-impl_integer_for_isize!(i16,  test_integer_i16);
-impl_integer_for_isize!(i32,  test_integer_i32);
-impl_integer_for_isize!(i64,  test_integer_i64);
-impl_integer_for_isize!(isize,  test_integer_isize);
+impl_integer_for_isize!(i8, test_integer_i8);
+impl_integer_for_isize!(i16, test_integer_i16);
+impl_integer_for_isize!(i32, test_integer_i32);
+impl_integer_for_isize!(i64, test_integer_i64);
+impl_integer_for_isize!(isize, test_integer_isize);
 
 macro_rules! impl_integer_for_usize {
     ($T:ty, $test_mod:ident) => (
         impl Integer for $T {
             /// Unsigned integer division. Returns the same result as `div` (`/`).
             #[inline]
-            fn div_floor(&self, other: &$T) -> $T { *self / *other }
+            fn div_floor(&self, other: &Self) -> Self {
+                *self / *other
+            }
 
             /// Unsigned integer modulo operation. Returns the same result as `rem` (`%`).
             #[inline]
-            fn mod_floor(&self, other: &$T) -> $T { *self % *other }
+            fn mod_floor(&self, other: &Self) -> Self {
+                *self % *other
+            }
 
             /// Calculates the Greatest Common Divisor (GCD) of the number and `other`
             #[inline]
-            fn gcd(&self, other: &$T) -> $T {
+            fn gcd(&self, other: &Self) -> Self {
                 // Use Stein's algorithm
                 let mut m = *self;
                 let mut n = *other;
@@ -505,29 +531,37 @@ macro_rules! impl_integer_for_usize {
 
             /// Calculates the Lowest Common Multiple (LCM) of the number and `other`.
             #[inline]
-            fn lcm(&self, other: &$T) -> $T {
+            fn lcm(&self, other: &Self) -> Self {
                 *self * (*other / self.gcd(other))
             }
 
             /// Deprecated, use `is_multiple_of` instead.
             #[inline]
-            fn divides(&self, other: &$T) -> bool { return self.is_multiple_of(other); }
+            fn divides(&self, other: &Self) -> bool {
+                self.is_multiple_of(other)
+            }
 
             /// Returns `true` if the number is a multiple of `other`.
             #[inline]
-            fn is_multiple_of(&self, other: &$T) -> bool { *self % *other == 0 }
+            fn is_multiple_of(&self, other: &Self) -> bool {
+                *self % *other == 0
+            }
 
             /// Returns `true` if the number is divisible by `2`.
             #[inline]
-            fn is_even(&self) -> bool { (*self) & 1 == 0 }
+            fn is_even(&self) -> bool {
+                *self % 2 == 0
+            }
 
             /// Returns `true` if the number is not divisible by `2`.
             #[inline]
-            fn is_odd(&self) -> bool { !(*self).is_even() }
+            fn is_odd(&self) -> bool {
+                !self.is_even()
+            }
 
             /// Simultaneous truncated integer division and modulus.
             #[inline]
-            fn div_rem(&self, other: &$T) -> ($T, $T) {
+            fn div_rem(&self, other: &Self) -> (Self, Self) {
                 (*self / *other, *self % *other)
             }
         }
@@ -621,10 +655,10 @@ macro_rules! impl_integer_for_usize {
     )
 }
 
-impl_integer_for_usize!(u8,   test_integer_u8);
-impl_integer_for_usize!(u16,  test_integer_u16);
-impl_integer_for_usize!(u32,  test_integer_u32);
-impl_integer_for_usize!(u64,  test_integer_u64);
+impl_integer_for_usize!(u8, test_integer_u8);
+impl_integer_for_usize!(u16, test_integer_u16);
+impl_integer_for_usize!(u32, test_integer_u32);
+impl_integer_for_usize!(u64, test_integer_u64);
 impl_integer_for_usize!(usize, test_integer_usize);
 
 #[test]
