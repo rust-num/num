@@ -526,12 +526,14 @@ impl<T: Clone + Integer + Signed> Signed for Ratio<T> {
 
     #[inline]
     fn is_positive(&self) -> bool {
-        !self.is_negative()
+        (self.numer.is_positive() && self.denom.is_positive()) ||
+        (self.numer.is_negative() && self.denom.is_negative())
     }
 
     #[inline]
     fn is_negative(&self) -> bool {
-        self.numer.is_negative() ^ self.denom.is_negative()
+        (self.numer.is_negative() && self.denom.is_positive()) ||
+        (self.numer.is_positive() && self.denom.is_negative())
     }
 }
 
@@ -673,6 +675,14 @@ mod test {
     pub const _NEG1_2: Rational = Ratio {
         numer: -1,
         denom: 2,
+    };
+    pub const _1_NEG2: Rational = Ratio {
+        numer: 1,
+        denom: -2,
+    };
+    pub const _NEG1_NEG2: Rational = Ratio {
+        numer: -1,
+        denom: -2,
     };
     pub const _1_3: Rational = Ratio {
         numer: 1,
@@ -1081,9 +1091,17 @@ mod test {
         assert_eq!(_1_2.abs_sub(&_3_2), Zero::zero());
         assert_eq!(_1_2.signum(), One::one());
         assert_eq!(_NEG1_2.signum(), -<Ratio<isize>>::one());
+        assert_eq!(_0.signum(), Zero::zero());
         assert!(_NEG1_2.is_negative());
+        assert!(_1_NEG2.is_negative());
         assert!(!_NEG1_2.is_positive());
+        assert!(!_1_NEG2.is_positive());
+        assert!(_1_2.is_positive());
+        assert!(_NEG1_NEG2.is_positive());
         assert!(!_1_2.is_negative());
+        assert!(!_NEG1_NEG2.is_negative());
+        assert!(!_0.is_positive());
+        assert!(!_0.is_negative());
     }
 
     #[test]
