@@ -14,7 +14,9 @@ version = "0.1.32"
 [dependencies.num-integer]
 optional = false
 path = "../integer"
+version = "0.1.32"
 
 [dependencies.num-traits]
 optional = false
 path = "../traits"
+version = "0.1.32"
