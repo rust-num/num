@@ -14,12 +14,15 @@ version = "0.1.32"
 [dependencies.num-bigint]
 optional = true
 path = "../bigint"
+version = "0.1.32"
 
 [dependencies.num-integer]
 path = "../integer"
+version = "0.1.32"
 
 [dependencies.num-traits]
 path = "../traits"
+version = "0.1.32"
 
 [dependencies.rustc-serialize]
 optional = true
