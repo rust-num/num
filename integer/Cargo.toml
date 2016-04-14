@@ -11,3 +11,4 @@ version = "0.1.32"
 
 [dependencies.num-traits]
 path = "../traits"
+version = "0.1.32"
