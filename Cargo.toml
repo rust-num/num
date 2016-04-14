@@ -21,24 +21,30 @@ name = "shootout-pidigits"
 [dependencies.num-bigint]
 optional = true
 path = "bigint"
+version = "0.1.32"
 
 [dependencies.num-complex]
 optional = true
 path = "complex"
+version = "0.1.32"
 
 [dependencies.num-integer]
 path = "./integer"
+version = "0.1.32"
 
 [dependencies.num-iter]
 optional = false
 path = "iter"
+version = "0.1.32"
 
 [dependencies.num-rational]
 optional = true
 path = "rational"
+version = "0.1.32"
 
 [dependencies.num-traits]
 path = "./traits"
+version = "0.1.32"
 
 [dev-dependencies]
 
