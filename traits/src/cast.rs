@@ -222,9 +222,11 @@ macro_rules! impl_to_primitive_float_to_float {
         if size_of::<$SrcT>() <= size_of::<$DstT>() {
             Some($slf as $DstT)
         } else {
+            // Make sure the value is in range for the cast.
+            // NaN and +-inf are cast as they are.
             let n = $slf as f64;
-            let max_value: $SrcT = ::std::$SrcT::MAX;
-            if -max_value as f64 <= n && n <= max_value as f64 {
+            let max_value: $DstT = ::std::$DstT::MAX;
+            if !n.is_finite() || (-max_value as f64 <= n && n <= max_value as f64) {
                 Some($slf as $DstT)
             } else {
                 None
@@ -431,3 +433,18 @@ impl_num_cast!(i64,   to_i64);
 impl_num_cast!(isize, to_isize);
 impl_num_cast!(f32,   to_f32);
 impl_num_cast!(f64,   to_f64);
+
+
+#[test]
+fn to_primitive_float() {
+    use std::f32;
+    use std::f64;
+
+    let f32_toolarge = 1e39f64;
+    assert_eq!(f32_toolarge.to_f32(), None);
+    assert_eq!((f32::MAX as f64).to_f32(), Some(f32::MAX));
+    assert_eq!((-f32::MAX as f64).to_f32(), Some(-f32::MAX));
+    assert_eq!(f64::INFINITY.to_f32(), Some(f32::INFINITY));
+    assert_eq!((f64::NEG_INFINITY).to_f32(), Some(f32::NEG_INFINITY));
+    assert!((f64::NAN).to_f32().map_or(false, |f| f.is_nan()));
+}
