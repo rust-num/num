@@ -27,3 +27,6 @@ version = "^0.7.0"
 [features]
 default = ["rustc-serialize"]
 unstable = []
+
+# Requires Rust 1.8 and enables AddAssign etc.
+opassign = []
