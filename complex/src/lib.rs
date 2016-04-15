@@ -516,6 +516,88 @@ impl<T: Clone + Num> Div<Complex<T>> for Complex<T> {
     }
 }
 
+// Op Assign
+
+mod opassign {
+    use std::ops::{AddAssign, SubAssign, MulAssign, DivAssign};
+
+    use traits::Num;
+
+    use Complex;
+
+    impl<T: Clone + Num> AddAssign for Complex<T> {
+        fn add_assign(&mut self, other: Complex<T>) {
+            *self = self.clone() + other;
+        }
+    }
+
+    impl<T: Clone + Num> SubAssign for Complex<T> {
+        fn sub_assign(&mut self, other: Complex<T>) {
+            *self = self.clone() - other;
+        }
+    }
+
+    impl<T: Clone + Num> MulAssign for Complex<T> {
+        fn mul_assign(&mut self, other: Complex<T>) {
+            *self = self.clone() * other;
+        }
+    }
+
+    impl<T: Clone + Num> DivAssign for Complex<T> {
+        fn div_assign(&mut self, other: Complex<T>) {
+            *self = self.clone() / other;
+        }
+    }
+
+    impl<T: Num + AddAssign> AddAssign<T> for Complex<T> {
+        fn add_assign(&mut self, other: T) {
+            self.re += other;
+        }
+    }
+
+    impl<T: Num + SubAssign> SubAssign<T> for Complex<T> {
+        fn sub_assign(&mut self, other: T) {
+            self.re -= other;
+        }
+    }
+
+    impl<T: Clone + Num + MulAssign> MulAssign<T> for Complex<T> {
+        fn mul_assign(&mut self, other: T) {
+            self.re *= other.clone();
+            self.im *= other;
+        }
+    }
+
+    impl<T: Clone + Num + DivAssign> DivAssign<T> for Complex<T> {
+        fn div_assign(&mut self, other: T) {
+            self.re /= other.clone();
+            self.im /= other;
+        }
+    }
+
+    macro_rules! forward_op_assign {
+        (impl $imp:ident, $method:ident) => {
+            impl<'a, T: Clone + Num> $imp<&'a Complex<T>> for Complex<T> {
+                #[inline]
+                fn $method(&mut self, other: &Complex<T>) {
+                    self.$method(other.clone())
+                }
+            }
+            impl<'a, T: Clone + Num + $imp> $imp<&'a T> for Complex<T> {
+                #[inline]
+                fn $method(&mut self, other: &T) {
+                    self.$method(other.clone())
+                }
+            }
+        }
+    }
+
+    forward_op_assign!(impl AddAssign, add_assign);
+    forward_op_assign!(impl SubAssign, sub_assign);
+    forward_op_assign!(impl MulAssign, mul_assign);
+    forward_op_assign!(impl DivAssign, div_assign);
+}
+
 impl<T: Clone + Num + Neg<Output = T>> Neg for Complex<T> {
     type Output = Complex<T>;
 
