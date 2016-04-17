@@ -120,7 +120,8 @@ impl<T: Clone + Float> Complex<T> {
     #[inline]
     pub fn exp(&self) -> Complex<T> {
         // formula: e^(a + bi) = e^a (cos(b) + i*sin(b))
-        Complex::new(self.im.cos(), self.im.sin()).scale(self.re.exp())
+        // = from_polar(e^a, b)
+        Complex::from_polar(&self.re.exp(), &self.im)
     }
 
     /// Computes the principal value of natural logarithm of `self`.
@@ -133,7 +134,8 @@ impl<T: Clone + Float> Complex<T> {
     #[inline]
     pub fn ln(&self) -> Complex<T> {
         // formula: ln(z) = ln|z| + i*arg(z)
-        Complex::new(self.norm().ln(), self.arg())
+        let (r, theta) = self.to_polar();
+        Complex::new(r.ln(), theta)
     }
 
     /// Computes the principal value of the square root of `self`.
@@ -149,6 +151,53 @@ impl<T: Clone + Float> Complex<T> {
         let two = T::one() + T::one();
         let (r, theta) = self.to_polar();
         Complex::from_polar(&(r.sqrt()), &(theta/two))
+    }
+    
+    /// Raises `self` to a floating point power.
+    #[inline]
+    pub fn powf(&self, exp: T) -> Complex<T> {
+        // formula: x^y = (ρ e^(i θ))^y = ρ^y e^(i θ y)
+        // = from_polar(ρ^y, θ y)
+        let (r, theta) = self.to_polar();
+        Complex::from_polar(&r.powf(exp), &(theta*exp))
+    }
+    
+    /// Returns the logarithm of `self` with respect to an arbitrary base.
+    #[inline]
+    pub fn log(&self, base: T) -> Complex<T> {
+        // formula: log_y(x) = log_y(ρ e^(i θ)) 
+        // = log_y(ρ) + log_y(e^(i θ)) = log_y(ρ) + ln(e^(i θ)) / ln(y) 
+        // = log_y(ρ) + i θ / ln(y) 
+        let (r, theta) = self.to_polar();
+        Complex::new(r.log(base), theta / base.ln())
+    }
+    
+    /// Raises `self` to a complex power.
+    #[inline]
+    pub fn powc(&self, exp: Complex<T>) -> Complex<T> {
+        // formula: x^y = (a + i b)^(c + i d)
+        // = (ρ e^(i θ))^c (ρ e^(i θ))^(i d) 
+        //    where ρ=|x| and θ=arg(x)
+        // = ρ^c e^(−d θ) e^(i c θ) ρ^(i d)
+        // = p^c e^(−d θ) (cos(c θ) 
+        //   + i sin(c θ)) (cos(d ln(ρ)) + i sin(d ln(ρ)))
+        // = p^c e^(−d θ) (
+        //   cos(c θ) cos(d ln(ρ)) − sin(c θ) sin(d ln(ρ))
+        //   + i(cos(c θ) sin(d ln(ρ)) + sin(c θ) cos(d ln(ρ))))
+        // = p^c e^(−d θ) (cos(c θ + d ln(ρ)) + i sin(c θ + d ln(ρ)))
+        // = from_polar(p^c e^(−d θ), c θ + d ln(ρ))
+        let (r, theta) = self.to_polar();
+        Complex::from_polar(
+            &(r.powf(exp.re) * (-exp.im * theta).exp()), 
+            &(exp.re * theta + exp.im * r.ln()))
+    }
+    
+    /// Raises a floating point number to the complex power `self`.
+    #[inline]
+    pub fn expf(&self, base: T) -> Complex<T> {
+        // formula: x^(a+bi) = x^a x^bi = x^a e^(b ln(x) i) 
+        // = from_polar(x^a, b ln(x))
+        Complex::from_polar(&base.powf(self.re), &(self.im * base.ln()))
     }
 
     /// Computes the sine of `self`.
@@ -716,8 +765,12 @@ mod test {
     }
 
     fn close(a: Complex64, b: Complex64) -> bool {
+        close_to_tol(a, b, 1e-10)
+    }
+    
+    fn close_to_tol(a: Complex64, b: Complex64, tol: f64) -> bool {
         // returns true if a and b are reasonably close
-        (a == b) || (a-b).norm() < 1e-10
+        (a == b) || (a-b).norm() < tol
     }
 
     #[test]
@@ -747,6 +800,49 @@ mod test {
             // for this branch, -pi <= arg(ln(z)) <= pi
             assert!(-f64::consts::PI <= c.ln().arg() && c.ln().arg() <= f64::consts::PI);
         }
+    }
+    
+    #[test]
+    fn test_powc()
+    {
+        let a = Complex::new(2.0, -3.0);
+        let b = Complex::new(3.0, 0.0);
+        assert!(close(a.powc(b), a.powf(b.re)));
+        assert!(close(b.powc(a), a.expf(b.re)));
+        let c = Complex::new(1.0 / 3.0, 0.1);
+        assert!(close_to_tol(a.powc(c), Complex::new(1.65826, -0.33502), 1e-5));
+    }
+    
+    #[test]
+    fn test_powf()
+    {
+        let c = Complex::new(2.0, -1.0);
+        let r = c.powf(3.5);
+        assert!(close_to_tol(r, Complex::new(-0.8684746, -16.695934), 1e-5));
+    }
+    
+    #[test]
+    fn test_log()
+    {
+        let c = Complex::new(2.0, -1.0);
+        let r = c.log(10.0);
+        assert!(close_to_tol(r, Complex::new(0.349485, -0.20135958), 1e-5));
+    }
+    
+    #[test]
+    fn test_some_expf_cases()
+    {
+        let c = Complex::new(2.0, -1.0);
+        let r = c.expf(10.0);
+        assert!(close_to_tol(r, Complex::new(-66.82015, -74.39803), 1e-5));
+        
+        let c = Complex::new(5.0, -2.0);
+        let r = c.expf(3.4);
+        assert!(close_to_tol(r, Complex::new(-349.25, -290.63), 1e-2));
+        
+        let c = Complex::new(-1.5, 2.0 / 3.0);
+        let r = c.expf(1.0 / 3.0);
+        assert!(close_to_tol(r, Complex::new(3.8637, -3.4745), 1e-2));
     }
 
     #[test]
