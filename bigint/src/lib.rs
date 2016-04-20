@@ -991,9 +991,11 @@ fn mac3(acc: &mut [BigDigit], b: &[BigDigit], c: &[BigDigit]) {
         let (x0, x1) = x.split_at(b);
         let (y0, y1) = y.split_at(b);
 
-        /* We reuse the same BigUint for all the intermediate multiplies: */
-
-        let len = y.len() + 1;
+        /*
+         * We reuse the same BigUint for all the intermediate multiplies and have to size p
+         * appropriately here: x1.len() >= x0.len and y1.len() >= y0.len():
+         */
+        let len = x1.len() + y1.len() + 1;
         let mut p = BigUint { data: vec![0; len] };
 
         // p2 = x1 * y1
@@ -3825,6 +3827,15 @@ mod biguint_tests {
             assert!(a == b.checked_mul(&c).unwrap() + &d);
             assert!(a == c.checked_mul(&b).unwrap() + &d);
         }
+    }
+
+    #[test]
+    fn test_mul_overflow() {
+        /* Test for issue #187 - overflow due to mac3 incorrectly sizing temporary */
+        let s = "531137992816767098689588206552468627329593117727031923199444138200403559860852242739162502232636710047537552105951370000796528760829212940754539968588340162273730474622005920097370111";
+        let a: BigUint = s.parse().unwrap();
+        let b = a.clone();
+        let _ = a.checked_mul(&b);
     }
 
     #[test]
