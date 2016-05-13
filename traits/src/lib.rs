@@ -14,12 +14,13 @@ use std::ops::{Add, Sub, Mul, Div, Rem};
 
 pub use bounds::Bounded;
 pub use float::Float;
-pub use identities::{Zero, One};
+pub use identities::{Zero, One, zero, one};
 pub use ops::checked::*;
 pub use ops::saturating::Saturating;
-pub use sign::{Signed, Unsigned};
+pub use sign::{Signed, Unsigned, abs, abs_sub, signum};
 pub use cast::*;
 pub use int::PrimInt;
+pub use pow::{pow, checked_pow};
 
 pub mod identities;
 pub mod sign;
@@ -28,6 +29,7 @@ pub mod bounds;
 pub mod float;
 pub mod cast;
 pub mod int;
+pub mod pow;
 
 /// The base trait for numeric types
 pub trait Num: PartialEq + Zero + One

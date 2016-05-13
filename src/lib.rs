@@ -78,10 +78,10 @@ pub use num_complex::Complex;
 pub use num_integer::Integer;
 pub use num_iter::{range, range_inclusive, range_step, range_step_inclusive};
 pub use num_traits::{Num, Zero, One, Signed, Unsigned, Bounded,
+                     one, zero, abs, abs_sub, signum,
                      Saturating, CheckedAdd, CheckedSub, CheckedMul, CheckedDiv,
-                     PrimInt, Float, ToPrimitive, FromPrimitive, NumCast, cast};
-
-use std::ops::{Mul};
+                     PrimInt, Float, ToPrimitive, FromPrimitive, NumCast, cast,
+                     pow, checked_pow};
 
 #[cfg(feature = "num-bigint")]
 pub mod bigint {
@@ -108,115 +108,4 @@ pub mod traits {
 #[cfg(feature = "num-rational")]
 pub mod rational {
     pub use num_rational::*;
-}
-
-/// Returns the additive identity, `0`.
-#[inline(always)] pub fn zero<T: Zero>() -> T { Zero::zero() }
-
-/// Returns the multiplicative identity, `1`.
-#[inline(always)] pub fn one<T: One>() -> T { One::one() }
-
-/// Computes the absolute value.
-///
-/// For `f32` and `f64`, `NaN` will be returned if the number is `NaN`
-///
-/// For signed integers, `::MIN` will be returned if the number is `::MIN`.
-#[inline(always)]
-pub fn abs<T: Signed>(value: T) -> T {
-    value.abs()
-}
-
-/// The positive difference of two numbers.
-///
-/// Returns zero if `x` is less than or equal to `y`, otherwise the difference
-/// between `x` and `y` is returned.
-#[inline(always)]
-pub fn abs_sub<T: Signed>(x: T, y: T) -> T {
-    x.abs_sub(&y)
-}
-
-/// Returns the sign of the number.
-///
-/// For `f32` and `f64`:
-///
-/// * `1.0` if the number is positive, `+0.0` or `INFINITY`
-/// * `-1.0` if the number is negative, `-0.0` or `NEG_INFINITY`
-/// * `NaN` if the number is `NaN`
-///
-/// For signed integers:
-///
-/// * `0` if the number is zero
-/// * `1` if the number is positive
-/// * `-1` if the number is negative
-#[inline(always)] pub fn signum<T: Signed>(value: T) -> T { value.signum() }
-
-/// Raises a value to the power of exp, using exponentiation by squaring.
-///
-/// # Example
-///
-/// ```rust
-/// use num;
-///
-/// assert_eq!(num::pow(2i8, 4), 16);
-/// assert_eq!(num::pow(6u8, 3), 216);
-/// ```
-#[inline]
-pub fn pow<T: Clone + One + Mul<T, Output = T>>(mut base: T, mut exp: usize) -> T {
-    if exp == 0 { return T::one() }
-
-    while exp & 1 == 0 {
-        base = base.clone() * base;
-        exp >>= 1;
-    }
-    if exp == 1 { return base }
-
-    let mut acc = base.clone();
-    while exp > 1 {
-        exp >>= 1;
-        base = base.clone() * base;
-        if exp & 1 == 1 {
-            acc = acc * base.clone();
-        }
-    }
-    acc
-}
-
-/// Raises a value to the power of exp, returning `None` if an overflow occurred.
-///
-/// Otherwise same as the `pow` function.
-///
-/// # Example
-///
-/// ```rust
-/// use num;
-///
-/// assert_eq!(num::checked_pow(2i8, 4), Some(16));
-/// assert_eq!(num::checked_pow(7i8, 8), None);
-/// assert_eq!(num::checked_pow(7u32, 8), Some(5_764_801));
-/// ```
-#[inline]
-pub fn checked_pow<T: Clone + One + CheckedMul>(mut base: T, mut exp: usize) -> Option<T> {
-    if exp == 0 { return Some(T::one()) }
-
-    macro_rules! optry {
-        ( $ expr : expr ) => {
-            if let Some(val) = $expr { val } else { return None }
-        }
-    }
-
-    while exp & 1 == 0 {
-        base = optry!(base.checked_mul(&base));
-        exp >>= 1;
-    }
-    if exp == 1 { return Some(base) }
-
-    let mut acc = base.clone();
-    while exp > 1 {
-        exp >>= 1;
-        base = optry!(base.checked_mul(&base));
-        if exp & 1 == 1 {
-            acc = optry!(acc.checked_mul(&base));
-        }
-    }
-    Some(acc)
 }

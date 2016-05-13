@@ -93,3 +93,12 @@ one_impl!(i64,   1i64);
 
 one_impl!(f32, 1.0f32);
 one_impl!(f64, 1.0f64);
+
+
+// Some helper functions provided for backwards compatibility.
+
+/// Returns the additive identity, `0`.
+#[inline(always)] pub fn zero<T: Zero>() -> T { Zero::zero() }
+
+/// Returns the multiplicative identity, `1`.
+#[inline(always)] pub fn one<T: One>() -> T { One::one() }
