@@ -64,11 +64,15 @@ extern crate num_iter;
 extern crate num_complex;
 #[cfg(feature = "num-bigint")]
 extern crate num_bigint;
+#[cfg(feature = "num-bigdecimal")]
+extern crate num_bigdecimal;
 #[cfg(feature = "num-rational")]
 extern crate num_rational;
 
 #[cfg(feature = "num-bigint")]
 pub use num_bigint::{BigInt, BigUint};
+#[cfg(feature = "num-bigdecimal")]
+pub use num_bigdecimal::BigDecimal;
 #[cfg(feature = "num-rational")]
 pub use num_rational::Rational;
 #[cfg(all(feature = "num-rational", feature="num-bigint"))]
@@ -86,6 +90,11 @@ pub use num_traits::{Num, Zero, One, Signed, Unsigned, Bounded,
 #[cfg(feature = "num-bigint")]
 pub mod bigint {
     pub use num_bigint::*;
+}
+
+#[cfg(feature = "num-bigdecimal")]
+pub mod bigdecimal {
+    pub use num_bigdecimal::*;
 }
 
 #[cfg(feature = "num-complex")]
