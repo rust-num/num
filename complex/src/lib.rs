@@ -23,9 +23,6 @@ use std::fmt;
 use std::hash;
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
-#[cfg(feature = "serde")]
-use serde;
-
 use traits::{Zero, One, Num, Float};
 
 // FIXME #1284: handle complex NaN & infinity etc. This
