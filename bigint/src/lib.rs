@@ -90,6 +90,7 @@ use std::str::{self, FromStr};
 use std::fmt;
 #[cfg(test)]
 use std::hash;
+use std::cmp;
 use std::cmp::Ordering::{self, Less, Greater, Equal};
 use std::{f32, f64};
 use std::{u8, i64, u64};
@@ -173,12 +174,7 @@ fn sbb(a: BigDigit, b: BigDigit, borrow: &mut BigDigit) -> BigDigit {
                                                   (*borrow as DoubleBigDigit));
     // hi * (base) + lo == 1*(base) + ai - bi - borrow
     // => ai - bi - borrow < 0 <=> hi == 0
-    //
-    *borrow = if hi == 0 {
-        1
-    } else {
-        0
-    };
+    *borrow = (hi == 0) as BigDigit;
     lo
 }
 
@@ -755,20 +751,22 @@ forward_all_binop_to_val_ref_commutative!(impl Add for BigUint, add);
 #[must_use]
 #[inline]
 fn __add2(a: &mut [BigDigit], b: &[BigDigit]) -> BigDigit {
-    let mut b_iter = b.iter();
-    let mut carry = 0;
+    debug_assert!(a.len() >= b.len());
 
-    for ai in a.iter_mut() {
-        if let Some(bi) = b_iter.next() {
-            *ai = adc(*ai, *bi, &mut carry);
-        } else if carry != 0 {
-            *ai = adc(*ai, 0, &mut carry);
-        } else {
-            break;
+    let mut carry = 0;
+    let (a_lo, a_hi) = a.split_at_mut(b.len());
+
+    for (a, b) in a_lo.iter_mut().zip(b) {
+        *a = adc(*a, *b, &mut carry);
+    }
+
+    if carry != 0 {
+        for a in a_hi {
+            *a = adc(*a, 0, &mut carry);
+            if carry == 0 { break }
         }
     }
 
-    debug_assert!(b_iter.next() == None);
     carry
 }
 
@@ -832,21 +830,25 @@ impl<'a> Add<&'a BigUint> for BigUint {
 forward_all_binop_to_val_ref!(impl Sub for BigUint, sub);
 
 fn sub2(a: &mut [BigDigit], b: &[BigDigit]) {
-    let mut b_iter = b.iter();
     let mut borrow = 0;
 
-    for ai in a.iter_mut() {
-        if let Some(bi) = b_iter.next() {
-            *ai = sbb(*ai, *bi, &mut borrow);
-        } else if borrow != 0 {
-            *ai = sbb(*ai, 0, &mut borrow);
-        } else {
-            break;
+    let len = cmp::min(a.len(), b.len());
+    let (a_lo, a_hi) = a.split_at_mut(len);
+    let (b_lo, b_hi) = b.split_at(len);
+
+    for (a, b) in a_lo.iter_mut().zip(b_lo) {
+        *a = sbb(*a, *b, &mut borrow);
+    }
+
+    if borrow != 0 {
+        for a in a_hi {
+            *a = sbb(*a, 0, &mut borrow);
+            if borrow == 0 { break }
         }
     }
 
     // note: we're _required_ to fail on underflow
-    assert!(borrow == 0 && b_iter.all(|x| *x == 0),
+    assert!(borrow == 0 && b_hi.iter().all(|x| *x == 0),
             "Cannot subtract b from a because b is larger than a.");
 }
 
@@ -866,14 +868,14 @@ fn sub_sign(a: &[BigDigit], b: &[BigDigit]) -> BigInt {
 
     match cmp_slice(a, b) {
         Greater => {
-            let mut ret = BigUint::from_slice(a);
-            sub2(&mut ret.data[..], b);
-            BigInt::from_biguint(Plus, ret.normalize())
+            let mut a = a.to_vec();
+            sub2(&mut a, b);
+            BigInt::new(Plus, a)
         }
         Less => {
-            let mut ret = BigUint::from_slice(b);
-            sub2(&mut ret.data[..], a);
-            BigInt::from_biguint(Minus, ret.normalize())
+            let mut b = b.to_vec();
+            sub2(&mut b, a);
+            BigInt::new(Minus, b)
         }
         _ => Zero::zero(),
     }

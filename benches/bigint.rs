@@ -91,6 +91,16 @@ fn fib_100(b: &mut Bencher) {
 }
 
 #[bench]
+fn fib_1000(b: &mut Bencher) {
+    b.iter(|| fib(1000));
+}
+
+#[bench]
+fn fib_10000(b: &mut Bencher) {
+    b.iter(|| fib(10000));
+}
+
+#[bench]
 fn fac_to_string(b: &mut Bencher) {
     let fac = factorial(100);
     b.iter(|| fac.to_string());
