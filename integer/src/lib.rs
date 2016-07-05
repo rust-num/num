@@ -70,15 +70,16 @@ pub trait Integer: Sized + Num + PartialOrd + Ord + Eq {
     ///
     /// ~~~
     /// # use num_integer::Integer;
-    /// let inverse_15 = 15u32.inverse_mod(&17);
+    /// let inverse_15 = 15.inverse_mod(&17);
     /// assert_eq!(inverse_15, Some(8));
+    /// // 15 times its inverse mod 17 should equal 1
     /// assert_eq!((15 * inverse_15.unwrap()) % 17, 1);
     /// 
     /// // gcd(4, 10) = 2, so 4 doesn't have an inverse mod 10
-    /// assert_eq!(4u8.inverse_mod(&10), None);
+    /// assert_eq!(4.inverse_mod(&10), None);
     /// 
     /// // but gcd(3, 10) = 1, so 3 has an inverse mod 10
-    /// assert_eq!(3u8.inverse_mod(&10), Some(7));
+    /// assert_eq!(3.inverse_mod(&10), Some(7));
     /// ~~~
     fn inverse_mod(&self, modulo: &Self) -> Option<Self>;
 
