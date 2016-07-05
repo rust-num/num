@@ -83,7 +83,7 @@ pub trait Integer: Sized + Num + PartialOrd + Ord + Eq {
     fn inverse_mod(&self, modulo: &Self) -> Option<Self>;
 
     /// Computes `self ^ exponent % modulo`
-    /// Will not overflow if modulo * modulo does not overflow
+    /// Will not overflow if (modulo - 1) ^ 2 does not overflow
     ///
     /// Panics if `exponent < 0`. To compute negative exponents, 
     /// compute the multiplicative inverse and call pow_mod on te result
@@ -497,10 +497,11 @@ macro_rules! impl_integer_for_isize {
 
             #[test]
             fn test_inverse_mod() {
-                // verify that the inverse_mod function satisfies the mathematical definition
-                let inverse_15 = (15 as $T).inverse_mod(&17);
-                assert_eq!(inverse_15, Some(8));
-                assert_eq!((15 * inverse_15.unwrap()) % 17, 1);
+                //for prime numbers, every input except 0 has an inverse
+                let prime = 11 as $T;
+                for i in 1..prime {
+                    assert_eq!(i * i.inverse_mod(&prime).unwrap() % prime, 1);
+                }
 
                 // gcd(4, 10) = 2, so 4 doesn't have an inverse mod 10
                 assert_eq!((4 as $T).inverse_mod(&10), None);
@@ -513,6 +514,12 @@ macro_rules! impl_integer_for_isize {
 
                 //negative modulo is allowed
                 assert_eq!((3 as $T).inverse_mod(&-11), Some(7));
+
+                //0 does not have an inverse
+                assert_eq!((0 as $T).inverse_mod(&10), None);
+
+                //the inverse of 1 is 1
+                assert_eq!((1 as $T).inverse_mod(&10), Some(1));
             }
 
             #[test]
@@ -844,16 +851,23 @@ macro_rules! impl_integer_for_usize {
 
             #[test]
             fn test_inverse_mod() {
-                // verify that the inverse_mod function satisfies the mathematical definition
-                let inverse_15 = (15 as $T).inverse_mod(&17);
-                assert_eq!(inverse_15, Some(8));
-                assert_eq!((15 * inverse_15.unwrap()) % 17, 1);
+                //for prime numbers, every input except 0 has an inverse
+                let prime = 13 as $T;
+                for i in 1..prime {
+                    assert_eq!(i * i.inverse_mod(&prime).unwrap() % prime, 1);
+                }
 
                 // gcd(4, 10) = 2, so 4 doesn't have an inverse mod 10
                 assert_eq!((4 as $T).inverse_mod(&10), None);
 
                 // but gcd(3, 10) = 1, so 3 has an inverse mod 10
                 assert_eq!((3 as $T).inverse_mod(&10), Some(7));
+
+                //0 does not have an inverse
+                assert_eq!((0 as $T).inverse_mod(&10), None);
+
+                //the inverse of 1 is 1
+                assert_eq!((1 as $T).inverse_mod(&10), Some(1));
             }
 
             #[test]

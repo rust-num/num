@@ -4008,7 +4008,7 @@ mod biguint_tests {
             assert_eq!(big_base.inverse_mod(&big_modulo), None);
         }
 
-        // if the modulo is prome we're guaranteed to get an answer
+        // if the modulo is prime we're guaranteed to get an answer
         check(15, 17, 8);
 
         // gcd(4, 10) = 2, so 4 doesn't have an inverse mod 10
@@ -4016,6 +4016,12 @@ mod biguint_tests {
 
         // but gcd(3, 10) = 1, so 3 has an inverse mod 10
         check(3, 10, 7);
+
+        //0 does not have an inverse
+        check_none(0, 10);
+
+        //the inverse of 1 is 1
+        check(1, 10, 1);
     }
 
     #[test]
@@ -5170,11 +5176,11 @@ mod bigint_tests {
             assert_eq!(big_base.inverse_mod(&big_modulo), None);
         }
 
-        // if the modulo is prome we're guaranteed to get an answer
+        // if the modulo is prime we're guaranteed to get an answer
         check(15, 17, 8);
 
         // negative n and negtive modulo are allowed
-        //check(-3, 11, 7);
+        check(-3, 11, 7);
         check(3, -11, 7);
 
         // gcd(4, 10) = 2, so 4 doesn't have an inverse mod 10
@@ -5182,6 +5188,12 @@ mod bigint_tests {
 
         // but gcd(3, 10) = 1, so 3 has an inverse mod 10
         check(3, 10, 7);
+
+        // 0 does not have an inverse
+        check_none(0, 10);
+
+        // the inverse of 1 is 1
+        check(1, 10, 1);
     }
 
     #[test]
