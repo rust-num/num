@@ -827,7 +827,8 @@ impl<'a> Add<&'a BigUint> for BigUint {
     }
 }
 
-forward_all_binop_to_val_ref!(impl Sub for BigUint, sub);
+forward_val_val_binop!(impl Sub for BigUint, sub);
+forward_ref_ref_binop!(impl Sub for BigUint, sub);
 
 fn sub2(a: &mut [BigDigit], b: &[BigDigit]) {
     let mut borrow = 0;
@@ -858,6 +859,40 @@ impl<'a> Sub<&'a BigUint> for BigUint {
     fn sub(mut self, other: &BigUint) -> BigUint {
         sub2(&mut self.data[..], &other.data[..]);
         self.normalize()
+    }
+}
+
+fn sub2rev(a: &[BigDigit], b: &mut [BigDigit]) {
+    debug_assert!(b.len() >= a.len());
+
+    let mut borrow = 0;
+
+    let len = cmp::min(a.len(), b.len());
+    let (a_lo, a_hi) = a.split_at(len);
+    let (b_lo, b_hi) = b.split_at_mut(len);
+
+    for (a, b) in a_lo.iter().zip(b_lo) {
+        *b = sbb(*a, *b, &mut borrow);
+    }
+
+    assert!(a_hi.is_empty());
+
+    // note: we're _required_ to fail on underflow
+    assert!(borrow == 0 && b_hi.iter().all(|x| *x == 0),
+            "Cannot subtract b from a because b is larger than a.");
+}
+
+impl<'a> Sub<BigUint> for &'a BigUint {
+    type Output = BigUint;
+
+    fn sub(self, mut other: BigUint) -> BigUint {
+        if other.data.len() < self.data.len() {
+            let extra = self.data.len() - other.data.len();
+            other.data.extend(repeat(0).take(extra));
+        }
+
+        sub2rev(&self.data[..], &mut other.data[..]);
+        other.normalize()
     }
 }
 
