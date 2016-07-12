@@ -7,7 +7,7 @@ keywords = ["mathematics", "numerics"]
 license = "MIT/Apache-2.0"
 name = "num-complex"
 repository = "https://github.com/rust-num/num"
-version = "0.1.32"
+version = "0.1.33"
 
 [dependencies]
 
