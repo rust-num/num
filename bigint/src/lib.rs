@@ -4249,7 +4249,7 @@ mod biguint_tests {
 
 #[cfg(test)]
 mod bigint_tests {
-    use super::{BigDigit, BigUint, ToBigUint};
+    use super::{BigDigit, BigUint};
     use super::{Sign, BigInt, RandBigInt, ToBigInt, big_digit};
     use super::Sign::{Minus, NoSign, Plus};
 
