@@ -1003,6 +1003,7 @@ macro_rules! float_impl {
                 <$T>::min(self, other)
             }
 
+            #[allow(deprecated)]
             fn abs_sub(self, other: Self) -> Self {
                 <$T>::abs_sub(self, other)
             }
