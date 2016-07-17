@@ -86,6 +86,7 @@ macro_rules! signed_float_impl {
             /// less than or equal to `other`, otherwise the difference between`self`
             /// and `other` is returned.
             #[inline]
+            #[allow(deprecated)]
             fn abs_sub(&self, other: &$t) -> $t {
                 <$t>::abs_sub(*self, *other)
             }

@@ -1,16 +1,16 @@
 #!/bin/sh
-# Use multirust to locally run the same suite of tests as .travis.yml.
+# Use rustup to locally run the same suite of tests as .travis.yml.
 # (You should first install/update 1.0.0, beta, and nightly.)
 
 set -ex
 
 for toolchain in 1.0.0 beta nightly; do
-    run="multirust run $toolchain"
+    run="rustup run $toolchain"
     $run cargo build --verbose
-    $run make test
-    $run .travis/test_features.sh
+    $run /usr/bin/env make test
+    $run $PWD/.travis/test_features.sh
     if [ $toolchain = nightly ]; then
-        $run .travis/test_nightly.sh
+        $run $PWD/.travis/test_nightly.sh
     fi
     $run cargo doc
 done
