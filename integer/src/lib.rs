@@ -55,7 +55,54 @@ pub trait Integer: Sized + Num + PartialOrd + Ord + Eq {
     /// assert!((-1).mod_floor(& 2) ==  1);
     /// assert!((-1).mod_floor(&-2) == -1);
     /// ~~~
-    fn mod_floor(&self, other: &Self) -> Self;
+    fn mod_floor(&self, modulo: &Self) -> Self;
+
+    /// Computes the multiplicative inverse of `self % modulo`
+    /// IE, it returns `x` such that `(self * x) % modulo = 1`
+    ///
+    /// The multiplicative inverse does not always exist for a given set of input.
+    /// It is guaranteed to exist if modulo is prime
+    /// But if modulo is composite, it only exists if `gcd(self, modulo) == 1`
+    ///
+    /// If the multiplicative inverse does not exist, None is returned
+    ///
+    /// # Examples
+    ///
+    /// ~~~
+    /// # use num_integer::Integer;
+    /// let inverse_15 = 15.inverse_mod(&17);
+    /// assert_eq!(inverse_15, Some(8));
+    /// // 15 times its inverse mod 17 should equal 1
+    /// assert_eq!((15 * inverse_15.unwrap()) % 17, 1);
+    /// 
+    /// // gcd(4, 10) = 2, so 4 doesn't have an inverse mod 10
+    /// assert_eq!(4.inverse_mod(&10), None);
+    /// 
+    /// // but gcd(3, 10) = 1, so 3 has an inverse mod 10
+    /// assert_eq!(3.inverse_mod(&10), Some(7));
+    /// ~~~
+    fn inverse_mod(&self, modulo: &Self) -> Option<Self>;
+
+    /// Computes `self ^ exponent % modulo`
+    /// Will not overflow if (modulo - 1) ^ 2 does not overflow
+    ///
+    /// Panics if `exponent < 0`. To compute negative exponents, 
+    /// compute the multiplicative inverse and call pow_mod on te result
+    ///
+    /// # Examples
+    ///
+    /// ~~~
+    /// # use num_integer::Integer;
+    /// assert_eq!(6.pow_mod(&2, &7), 1);
+    /// assert_eq!(2.pow_mod(&9, &300), 212);
+    /// 
+    /// // negative exponents are not allowed!
+    /// // assert_eq!(2.pow_mod(-75, 91), 212); -- panic
+    ///
+    /// //proper way to compute negative exponents
+    /// assert_eq!(2.inverse_mod(&91).unwrap().pow_mod(&75, &91), 57);
+    /// ~~~
+    fn pow_mod(&self, exponent: &Self, modulo: &Self) -> Self;
 
     /// Greatest Common Divisor (GCD).
     ///
@@ -177,7 +224,18 @@ pub fn mod_floor<T: Integer>(x: T, y: T) -> T {
 pub fn div_mod_floor<T: Integer>(x: T, y: T) -> (T, T) {
     x.div_mod_floor(&y)
 }
-
+/// Computes the multiplicative inverse of `self % modulo`
+/// IE, it returns `x` such that `(self * x) % modulo = 1`
+#[inline]
+pub fn inverse_mod<T: Integer>(n: T, modulo: T) -> Option<T> {
+    n.inverse_mod(&modulo)
+}
+/// Computes `base ^ exponent % modulo` using an algorithm that allows
+/// Will not overflow if (modulo - 1) ^ 2 does not overflow
+#[inline]
+pub fn pow_mod<T: Integer>(base: T, exponent: T, modulo: T) -> T {
+    base.pow_mod(&exponent, &modulo)
+}
 /// Calculates the Greatest Common Divisor (GCD) of the number and `other`. The
 /// result is always positive.
 #[inline(always)]
@@ -226,6 +284,75 @@ macro_rules! impl_integer_for_isize {
                     (d, r) if (r > 0 && *other < 0)
                            || (r < 0 && *other > 0) => (d - 1, r + *other),
                     (d, r)                          => (d, r),
+                }
+            }
+
+            /// Computes the multiplicative inverse of `self % modulo`
+            /// IE, it returns `x` such that `(self * x) % modulo = 1`
+            #[inline]
+            fn inverse_mod(&self, modulo: &Self) -> Option<Self> {
+                let mut inverse = 0;
+                let mut inverse_next = 1;
+
+                let mut gcd = *modulo;
+                let mut gcd_next = *self;
+
+                if gcd < 0 {
+                    gcd = -gcd;
+                    gcd_next = -gcd_next;
+                }
+                if gcd_next < 0 {
+                    gcd_next += modulo.abs();
+                }
+
+                while gcd_next != 0 {
+                    let (quotient, remainder) = gcd.div_rem(&gcd_next);
+                    gcd = gcd_next;
+                    gcd_next = remainder;
+
+                    inverse -= quotient * inverse_next;
+                    std::mem::swap(&mut inverse, &mut inverse_next);
+                }
+
+                if gcd > 1 {
+                    None
+                } else {
+                    let result = inverse % modulo;
+                    if result < 0 {
+                        Some(result + modulo.abs())
+                    } else {
+                        Some(result)
+                    }
+                }
+            }
+
+            /// Computes `self ^ exponent % modulo`
+            /// Will never overflow if (modulo - 1) ^ 2 does not overflow
+            #[inline]
+            fn pow_mod(&self, exponent: &Self, modulo: &Self) -> Self {
+                // Standard exponentiation by squaring
+
+                assert!(*exponent >= 0);
+
+                let mut base = *self;
+                let mut exp = *exponent;
+
+                let mut result = 1;
+
+                if exp == 0 {
+                    1
+                } else {
+                    base = base % modulo;
+
+                    while exp > 0 {
+                        if exp.is_odd() {
+                            result = result * base % modulo;
+                        }
+                        exp >>= 1;
+                        base = base * base % modulo;
+                    }
+
+                    result
                 }
             }
 
@@ -370,6 +497,51 @@ macro_rules! impl_integer_for_isize {
             }
 
             #[test]
+            fn test_inverse_mod() {
+                //for prime numbers, every input except 0 has an inverse
+                let prime = 11 as $T;
+                for i in 1..prime {
+                    assert_eq!(i * i.inverse_mod(&prime).unwrap() % prime, 1);
+                }
+
+                // gcd(4, 10) = 2, so 4 doesn't have an inverse mod 10
+                assert_eq!((4 as $T).inverse_mod(&10), None);
+
+                // but gcd(3, 10) = 1, so 3 has an inverse mod 10
+                assert_eq!((3 as $T).inverse_mod(&10), Some(7));
+
+                //negative n is allowed
+                assert_eq!((-3 as $T).inverse_mod(&11), Some(7));
+
+                //negative modulo is allowed
+                assert_eq!((3 as $T).inverse_mod(&-11), Some(7));
+
+                //0 does not have an inverse
+                assert_eq!((0 as $T).inverse_mod(&10), None);
+
+                //the inverse of 1 is 1
+                assert_eq!((1 as $T).inverse_mod(&10), Some(1));
+            }
+
+            #[test]
+            fn test_pow_mod() {
+                // 0 ^ anything is 0
+                assert_eq!((0 as $T).pow_mod(&10, &5), 0 as $T);
+
+                // anything ^ 0 is 1
+                assert_eq!((10 as $T).pow_mod(&0, &9), 1 as $T);
+
+                // include a test that would surely overflow i8 if written naively
+                assert_eq!((46 as $T).pow_mod(&126, &11), 9 as $T);
+
+                // negative bases are allowed, the result might be negative though
+                assert_eq!((-7 as $T).pow_mod(&53, &9), -4 as $T);
+
+                // negative modulo are allowed, the result might be negative though
+                assert_eq!((7 as $T).pow_mod(&53, &-9), 4 as $T);
+            }
+
+            #[test]
             fn test_gcd() {
                 assert_eq!((10 as $T).gcd(&2), 2 as $T);
                 assert_eq!((10 as $T).gcd(&3), 1 as $T);
@@ -505,6 +677,67 @@ macro_rules! impl_integer_for_usize {
                 *self % *other
             }
 
+            /// Computes the multiplicative inverse of `self % modulo`
+            /// IE, it returns `x` such that `(self * x) % modulo = 1`
+            #[inline]
+            fn inverse_mod(&self, modulo: &Self) -> Option<Self> {
+                let mut inverse = 0;
+                let mut inverse_next = 1;
+
+                let mut gcd = *modulo;
+                let mut gcd_next = *self;
+
+                while gcd_next != 0 {
+                    let (quotient, remainder) = gcd.div_rem(&gcd_next);
+                    gcd = gcd_next;
+                    gcd_next = remainder;
+
+                    // it's possible for this next subtraction to make inverse negative
+                    // to prevent that, if the subtraction will make it negative, wrap around
+                    let subtract = quotient * inverse_next;
+                    inverse = if subtract < inverse {
+                        inverse - subtract
+                    } else {
+                        modulo - (subtract - inverse) % modulo
+                    };
+                    std::mem::swap(&mut inverse, &mut inverse_next);
+                }
+
+                if gcd > 1 {
+                    None
+                } else {
+                    Some(inverse % modulo)
+                }
+            }
+
+            /// Computes `self ^ exponent % modulo`
+            /// Will never overflow if (modulo - 1) ^ 2 does not overflow
+            #[inline]
+            fn pow_mod(&self, exponent: &Self, modulo: &Self) -> Self {
+                // Standard exponentiation by squaring
+
+                let mut base = *self;
+                let mut exp = *exponent;
+
+                let mut result = 1;
+
+                if exp == 0 {
+                    1
+                } else {
+                    base = base % modulo;
+
+                    while exp > 0 {
+                        if exp.is_odd() {
+                            result = result * base % modulo;
+                        }
+                        exp >>= 1;
+                        base = base * base % modulo;
+                    }
+
+                    result
+                }
+            }
+
             /// Calculates the Greatest Common Divisor (GCD) of the number and `other`
             #[inline]
             fn gcd(&self, other: &Self) -> Self {
@@ -615,6 +848,39 @@ macro_rules! impl_integer_for_usize {
                     assert_eq!(euclidean_gcd(i,j), i.gcd(&j));
                 }
                 assert_eq!(255.gcd(&255), 255);
+            }
+
+            #[test]
+            fn test_inverse_mod() {
+                //for prime numbers, every input except 0 has an inverse
+                let prime = 13 as $T;
+                for i in 1..prime {
+                    assert_eq!(i * i.inverse_mod(&prime).unwrap() % prime, 1);
+                }
+
+                // gcd(4, 10) = 2, so 4 doesn't have an inverse mod 10
+                assert_eq!((4 as $T).inverse_mod(&10), None);
+
+                // but gcd(3, 10) = 1, so 3 has an inverse mod 10
+                assert_eq!((3 as $T).inverse_mod(&10), Some(7));
+
+                //0 does not have an inverse
+                assert_eq!((0 as $T).inverse_mod(&10), None);
+
+                //the inverse of 1 is 1
+                assert_eq!((1 as $T).inverse_mod(&10), Some(1));
+            }
+
+            #[test]
+            fn test_pow_mod() {
+                // 0 ^ anything is 0
+                assert_eq!((0 as $T).pow_mod(&10, &5), 0 as $T);
+
+                // anything ^ 0 is 1
+                assert_eq!((10 as $T).pow_mod(&0, &9), 1 as $T);
+
+                // include a test that would surely overflow u8 if written naively
+                assert_eq!((46 as $T).pow_mod(&126, &11), 9 as $T);
             }
 
             #[test]

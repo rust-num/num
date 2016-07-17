@@ -1304,6 +1304,65 @@ impl Integer for BigUint {
         (q.normalize(), a >> shift)
     }
 
+    /// Computes the multiplicative inverse of `self % modulo`
+    /// IE, it returns `x` such that `(self * x) % modulo = 1`
+    #[inline]
+    fn inverse_mod(&self, modulo: &Self) -> Option<Self> {
+        let mut inverse: Self = Zero::zero();
+        let mut inverse_next: Self = One::one();
+
+        let mut gcd = modulo.clone();
+        let mut gcd_next = self.clone();
+
+        while !gcd_next.is_zero() {
+            let (quotient, remainder) = gcd.div_rem(&gcd_next);
+            gcd = std::mem::replace(&mut gcd_next, remainder);
+
+            // it's possible for this next subtraction to make inverse negative
+            // to prevent that, if the subtraction will make it negative, wrap around
+            let subtract = quotient * &inverse_next;
+            inverse = if subtract < inverse {
+                inverse - subtract
+            } else {
+                modulo - (subtract - inverse) % modulo
+            };
+            std::mem::swap(&mut inverse, &mut inverse_next);
+        }
+
+        if gcd > One::one() {
+            None
+        } else {
+            Some(inverse % modulo)
+        }
+    }
+
+    /// Computes `self ^ exponent % modulo`
+    #[inline]
+    fn pow_mod(&self, exponent: &Self, modulo: &Self) -> Self {
+        // Standard exponentiation by squaring
+
+        let mut base = self.clone();
+        let mut exp = exponent.clone();
+
+        let mut result = One::one();
+
+        if exp.is_zero() {
+            One::one()
+        } else {
+            base = base % modulo;
+
+            while !exp.is_zero() {
+                if exp.is_odd() {
+                    result = result * &base % modulo;
+                }
+                exp = exp >> One::one();
+                base = &base * &base % modulo;
+            }
+
+            result
+        }
+    }
+
     /// Calculates the Greatest Common Divisor (GCD) of the number and `other`.
     ///
     /// The result is always positive.
@@ -2524,6 +2583,79 @@ impl Integer for BigInt {
                 }
             }
             (Minus, Minus) => (d, -m),
+        }
+    }
+
+    /// Computes the multiplicative inverse of `self % modulo`
+    /// IE, it returns `x` such that `(self * x) % modulo = 1`
+    #[inline]
+    fn inverse_mod(&self, modulo: &Self) -> Option<Self> {
+        let mut inverse: Self = Zero::zero();
+        let mut inverse_next: Self = One::one();
+        let mut gcd = modulo.clone();
+        let mut gcd_next = self.clone();
+
+        // convert a negative modulo and base into their positive equivalents
+        if gcd.is_negative() {
+            gcd = -gcd;
+            gcd_next = -gcd_next;
+        }
+        if gcd_next.is_negative() {
+            gcd_next = gcd_next + modulo.abs();
+        }
+
+        while !gcd_next.is_zero() {
+            let (quotient, remainder) = gcd.div_rem(&gcd_next);
+            gcd = std::mem::replace(&mut gcd_next, remainder);
+
+            let new_inverse = inverse - quotient * &inverse_next;
+            inverse = std::mem::replace(&mut inverse_next, new_inverse);
+        }
+
+        if gcd.is_negative() {
+            inverse = -inverse;
+        }
+
+        if gcd.abs() > One::one() {
+            None
+        } else {
+            let result = inverse % modulo;
+            
+            if result < Zero::zero() {
+                Some(result + modulo.abs())
+            } else {
+                Some(result)
+            }
+        }
+    }
+
+    /// Computes `self ^ exponent % modulo`
+    /// Will never overflow if (modulo - 1) ^ 2 does not overflow
+    #[inline]
+    fn pow_mod(&self, exponent: &Self, modulo: &Self) -> Self {
+        // Standard exponentiation by squaring
+
+        assert!(*exponent >= Zero::zero());
+
+        let mut base = self.clone();
+        let mut exp = exponent.clone();
+
+        let mut result = One::one();
+
+        if exp.is_zero() {
+            One::one()
+        } else {
+            base = base % modulo;
+
+            while !exp.is_zero() {
+                if exp.is_odd() {
+                    result = result * &base % modulo;
+                }
+                exp = exp >> One::one();
+                base = &base * &base % modulo;
+            }
+
+            result
         }
     }
 
@@ -3986,6 +4118,58 @@ mod biguint_tests {
     }
 
     #[test]
+    fn test_inverse_mod() {
+        fn check(base: usize, modulo: usize, expected: usize) {
+            let big_base: BigUint = FromPrimitive::from_usize(base).unwrap();
+            let big_modulo: BigUint = FromPrimitive::from_usize(modulo).unwrap();
+            let big_expected: BigUint = FromPrimitive::from_usize(expected).unwrap();
+
+            assert_eq!(big_base.inverse_mod(&big_modulo), Some(big_expected));
+        }
+
+        fn check_none(base: usize, modulo: usize) {
+            let big_base: BigUint = FromPrimitive::from_usize(base).unwrap();
+            let big_modulo: BigUint = FromPrimitive::from_usize(modulo).unwrap();
+
+            assert_eq!(big_base.inverse_mod(&big_modulo), None);
+        }
+
+        // if the modulo is prime we're guaranteed to get an answer
+        check(15, 17, 8);
+
+        // gcd(4, 10) = 2, so 4 doesn't have an inverse mod 10
+        check_none(4, 10);
+
+        // but gcd(3, 10) = 1, so 3 has an inverse mod 10
+        check(3, 10, 7);
+
+        //0 does not have an inverse
+        check_none(0, 10);
+
+        //the inverse of 1 is 1
+        check(1, 10, 1);
+    }
+
+    #[test]
+    fn test_pow_mod() {
+        fn check(base: usize, exponent: usize, modulo: usize, expected: usize) {
+            let big_base: BigUint = FromPrimitive::from_usize(base).unwrap();
+            let big_exponent: BigUint = FromPrimitive::from_usize(exponent).unwrap();
+            let big_modulo: BigUint = FromPrimitive::from_usize(modulo).unwrap();
+            let big_expected: BigUint = FromPrimitive::from_usize(expected).unwrap();
+
+            assert_eq!(big_base.pow_mod(&big_exponent, &big_modulo), big_expected);
+        }
+
+        // 0 ^ anything is 0
+        check(0, 10, 5,     0);
+        // anything ^ 0 is 1
+        check(10, 0, 5,     1);
+        // include a test that would surely break the computer if implemented naively
+        check(34563638, 502570596, 17847,      11899);
+    }
+
+    #[test]
     fn test_gcd() {
         fn check(a: usize, b: usize, c: usize) {
             let big_a: BigUint = FromPrimitive::from_usize(a).unwrap();
@@ -5102,6 +5286,66 @@ mod bigint_tests {
             assert!(c.checked_div(&Zero::zero()).is_none());
             assert!((-&c).checked_div(&Zero::zero()).is_none());
         }
+    }
+
+    #[test]
+    fn test_inverse_mod() {
+        fn check(base: isize, modulo: isize, expected: isize) {
+            let big_base: BigInt = FromPrimitive::from_isize(base).unwrap();
+            let big_modulo: BigInt = FromPrimitive::from_isize(modulo).unwrap();
+            let big_expected: BigInt = FromPrimitive::from_isize(expected).unwrap();
+
+            assert_eq!(big_base.inverse_mod(&big_modulo), Some(big_expected));
+        }
+
+        fn check_none(base: isize, modulo: isize) {
+            let big_base: BigInt = FromPrimitive::from_isize(base).unwrap();
+            let big_modulo: BigInt = FromPrimitive::from_isize(modulo).unwrap();
+
+            assert_eq!(big_base.inverse_mod(&big_modulo), None);
+        }
+
+        // if the modulo is prime we're guaranteed to get an answer
+        check(15, 17, 8);
+
+        // negative n and negtive modulo are allowed
+        check(-3, 11, 7);
+        check(3, -11, 7);
+
+        // gcd(4, 10) = 2, so 4 doesn't have an inverse mod 10
+        check_none(4, 10);
+
+        // but gcd(3, 10) = 1, so 3 has an inverse mod 10
+        check(3, 10, 7);
+
+        // 0 does not have an inverse
+        check_none(0, 10);
+
+        // the inverse of 1 is 1
+        check(1, 10, 1);
+    }
+
+    #[test]
+    fn test_pow_mod() {
+        fn check(base: isize, exponent: isize, modulo: isize, expected: isize) {
+            let big_base: BigInt = FromPrimitive::from_isize(base).unwrap();
+            let big_exponent: BigInt = FromPrimitive::from_isize(exponent).unwrap();
+            let big_modulo: BigInt = FromPrimitive::from_isize(modulo).unwrap();
+            let big_expected: BigInt = FromPrimitive::from_isize(expected).unwrap();
+
+            assert_eq!(big_base.pow_mod(&big_exponent, &big_modulo), big_expected);
+        }
+
+        // 0 ^ anything is 0
+        check(0, 10, 5,     0);
+        // anything ^ 0 is 1
+        check(10, 0, 5,     1);
+        // include a test that would surely break the computer if implemented naively
+        check(34563638, 502570596, 17847,      11899);
+        // negative bases are allowed, the result might be negative though
+        check(-7, 53, 9,     -4);
+        // negative modulo are allowed, the result might be negative though
+        check(7, 53, -9,     4);
     }
 
     #[test]
