@@ -56,13 +56,13 @@ pub type Rational64 = Ratio<i64>;
 pub type BigRational = Ratio<BigInt>;
 
 impl<T: Clone + Integer> Ratio<T> {
-    /// Creates a ratio representing the integer `t`.
+    /// Creates a `Ratio` representing the integer `t`.
     #[inline]
     pub fn from_integer(t: T) -> Ratio<T> {
         Ratio::new_raw(t, One::one())
     }
 
-    /// Creates a ratio without checking for `denom == 0` or reducing.
+    /// Creates a `Ratio` without checking for `denom == 0` or reducing.
     #[inline]
     pub fn new_raw(numer: T, denom: T) -> Ratio<T> {
         Ratio {
@@ -71,7 +71,7 @@ impl<T: Clone + Integer> Ratio<T> {
         }
     }
 
-    /// Create a new Ratio. Fails if `denom == 0`.
+    /// Creates a new `Ratio`. Fails if `denom == 0`.
     #[inline]
     pub fn new(numer: T, denom: T) -> Ratio<T> {
         if denom == Zero::zero() {
@@ -82,7 +82,7 @@ impl<T: Clone + Integer> Ratio<T> {
         ret
     }
 
-    /// Converts to an integer.
+    /// Converts to an integer, rounding towards zero.
     #[inline]
     pub fn to_integer(&self) -> T {
         self.trunc().numer
@@ -106,7 +106,7 @@ impl<T: Clone + Integer> Ratio<T> {
         self.denom == One::one()
     }
 
-    /// Put self into lowest terms, with denom > 0.
+    /// Puts self into lowest terms, with denom > 0.
     fn reduce(&mut self) {
         let g: T = self.numer.gcd(&self.denom);
 
@@ -124,7 +124,10 @@ impl<T: Clone + Integer> Ratio<T> {
         }
     }
 
-    /// Returns a `reduce`d copy of self.
+    /// Returns a reduced copy of self.
+    ///
+    /// In general, it is not necessary to use this method, as the only
+    /// method of procuring a non-reduced fraction is through `new_raw`.
     pub fn reduced(&self) -> Ratio<T> {
         let mut ret = self.clone();
         ret.reduce();
@@ -201,7 +204,9 @@ impl<T: Clone + Integer> Ratio<T> {
         Ratio::from_integer(self.numer.clone() / self.denom.clone())
     }
 
-    /// Returns the fractional part of a number.
+    /// Returns the fractional part of a number, with division rounded towards zero.
+    ///
+    /// Satisfies `self == self.trunc() + self.fract()`.
     #[inline]
     pub fn fract(&self) -> Ratio<T> {
         Ratio::new_raw(self.numer.clone() % self.denom.clone(), self.denom.clone())
@@ -209,7 +214,7 @@ impl<T: Clone + Integer> Ratio<T> {
 }
 
 impl<T: Clone + Integer + PrimInt> Ratio<T> {
-    /// Raises the ratio to the power of an exponent
+    /// Raises the `Ratio` to the power of an exponent.
     #[inline]
     pub fn pow(&self, expon: i32) -> Ratio<T> {
         match expon.cmp(&0) {
