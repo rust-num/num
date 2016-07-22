@@ -38,7 +38,7 @@ use integer::Integer;
 use traits::{FromPrimitive, Float, PrimInt, Num, Signed, Zero, One};
 
 /// Represents the ratio between 2 numbers.
-#[derive(Copy, Clone, Hash, Debug)]
+#[derive(Copy, Clone, Hash, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "rustc-serialize", derive(RustcEncodable, RustcDecodable))]
 #[allow(missing_docs)]
 pub struct Ratio<T> {
@@ -62,7 +62,11 @@ impl<T: Clone + Integer> Ratio<T> {
         Ratio::new_raw(t, One::one())
     }
 
-    /// Creates a `Ratio` without checking for `denom == 0` or reducing.
+    /// Creates a `Ratio` in an unchecked fashion.
+    ///
+    /// The user must ensure that the invariants of `Ratio` are maintained;
+    /// in particular, `numer` and `denom` share no factor in common;
+    /// `denom` is strictly positive; and zero is represented as `0/1`.
     #[inline]
     pub fn new_raw(numer: T, denom: T) -> Ratio<T> {
         Ratio {
@@ -270,12 +274,7 @@ impl<T: Clone + Integer> Ord for Ratio<T> {
     fn cmp(&self, other: &Self) -> cmp::Ordering {
         // With equal denominators, the numerators can be directly compared
         if self.denom == other.denom {
-            let ord = self.numer.cmp(&other.numer);
-            return if self.denom < T::zero() {
-                ord.reverse()
-            } else {
-                ord
-            };
+            return self.numer.cmp(&other.numer);
         }
 
         // With equal numerators, the denominators can be inversely compared
@@ -321,16 +320,6 @@ impl<T: Clone + Integer> PartialOrd for Ratio<T> {
         Some(self.cmp(other))
     }
 }
-
-impl<T: Clone + Integer> PartialEq for Ratio<T> {
-    #[inline]
-    fn eq(&self, other: &Self) -> bool {
-        self.cmp(other) == cmp::Ordering::Equal
-    }
-}
-
-impl<T: Clone + Integer> Eq for Ratio<T> {}
-
 
 macro_rules! forward_val_val_binop {
     (impl $imp:ident, $method:ident) => {
@@ -509,11 +498,7 @@ impl<T: Clone + Integer> Num for Ratio<T> {
 impl<T: Clone + Integer + Signed> Signed for Ratio<T> {
     #[inline]
     fn abs(&self) -> Ratio<T> {
-        if self.is_negative() {
-            -self.clone()
-        } else {
-            self.clone()
-        }
+        Ratio::new_raw(self.numer.clone().abs(), self.denom.clone())
     }
 
     #[inline]
@@ -527,25 +512,17 @@ impl<T: Clone + Integer + Signed> Signed for Ratio<T> {
 
     #[inline]
     fn signum(&self) -> Ratio<T> {
-        if self.is_positive() {
-            Self::one()
-        } else if self.is_zero() {
-            Self::zero()
-        } else {
-            -Self::one()
-        }
+        Ratio::from_integer(self.numer.clone().signum())
     }
 
     #[inline]
     fn is_positive(&self) -> bool {
-        (self.numer.is_positive() && self.denom.is_positive()) ||
-        (self.numer.is_negative() && self.denom.is_negative())
+        self.numer.is_positive()
     }
 
     #[inline]
     fn is_negative(&self) -> bool {
-        (self.numer.is_negative() && self.denom.is_positive()) ||
-        (self.numer.is_positive() && self.denom.is_negative())
+        self.numer.is_negative()
     }
 }
 
@@ -692,14 +669,6 @@ mod test {
         numer: -1,
         denom: 2,
     };
-    pub const _1_NEG2: Rational = Ratio {
-        numer: 1,
-        denom: -2,
-    };
-    pub const _NEG1_NEG2: Rational = Ratio {
-        numer: -1,
-        denom: -2,
-    };
     pub const _1_3: Rational = Ratio {
         numer: 1,
         denom: 3,
@@ -741,13 +710,15 @@ mod test {
 
     #[test]
     fn test_new_reduce() {
-        let one22 = Ratio::new(2, 2);
-
-        assert_eq!(one22, One::one());
+        assert_eq!(Ratio::new(2, 2), One::one());
+        assert_eq!(Ratio::new(-2, -2), One::one());
+        assert_eq!(Ratio::new(0, 5), Zero::zero());
+        assert_eq!(Ratio::new(0, -5), Zero::zero());
     }
+
     #[test]
     #[should_panic]
-    fn test_new_zero() {
+    fn test_new_denom_zero() {
         let _a = Ratio::new(1, 0);
     }
 
@@ -1117,15 +1088,13 @@ mod test {
         assert_eq!(_1_2.abs_sub(&_3_2), Zero::zero());
         assert_eq!(_1_2.signum(), One::one());
         assert_eq!(_NEG1_2.signum(), -<Ratio<isize>>::one());
+        assert_eq!(_2.signum(), One::one());
+        assert_eq!(_NEG2.signum(), -<Ratio<isize>>::one());
         assert_eq!(_0.signum(), Zero::zero());
         assert!(_NEG1_2.is_negative());
-        assert!(_1_NEG2.is_negative());
         assert!(!_NEG1_2.is_positive());
-        assert!(!_1_NEG2.is_positive());
         assert!(_1_2.is_positive());
-        assert!(_NEG1_NEG2.is_positive());
         assert!(!_1_2.is_negative());
-        assert!(!_NEG1_NEG2.is_negative());
         assert!(!_0.is_positive());
         assert!(!_0.is_negative());
     }
