@@ -135,9 +135,16 @@ impl<T: Clone + Integer> Ratio<T> {
     }
 
     /// Returns the reciprocal.
+    ///
+    /// Fails if the `Ratio` is zero.
     #[inline]
     pub fn recip(&self) -> Ratio<T> {
-        Ratio::new_raw(self.denom.clone(), self.numer.clone())
+        match self.numer.cmp(&T::zero()) {
+            cmp::Ordering::Equal => panic!("numerator == 0"),
+            cmp::Ordering::Greater => Ratio::new_raw(self.denom.clone(), self.numer.clone()),
+            cmp::Ordering::Less => Ratio::new_raw(T::zero() - self.denom.clone(),
+                                                  T::zero() - self.numer.clone())
+        }
     }
 
     /// Rounds towards minus infinity.
@@ -669,6 +676,10 @@ mod test {
         numer: 2,
         denom: 1,
     };
+    pub const _NEG2: Rational = Ratio {
+        numer: -2,
+        denom: 1,
+    };
     pub const _1_2: Rational = Ratio {
         numer: 1,
         denom: 2,
@@ -1007,6 +1018,16 @@ mod test {
         assert_eq!(_1_2 * _1_2.recip(), _1);
         assert_eq!(_3_2 * _3_2.recip(), _1);
         assert_eq!(_NEG1_2 * _NEG1_2.recip(), _1);
+
+        assert_eq!(_3_2.recip(), _2_3);
+        assert_eq!(_NEG1_2.recip(), _NEG2);
+        assert_eq!(_NEG1_2.recip().denom(), &1);
+    }
+
+    #[test]
+    #[should_panic = "== 0"]
+    fn test_recip_fail() {
+        let _a = Ratio::new(0, 1).recip();
     }
 
     #[test]
