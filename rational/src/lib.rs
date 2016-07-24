@@ -56,6 +56,17 @@ pub type Rational64 = Ratio<i64>;
 pub type BigRational = Ratio<BigInt>;
 
 impl<T: Clone + Integer> Ratio<T> {
+    /// Creates a new `Ratio`. Fails if `denom` is zero.
+    #[inline]
+    pub fn new(numer: T, denom: T) -> Ratio<T> {
+        if denom.is_zero() {
+            panic!("denominator == 0");
+        }
+        let mut ret = Ratio::new_raw(numer, denom);
+        ret.reduce();
+        ret
+    }
+
     /// Creates a `Ratio` representing the integer `t`.
     #[inline]
     pub fn from_integer(t: T) -> Ratio<T> {
@@ -69,17 +80,6 @@ impl<T: Clone + Integer> Ratio<T> {
             numer: numer,
             denom: denom,
         }
-    }
-
-    /// Creates a new `Ratio`. Fails if `denom == 0`.
-    #[inline]
-    pub fn new(numer: T, denom: T) -> Ratio<T> {
-        if denom == Zero::zero() {
-            panic!("denominator == 0");
-        }
-        let mut ret = Ratio::new_raw(numer, denom);
-        ret.reduce();
-        ret
     }
 
     /// Converts to an integer, rounding towards zero.
@@ -605,7 +605,7 @@ impl<T> serde::Deserialize for Ratio<T>
         where D: serde::Deserializer
     {
         let (numer, denom) = try!(serde::Deserialize::deserialize(deserializer));
-        if denom == Zero::zero() {
+        if denom.is_zero() {
             Err(serde::de::Error::invalid_value("denominator is zero"))
         } else {
             Ok(Ratio::new_raw(numer, denom))
