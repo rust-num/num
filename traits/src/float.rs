@@ -4,6 +4,9 @@ use std::num::FpCategory;
 
 use {Num, NumCast};
 
+// FIXME: these doctests aren't actually helpful, because they're using and
+// testing the inherent methods directly, not going through `Float`.
+
 pub trait Float
     : Num
     + Copy
@@ -501,6 +504,40 @@ pub trait Float
     /// ```
     fn log10(self) -> Self;
 
+    /// Converts radians to degrees.
+    ///
+    /// ```
+    /// use std::f64::consts;
+    ///
+    /// let angle = consts::PI;
+    ///
+    /// let abs_difference = (angle.to_degrees() - 180.0).abs();
+    ///
+    /// assert!(abs_difference < 1e-10);
+    /// ```
+    fn to_degrees(self) -> Self {
+        let halfpi = Self::zero().acos();
+        let ninety = Self::from(90u8).unwrap();
+        self * ninety / halfpi
+    }
+
+    /// Converts degrees to radians.
+    ///
+    /// ```
+    /// use std::f64::consts;
+    ///
+    /// let angle = 180.0_f64;
+    ///
+    /// let abs_difference = (angle.to_radians() - consts::PI).abs();
+    ///
+    /// assert!(abs_difference < 1e-10);
+    /// ```
+    fn to_radians(self) -> Self {
+        let halfpi = Self::zero().acos();
+        let ninety = Self::from(90u8).unwrap();
+        self * halfpi / ninety
+    }
+
     /// Returns the maximum of the two numbers.
     ///
     /// ```
@@ -995,6 +1032,18 @@ macro_rules! float_impl {
                 <$T>::log10(self)
             }
 
+            fn to_degrees(self) -> Self {
+                // NB: `f32` didn't stabilize this until 1.7
+                // <$T>::to_degrees(self)
+                self * (180. / ::std::$T::consts::PI)
+            }
+
+            fn to_radians(self) -> Self {
+                // NB: `f32` didn't stabilize this until 1.7
+                // <$T>::to_radians(self)
+                self * (::std::$T::consts::PI / 180.)
+            }
+
             fn max(self, other: Self) -> Self {
                 <$T>::max(self, other)
             }
@@ -1125,3 +1174,33 @@ fn integer_decode_f64(f: f64) -> (u64, i16, i8) {
 
 float_impl!(f32 integer_decode_f32);
 float_impl!(f64 integer_decode_f64);
+
+
+#[cfg(test)]
+mod tests {
+    use Float;
+
+    #[test]
+    fn convert_deg_rad() {
+        use std::f64::consts;
+
+        const DEG_RAD_PAIRS: [(f64, f64); 7] = [
+            (0.0, 0.),
+            (22.5, consts::FRAC_PI_8),
+            (30.0, consts::FRAC_PI_6),
+            (45.0, consts::FRAC_PI_4),
+            (60.0, consts::FRAC_PI_3),
+            (90.0, consts::FRAC_PI_2),
+            (180.0, consts::PI),
+        ];
+
+        for &(deg, rad) in &DEG_RAD_PAIRS {
+            assert!((Float::to_degrees(rad) - deg).abs() < 1e-6);
+            assert!((Float::to_radians(deg) - rad).abs() < 1e-6);
+
+            let (deg, rad) = (deg as f32, rad as f32);
+            assert!((Float::to_degrees(rad) - deg).abs() < 1e-6);
+            assert!((Float::to_radians(deg) - rad).abs() < 1e-6);
+        }
+    }
+}
