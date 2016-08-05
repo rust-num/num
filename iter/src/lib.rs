@@ -313,6 +313,10 @@ mod tests {
             fn one() -> Foo {
                 Foo
             }
+            
+            fn is_one(&self) -> bool {
+                true
+            }
         }
 
         assert!(super::range(0, 5).collect::<Vec<isize>>() == vec![0, 1, 2, 3, 4]);

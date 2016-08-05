@@ -610,6 +610,11 @@ impl<T: Clone + Num> One for Complex<T> {
     fn one() -> Complex<T> {
         Complex::new(One::one(), Zero::zero())
     }
+    
+    #[inline]
+    fn is_one(&self) -> bool {
+        self.re == One::one() && self.im == Zero::zero()
+    }
 }
 
 /* string conversions */
