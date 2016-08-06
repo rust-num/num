@@ -509,7 +509,7 @@ impl<T: Clone + Integer> One for Ratio<T> {
 
     #[inline]
     fn is_one(&self) -> bool {
-        self == &Ratio::one()
+        self.numer == self.denom
     }
 }
 
