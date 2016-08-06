@@ -613,7 +613,7 @@ impl<T: Clone + Num> One for Complex<T> {
     
     #[inline]
     fn is_one(&self) -> bool {
-        self.re == One::one() && self.im == Zero::zero()
+        self.re.is_one() && self.im.is_zero()
     }
 }
 
