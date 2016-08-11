@@ -515,6 +515,7 @@ pub trait Float
     ///
     /// assert!(abs_difference < 1e-10);
     /// ```
+    #[inline]
     fn to_degrees(self) -> Self {
         let halfpi = Self::zero().acos();
         let ninety = Self::from(90u8).unwrap();
@@ -532,6 +533,7 @@ pub trait Float
     ///
     /// assert!(abs_difference < 1e-10);
     /// ```
+    #[inline]
     fn to_radians(self) -> Self {
         let halfpi = Self::zero().acos();
         let ninety = Self::from(90u8).unwrap();
@@ -904,231 +906,287 @@ pub trait Float
 macro_rules! float_impl {
     ($T:ident $decode:ident) => (
         impl Float for $T {
+            #[inline]
             fn nan() -> Self {
                 ::std::$T::NAN
             }
 
+            #[inline]
             fn infinity() -> Self {
                 ::std::$T::INFINITY
             }
 
+            #[inline]
             fn neg_infinity() -> Self {
                 ::std::$T::NEG_INFINITY
             }
 
+            #[inline]
             fn neg_zero() -> Self {
                 -0.0
             }
 
+            #[inline]
             fn min_value() -> Self {
                 ::std::$T::MIN
             }
 
+            #[inline]
             fn min_positive_value() -> Self {
                 ::std::$T::MIN_POSITIVE
             }
 
+            #[inline]
             fn max_value() -> Self {
                 ::std::$T::MAX
             }
 
+            #[inline]
             fn is_nan(self) -> bool {
                 <$T>::is_nan(self)
             }
 
+            #[inline]
             fn is_infinite(self) -> bool {
                 <$T>::is_infinite(self)
             }
 
+            #[inline]
             fn is_finite(self) -> bool {
                 <$T>::is_finite(self)
             }
 
+            #[inline]
             fn is_normal(self) -> bool {
                 <$T>::is_normal(self)
             }
 
+            #[inline]
             fn classify(self) -> FpCategory {
                 <$T>::classify(self)
             }
 
+            #[inline]
             fn floor(self) -> Self {
                 <$T>::floor(self)
             }
 
+            #[inline]
             fn ceil(self) -> Self {
                 <$T>::ceil(self)
             }
 
+            #[inline]
             fn round(self) -> Self {
                 <$T>::round(self)
             }
 
+            #[inline]
             fn trunc(self) -> Self {
                 <$T>::trunc(self)
             }
 
+            #[inline]
             fn fract(self) -> Self {
                 <$T>::fract(self)
             }
 
+            #[inline]
             fn abs(self) -> Self {
                 <$T>::abs(self)
             }
 
+            #[inline]
             fn signum(self) -> Self {
                 <$T>::signum(self)
             }
 
+            #[inline]
             fn is_sign_positive(self) -> bool {
                 <$T>::is_sign_positive(self)
             }
 
+            #[inline]
             fn is_sign_negative(self) -> bool {
                 <$T>::is_sign_negative(self)
             }
 
+            #[inline]
             fn mul_add(self, a: Self, b: Self) -> Self {
                 <$T>::mul_add(self, a, b)
             }
 
+            #[inline]
             fn recip(self) -> Self {
                 <$T>::recip(self)
             }
 
+            #[inline]
             fn powi(self, n: i32) -> Self {
                 <$T>::powi(self, n)
             }
 
+            #[inline]
             fn powf(self, n: Self) -> Self {
                 <$T>::powf(self, n)
             }
 
+            #[inline]
             fn sqrt(self) -> Self {
                 <$T>::sqrt(self)
             }
 
+            #[inline]
             fn exp(self) -> Self {
                 <$T>::exp(self)
             }
 
+            #[inline]
             fn exp2(self) -> Self {
                 <$T>::exp2(self)
             }
 
+            #[inline]
             fn ln(self) -> Self {
                 <$T>::ln(self)
             }
 
+            #[inline]
             fn log(self, base: Self) -> Self {
                 <$T>::log(self, base)
             }
 
+            #[inline]
             fn log2(self) -> Self {
                 <$T>::log2(self)
             }
 
+            #[inline]
             fn log10(self) -> Self {
                 <$T>::log10(self)
             }
 
+            #[inline]
             fn to_degrees(self) -> Self {
                 // NB: `f32` didn't stabilize this until 1.7
                 // <$T>::to_degrees(self)
                 self * (180. / ::std::$T::consts::PI)
             }
 
+            #[inline]
             fn to_radians(self) -> Self {
                 // NB: `f32` didn't stabilize this until 1.7
                 // <$T>::to_radians(self)
                 self * (::std::$T::consts::PI / 180.)
             }
 
+            #[inline]
             fn max(self, other: Self) -> Self {
                 <$T>::max(self, other)
             }
 
+            #[inline]
             fn min(self, other: Self) -> Self {
                 <$T>::min(self, other)
             }
 
+            #[inline]
             #[allow(deprecated)]
             fn abs_sub(self, other: Self) -> Self {
                 <$T>::abs_sub(self, other)
             }
 
+            #[inline]
             fn cbrt(self) -> Self {
                 <$T>::cbrt(self)
             }
 
+            #[inline]
             fn hypot(self, other: Self) -> Self {
                 <$T>::hypot(self, other)
             }
 
+            #[inline]
             fn sin(self) -> Self {
                 <$T>::sin(self)
             }
 
+            #[inline]
             fn cos(self) -> Self {
                 <$T>::cos(self)
             }
 
+            #[inline]
             fn tan(self) -> Self {
                 <$T>::tan(self)
             }
 
+            #[inline]
             fn asin(self) -> Self {
                 <$T>::asin(self)
             }
 
+            #[inline]
             fn acos(self) -> Self {
                 <$T>::acos(self)
             }
 
+            #[inline]
             fn atan(self) -> Self {
                 <$T>::atan(self)
             }
 
+            #[inline]
             fn atan2(self, other: Self) -> Self {
                 <$T>::atan2(self, other)
             }
 
+            #[inline]
             fn sin_cos(self) -> (Self, Self) {
                 <$T>::sin_cos(self)
             }
 
+            #[inline]
             fn exp_m1(self) -> Self {
                 <$T>::exp_m1(self)
             }
 
+            #[inline]
             fn ln_1p(self) -> Self {
                 <$T>::ln_1p(self)
             }
 
+            #[inline]
             fn sinh(self) -> Self {
                 <$T>::sinh(self)
             }
 
+            #[inline]
             fn cosh(self) -> Self {
                 <$T>::cosh(self)
             }
 
+            #[inline]
             fn tanh(self) -> Self {
                 <$T>::tanh(self)
             }
 
+            #[inline]
             fn asinh(self) -> Self {
                 <$T>::asinh(self)
             }
 
+            #[inline]
             fn acosh(self) -> Self {
                 <$T>::acosh(self)
             }
 
+            #[inline]
             fn atanh(self) -> Self {
                 <$T>::atanh(self)
             }
 
+            #[inline]
             fn integer_decode(self) -> (u64, i16, i8) {
                 $decode(self)
             }
