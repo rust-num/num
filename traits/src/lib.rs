@@ -13,7 +13,7 @@
 use std::ops::{Add, Sub, Mul, Div, Rem};
 
 pub use bounds::Bounded;
-pub use float::Float;
+pub use float::{Float, FloatConst};
 pub use identities::{Zero, One, zero, one};
 pub use ops::checked::*;
 pub use ops::saturating::Saturating;
