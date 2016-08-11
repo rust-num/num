@@ -1049,6 +1049,7 @@ impl BigUint {
     }
 
     /// Determines the fewest bits necessary to express the `BigUint`.
+    #[inline]
     pub fn bits(&self) -> usize {
         if self.is_zero() {
             return 0;

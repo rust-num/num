@@ -46,6 +46,7 @@ macro_rules! int_trait_impl {
     ($name:ident for $($t:ty)*) => ($(
         impl $name for $t {
             type FromStrRadixErr = ::std::num::ParseIntError;
+            #[inline]
             fn from_str_radix(s: &str, radix: u32)
                               -> Result<Self, ::std::num::ParseIntError>
             {

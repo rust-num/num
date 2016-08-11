@@ -1068,6 +1068,7 @@ impl BigInt {
 
     /// Determines the fewest bits necessary to express the `BigInt`,
     /// not including the sign.
+    #[inline]
     pub fn bits(&self) -> usize {
         self.data.bits()
     }

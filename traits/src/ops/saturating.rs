@@ -12,10 +12,12 @@ pub trait Saturating {
 macro_rules! saturating_impl {
     ($trait_name:ident for $($t:ty)*) => {$(
         impl $trait_name for $t {
+            #[inline]
             fn saturating_add(self, v: Self) -> Self {
                 Self::saturating_add(self, v)
             }
 
+            #[inline]
             fn saturating_sub(self, v: Self) -> Self {
                 Self::saturating_sub(self, v)
             }

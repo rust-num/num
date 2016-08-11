@@ -55,9 +55,11 @@ macro_rules! for_each_tuple {
 macro_rules! bounded_tuple {
     ( $($name:ident)* ) => (
         impl<$($name: Bounded,)*> Bounded for ($($name,)*) {
+            #[inline]
             fn min_value() -> Self {
                 ($($name::min_value(),)*)
             }
+            #[inline]
             fn max_value() -> Self {
                 ($($name::max_value(),)*)
             }
