@@ -601,7 +601,7 @@ impl<T> serde::Deserialize for Ratio<T>
     fn deserialize<D>(deserializer: &mut D) -> Result<Self, D::Error>
         where D: serde::Deserializer
     {
-        let (numer, denom) = try!(serde::Deserialize::deserialize(deserializer));
+        let (numer, denom): (T,T) = try!(serde::Deserialize::deserialize(deserializer));
         if denom.is_zero() {
             Err(serde::de::Error::invalid_value("denominator is zero"))
         } else {
