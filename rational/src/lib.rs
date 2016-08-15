@@ -28,9 +28,6 @@ use std::hash;
 use std::ops::{Add, Div, Mul, Neg, Rem, Sub};
 use std::str::FromStr;
 
-#[cfg(feature = "serde")]
-use serde;
-
 #[cfg(feature = "num-bigint")]
 use bigint::{BigInt, BigUint, Sign};
 
