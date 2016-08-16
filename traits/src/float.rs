@@ -1233,6 +1233,61 @@ fn integer_decode_f64(f: f64) -> (u64, i16, i8) {
 float_impl!(f32 integer_decode_f32);
 float_impl!(f64 integer_decode_f64);
 
+macro_rules! float_const_impl {
+    ($(#[$doc:meta] $constant:ident,)+) => (
+        #[allow(non_snake_case)]
+        pub trait FloatConst {
+            $(#[$doc] fn $constant() -> Self;)+
+        }
+        float_const_impl! { @float f32, $($constant,)+ }
+        float_const_impl! { @float f64, $($constant,)+ }
+    );
+    (@float $T:ident, $($constant:ident,)+) => (
+        impl FloatConst for $T {
+            $(
+                #[inline]
+                fn $constant() -> Self {
+                    ::std::$T::consts::$constant
+                }
+            )+
+        }
+    );
+}
+
+float_const_impl! {
+    #[doc = "Return Euler’s number."]
+    E,
+    #[doc = "Return `1.0 / π`."]
+    FRAC_1_PI,
+    #[doc = "Return `1.0 / sqrt(2.0)`."]
+    FRAC_1_SQRT_2,
+    #[doc = "Return `2.0 / π`."]
+    FRAC_2_PI,
+    #[doc = "Return `2.0 / sqrt(π)`."]
+    FRAC_2_SQRT_PI,
+    #[doc = "Return `π / 2.0`."]
+    FRAC_PI_2,
+    #[doc = "Return `π / 3.0`."]
+    FRAC_PI_3,
+    #[doc = "Return `π / 4.0`."]
+    FRAC_PI_4,
+    #[doc = "Return `π / 6.0`."]
+    FRAC_PI_6,
+    #[doc = "Return `π / 8.0`."]
+    FRAC_PI_8,
+    #[doc = "Return `ln(10.0)`."]
+    LN_10,
+    #[doc = "Return `ln(2.0)`."]
+    LN_2,
+    #[doc = "Return `log10(e)`."]
+    LOG10_E,
+    #[doc = "Return `log2(e)`."]
+    LOG2_E,
+    #[doc = "Return Archimedes’ constant."]
+    PI,
+    #[doc = "Return `sqrt(2.0)`."]
+    SQRT_2,
+}
 
 #[cfg(test)]
 mod tests {
