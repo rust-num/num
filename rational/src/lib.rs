@@ -28,9 +28,6 @@ use std::hash;
 use std::ops::{Add, Div, Mul, Neg, Rem, Sub};
 use std::str::FromStr;
 
-#[cfg(feature = "serde")]
-use serde;
-
 #[cfg(feature = "num-bigint")]
 use bigint::{BigInt, BigUint, Sign};
 
@@ -604,7 +601,7 @@ impl<T> serde::Deserialize for Ratio<T>
     fn deserialize<D>(deserializer: &mut D) -> Result<Self, D::Error>
         where D: serde::Deserializer
     {
-        let (numer, denom) = try!(serde::Deserialize::deserialize(deserializer));
+        let (numer, denom): (T,T) = try!(serde::Deserialize::deserialize(deserializer));
         if denom.is_zero() {
             Err(serde::de::Error::invalid_value("denominator is zero"))
         } else {
