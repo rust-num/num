@@ -10,67 +10,22 @@
 
 //! A Big decimal
 //!
-//! A `BigDecimal` is represented as a vector of `BigDigit`s.
+//! BigDecimal allows storing any real number to arbitrary precision; which
+//! avoids common floating point errors (such as 0.1 + 0.2 ≠ 0.3) at the
+//! cost of complexity.
+//!
+//! Internally, `BigDecimal` uses a `BigInt` object, paired with a 64-bit
+//! integer which determines the position of the decimal point. Therefore,
+//! the precision *is not* actually arbitrary, but limitied to 2^63 decimal
+//! places.
 //!
 //! Common numerical operations are overloaded, so we can treat them
 //! the same way we treat other numbers.
 //!
-//! ## Example
+//! It is not recommended to convert a floating point number to a decimal
+//! directly, as the floating point representation may be unexpected.
 //!
-//! ```rust
-//! extern crate num_bigdecimal;
-//! extern crate num_traits;
-//!
-//! # fn main() {
-//! use num_bigdecimal::BigDecimal;
-//! use num_traits::{Zero, One};
-//! use std::mem::replace;
-//!
-//! // Calculate large fibonacci numbers.
-//! fn fib(n: usize) -> BigDecimal {
-//!     let mut f0: BigUint = Zero::zero();
-//!     let mut f1: BigUint = One::one();
-//!     for _ in 0..n {
-//!         let f2 = f0 + &f1;
-//!         // This is a low cost way of swapping f0 with f1 and f1 with f2.
-//!         f0 = replace(&mut f1, f2);
-//!     }
-//!     f0
-//! }
-//!
-//! // This is a very large number.
-//! println!("fib(1000) = {}", fib(1000));
-//! # }
-//! ```
-//!
-//! It's easy to generate large random numbers:
-//!
-//! ```rust
-//! extern crate rand;
-//! extern crate num_bigint as bigint;
-//!
-//! # #[cfg(feature = "rand")]
-//! # fn main() {
-//! use bigint::{ToBigInt, RandBigInt};
-//!
-//! let mut rng = rand::thread_rng();
-//! let a = rng.gen_bigint(1000);
-//!
-//! let low = -10000.to_bigint().unwrap();
-//! let high = 10000.to_bigint().unwrap();
-//! let b = rng.gen_bigint_range(&low, &high);
-//!
-//! // Probably an even larger number.
-//! println!("{}", a * b);
-//! # }
-//!
-//! # #[cfg(not(feature = "rand"))]
-//! # fn main() {
-//! # }
-//! ```
 
-#[cfg(any(feature = "rand", test))]
-extern crate rand;
 #[cfg(feature = "rustc-serialize")]
 extern crate rustc_serialize;
 #[cfg(feature = "serde")]
@@ -90,6 +45,8 @@ use std::cmp::Ordering::Equal;
 use std::cmp::max;
 use bigint::{BigInt, ParseBigIntError};
 use traits::{Num, Zero, One};
+// use num_traits::identities::Zero;
+
 
 macro_rules! forward_val_val_binop {
     (impl $imp:ident for $res:ty, $method:ident) => {
@@ -158,8 +115,6 @@ macro_rules! forward_all_binop_to_ref_ref {
 
 /// A big decimal type.
 ///
-/// A `BigUint`-typed value `BigUint { data: vec!(a, b, c) }` represents a number
-/// `(a + b * big_digit::BASE + c * big_digit::BASE^2)`.
 #[derive(Clone, Debug, Hash)]
 #[cfg_attr(feature = "rustc-serialize", derive(RustcEncodable, RustcDecodable))]
 pub struct BigDecimal {
@@ -168,12 +123,14 @@ pub struct BigDecimal {
 }
 
 impl BigDecimal {
-    /// Creates and initializes a `BigUint`.
+    /// Creates and initializes a `BigDecimal`.
     ///
-    /// The digits are in little-endian base 2^32.
     #[inline]
     pub fn new(digits: BigInt, scale: i64) -> BigDecimal {
-        BigDecimal { int_val: digits, scale: scale }
+        BigDecimal {
+            int_val: digits,
+            scale: scale,
+        }
     }
 
     /// Creates and initializes a `BigDecimal`.
@@ -181,12 +138,8 @@ impl BigDecimal {
     /// # Examples
     ///
     /// ```
-    /// use num_bigdecimal::{BigDecimal};
-    /// use num_traits::Zero;
-    ///
-    /// assert_eq!(BigDecimal::parse_bytes(b"1234.12", 10), BigDecimal::zero());
-    /// assert_eq!(BigDecimal::parse_bytes(b"ABCD.1", 16), BigDecimal::zero());
-    /// assert_eq!(BigDecimal::parse_bytes(b"G", 16), None);
+    /// // assert_eq!(BigDecimal::parse_bytes(b"0", 16), BigDecimal::zero());
+    /// // assert_eq!(BigDecimal::parse_bytes(b"f", 16), BigDecimal::parse_bytes(b"16", 10));
     /// ```
     #[inline]
     pub fn parse_bytes(buf: &[u8], radix: u32) -> Option<BigDecimal> {
@@ -211,7 +164,7 @@ impl BigDecimal {
             return new;
         }
 
-        //todo implement
+        // todo implement
         self.clone()
     }
 }
@@ -382,19 +335,21 @@ impl Num for BigDecimal {
     fn from_str_radix(s: &str, radix: u32) -> Result<BigDecimal, ParseBigDecimalError> {
         let scale = match s.find('.') {
             Some(i) => (s.len() as i64) - (i as i64) - 1,
-            None => 0
+            None => 0,
         };
 
-        let bi = try!(BigInt::from_str_radix(s, radix));
-        Ok(BigDecimal::new(bi, scale as i64))
+        match BigInt::from_str_radix(s, radix) {
+            Ok(bi) => Ok(BigDecimal::new(bi, scale as i64)),
+            Err(_) => Err(ParseBigDecimalError::Other), // ParseDecimal(error)),
+        }
     }
 }
 
 #[cfg(test)]
 mod bigdecimal_tests {
-    use super::{BigDecimal};
+    use super::BigDecimal;
     use bigint::BigInt;
-    use traits::{Num};
+    use traits::Num;
 
     /// Assert that an op works for all val/ref combinations
     macro_rules! assert_op {
@@ -421,7 +376,7 @@ mod bigdecimal_tests {
         let b = BigDecimal::new(BigInt::from_str_radix("1234", 10).unwrap(), 3);
         let c = BigDecimal::new(BigInt::from_str_radix("11106", 10).unwrap(), 3);
         //  12.34
-        //-  1.234
+        //  -1.234
         //  11.106
         assert_eq!(a - b, c)
     }
@@ -431,20 +386,37 @@ mod bigdecimal_tests {
         let a = BigDecimal::new(BigInt::from_str_radix("1234", 10).unwrap(), 2);
         let b = BigDecimal::new(BigInt::from_str_radix("1234", 10).unwrap(), 3);
         let c = BigDecimal::new(BigInt::from_str_radix("1522756", 10).unwrap(), 5);
-        //  12.34
-        //*  1.234
-        //  15.22756
+        //  12.34 * 1.234 = 15.22756
         assert_eq!(a * b, c)
     }
 
     #[test]
     fn test_div() {
-        let a = BigDecimal::new(BigInt::from_str_radix("1234", 10).unwrap(), 2);
-        let b = BigDecimal::new(BigInt::from_str_radix("1233", 10).unwrap(), 3);
-        let c = BigDecimal::new(BigInt::from_str_radix("100081103", 10).unwrap(), 1);
-        //  12.34
-        //*  1.233
-        //  10.0081103
-        assert_eq!(a / b, c)
+        // x / y == z
+        for &(x, y, z) in [("1", "2", "0.5")].iter() {
+
+            let a = BigDecimal::from_str_radix(x, 10).unwrap();
+            let b = BigDecimal::from_str_radix(y, 10).unwrap();
+            // let c = BigDecimal::from_str_radix(z, 10).unwrap();
+            //  12.34 ÷ 1.233 = 10.0081103
+            // assert_eq!(a / b, c)
+        }
+    }
+
+    #[test]
+    fn test_from_str() {
+        let a = BigDecimal::from_str_radix("1", 10).unwrap();
+
+        // for &(x, y) in [("100.4", "1.0000"), ("4.5", "4.50")].iter() {
+        //     println!("X: {}", x);
+        //     let a = BigDecimal::from_str_radix(x, 10);
+        //     match a {
+        //         Ok(_) => println!("OK"),
+        //         Err(_) => println!("Err"),
+        //     }
+        //     // println!(">> {}", a);
+        //     a.unwrap();
+        //     // let b = BigDecimal::from_str_radix(y, 10).unwrap();
+        // }
     }
 }
