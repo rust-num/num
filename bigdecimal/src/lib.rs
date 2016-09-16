@@ -220,14 +220,27 @@ impl PartialEq for BigDecimal {
         //          rhs.int_val,
         //          rhs.scale);
 
+        // difference in scale between the two decimals
         let scale_diff = (self.scale - rhs.scale).abs() as u32;
 
-        let scale_bigint = if scale_diff <= 8 {
+        // the scale as a bigint number power of ten
+        // e.g. diff == 3 -> scale_bigint == 1000
+        let scale_bigint = if scale_diff <= 9 {
             BigInt::from_u64(10u64.pow(scale_diff)).unwrap()
         } else {
-            BigInt::one()
+            let billion = &BigInt::from_u64(10u64.pow(9)).unwrap();
+
+            let mut scale_diff = scale_diff;
+            let mut tmp_bigint = BigInt::one();
+            while scale_diff > 9 {
+                tmp_bigint = tmp_bigint * billion;
+                scale_diff -= 9;
+            }
+
+            tmp_bigint * BigInt::from_u64(10u64.pow(scale_diff)).unwrap()
         };
 
+        // fix scale and test equality
         let result = if self.scale > rhs.scale {
             let shifted_int = &rhs.int_val * scale_bigint;
             shifted_int == self.int_val
@@ -469,6 +482,7 @@ mod bigdecimal_tests {
             ("12.34", "1.234", "13.574"),
             ("12.34", "-1.234", "11.106"),
             ("1234e6", "1234e-6", "1234000000.001234"),
+            ("18446744073709551616.0", "1", "18446744073709551617"),
         ];
 
         for &(x, y, z) in vals.iter() {
@@ -510,7 +524,7 @@ mod bigdecimal_tests {
             ("2e1", "1", "20"),
             ("3", ".333333", "0.999999"),
             ("2389472934723", "209481029831", "500549251119075878721813"),
-            ("1e-45", "1e50", "100000"),
+            ("1e-450", "1e500", ".1e51"),
         ];
 
         for &(x, y, z) in vals.iter() {
@@ -552,6 +566,32 @@ mod bigdecimal_tests {
     }
 
     #[test]
+    fn test_equal() {
+        let vals = vec![
+            ("2", ".2e1"),
+            ("2123121e1231", "212.3121e1235"),
+        ];
+        for &(x, y) in vals.iter() {
+            let a = BigDecimal::from_str(x).unwrap();
+            let b = BigDecimal::from_str(y).unwrap();
+            assert_eq!(a, b);
+        }
+    }
+
+    #[test]
+    fn test_not_equal() {
+        let vals = vec![
+            ("2", ".2e2"),
+            ("1e45", "1e-900"),
+        ];
+        for &(x, y) in vals.iter() {
+            let a = BigDecimal::from_str(x).unwrap();
+            let b = BigDecimal::from_str(y).unwrap();
+            assert!(a != b, "{} == {}", a, b);
+        }
+    }
+
+    #[test]
     fn test_from_str() {
         let vals = vec![
             ("1331.107", 1331107, 3),
@@ -574,4 +614,5 @@ mod bigdecimal_tests {
             assert_eq!(x.scale, scale);
         }
     }
+
 }
