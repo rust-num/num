@@ -460,48 +460,68 @@ impl Num for BigDecimal {
 #[cfg(test)]
 mod bigdecimal_tests {
     use super::BigDecimal;
-    use bigint::BigInt;
-    use traits::{Num, ToPrimitive};
-
+    use traits::ToPrimitive;
     use std::str::FromStr;
-
-    /// Assert that an op works for all val/ref combinations
-    macro_rules! assert_op {
-        ($left:ident $op:tt $right:ident == $expected:expr) => {
-            assert_eq!((&$left) $op (&$right), $expected);
-            assert_eq!((&$left) $op $right.clone(), $expected);
-            assert_eq!($left.clone() $op (&$right), $expected);
-            assert_eq!($left.clone() $op $right.clone(), $expected);
-        };
-    }
 
     #[test]
     fn test_add() {
-        let a = BigDecimal::new(BigInt::from_str_radix("1234", 10).unwrap(), 2);
-        let b = BigDecimal::new(BigInt::from_str_radix("1234", 10).unwrap(), 3);
-        let c = BigDecimal::new(BigInt::from_str_radix("13574", 10).unwrap(), 3);
-        // 12.34 + 1.234 = 13.574
-        assert_eq!(a + b, c)
+        let vals = vec![
+            ("12.34", "1.234", "13.574"),
+            ("12.34", "-1.234", "11.106"),
+            ("1234e6", "1234e-6", "1234000000.001234"),
+        ];
+
+        for &(x, y, z) in vals.iter() {
+
+            let a = BigDecimal::from_str(x).unwrap();
+            let b = BigDecimal::from_str(y).unwrap();
+            let c = BigDecimal::from_str(z).unwrap();
+
+            let s = a + b;
+            assert_eq!(s, c);
+        }
     }
 
     #[test]
     fn test_sub() {
-        let a = BigDecimal::new(BigInt::from_str_radix("1234", 10).unwrap(), 2);
-        let b = BigDecimal::new(BigInt::from_str_radix("1234", 10).unwrap(), 3);
-        let c = BigDecimal::new(BigInt::from_str_radix("11106", 10).unwrap(), 3);
-        //  12.34
-        //  -1.234
-        //  11.106
-        assert_eq!(a - b, c)
+        let vals = vec![
+            ("12.34", "1.234", "11.106"),
+            ("12.34", "-1.234", "13.574"),
+            ("1234e6", "1234e-6", "1233999999.998766"),
+        ];
+
+        for &(x, y, z) in vals.iter() {
+
+            let a = BigDecimal::from_str(x).unwrap();
+            let b = BigDecimal::from_str(y).unwrap();
+            let c = BigDecimal::from_str(z).unwrap();
+
+            let d = a - b;
+            assert_eq!(d, c);
+        }
     }
 
     #[test]
     fn test_mul() {
-        let a = BigDecimal::new(BigInt::from_str_radix("1234", 10).unwrap(), 2);
-        let b = BigDecimal::new(BigInt::from_str_radix("1234", 10).unwrap(), 3);
-        let c = BigDecimal::new(BigInt::from_str_radix("1522756", 10).unwrap(), 5);
-        //  12.34 * 1.234 = 15.22756
-        assert_eq!(a * b, c)
+
+        let vals = vec![
+            ("2", "1", "2"),
+            ("12.34", "1.234", "15.22756"),
+            ("2e1", "1", "20"),
+            ("3", ".333333", "0.999999"),
+            ("2389472934723", "209481029831", "500549251119075878721813"),
+            ("1e-45", "1e50", "100000"),
+        ];
+
+        for &(x, y, z) in vals.iter() {
+
+            let a = BigDecimal::from_str(x).unwrap();
+            let b = BigDecimal::from_str(y).unwrap();
+            let c = BigDecimal::from_str(z).unwrap();
+
+            let p = a * b;
+            assert_eq!(p, c);
+        }
     }
 
     #[test]
