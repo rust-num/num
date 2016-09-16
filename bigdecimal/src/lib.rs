@@ -44,8 +44,8 @@ use std::fmt;
 use std::cmp::Ordering::Equal;
 use std::cmp::max;
 use bigint::{BigInt, BigUint, ParseBigIntError, Sign};
-use traits::{Num, Zero, One};
-// use num_traits::identities::Zero;
+use traits::{Num, Zero, One, FromPrimitive};
+use integer::Integer;
 
 
 macro_rules! forward_val_val_binop {
@@ -301,10 +301,33 @@ impl<'a, 'b> Div<&'b BigDecimal> for &'a BigDecimal {
     type Output = BigDecimal;
 
     #[inline]
+    #[allow(non_snake_case)]
     fn div(self, other: &BigDecimal) -> BigDecimal {
         let scale = self.scale - other.scale;
+        let ref num = self.int_val;
+        let ref den = other.int_val;
+        let (quotient, remainder) = num.div_rem(&den);
 
-        BigDecimal::new(self.int_val.clone() / other.int_val.clone(), scale)
+        // no remainder - quotient is final solution
+        if remainder == BigInt::zero() {
+            return BigDecimal::new(quotient, scale);
+        }
+
+        let BIG_TEN = &BigInt::from_i8(10).unwrap();
+        let mut remainder = remainder * BIG_TEN;
+        let mut quotient = quotient;
+
+        let MAX_ITERATIONS = 100;
+        let mut iteration_count = 0;
+        while remainder != BigInt::zero() && iteration_count < MAX_ITERATIONS {
+            let (q, r) = remainder.div_rem(&den);
+            quotient = quotient * BIG_TEN + q;
+            remainder = r * BIG_TEN;
+
+            iteration_count += 1;
+        }
+        let scale = scale + iteration_count;
+        BigDecimal::new(quotient, scale)
     }
 }
 
@@ -468,14 +491,25 @@ mod bigdecimal_tests {
 
     #[test]
     fn test_div() {
-        // x / y == z
-        for &(x, y, z) in [("1", "2", "0.5")].iter() {
+        let vals = vec![
+            ("2", "1", "2"),
+            ("1", "2", "0.5"),
+            ("1", ".2", "5"),
+            ("5", "4", "1.25"),
+            ("100", "5", "20"),
+            ("200", "5", "40."),
+            ("1", "3", ".3333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333"),
+            ("12.34", "1.233", "10.008110300081103000811030008110300081103000811030008110300081103000811030008110300081103000811030008"),
+        ];
 
-            let a = BigDecimal::from_str_radix(x, 10).unwrap();
-            let b = BigDecimal::from_str_radix(y, 10).unwrap();
-            // let c = BigDecimal::from_str_radix(z, 10).unwrap();
-            //  12.34 ÷ 1.233 = 10.0081103
-            // assert_eq!(a / b, c)
+        for &(x, y, z) in vals.iter() {
+
+            let a = BigDecimal::from_str(x).unwrap();
+            let b = BigDecimal::from_str(y).unwrap();
+            let c = BigDecimal::from_str(z).unwrap();
+
+            let q = a / b;
+            assert_eq!(q, c)
         }
     }
 
