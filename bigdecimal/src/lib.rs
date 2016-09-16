@@ -43,7 +43,7 @@ use std::str::{self, FromStr};
 use std::fmt;
 use std::cmp::Ordering::Equal;
 use std::cmp::max;
-use bigint::{BigInt, ParseBigIntError};
+use bigint::{BigInt, BigUint, ParseBigIntError, Sign};
 use traits::{Num, Zero, One};
 // use num_traits::identities::Zero;
 
@@ -157,10 +157,10 @@ impl BigDecimal {
 
         if new_scale > self.scale {
             let raise = new_scale - self.scale;
-            println!("raise: {}", raise);
+            // println!("raise: {}", raise);
             let exp = (10 as i64).pow(raise as u32);
             let new = BigDecimal::new(self.int_val.clone() * BigInt::from(exp), new_scale);
-            println!("new: {}", new);
+            // println!("new: {}", new);
             return new;
         }
 
@@ -333,15 +333,89 @@ impl Num for BigDecimal {
     /// Creates and initializes a BigDecimal.
     #[inline]
     fn from_str_radix(s: &str, radix: u32) -> Result<BigDecimal, ParseBigDecimalError> {
-        let scale = match s.find('.') {
-            Some(i) => (s.len() as i64) - (i as i64) - 1,
+        assert!(2 <= radix && radix <= 36, "The radix must be within 2...36");
+
+        // interpret as characters
+        let mut chars = s.chars().peekable();
+
+        // get the value of the first character
+        let firstchar = match chars.peek() {
+            Some(&c) => c,
+
+            // empty string returns zero
+            None => return Ok(BigDecimal::zero()),
+        };
+
+        // is this a negative number
+        let sign = if firstchar == '-' {
+            Sign::Minus
+        } else {
+            Sign::Plus
+        };
+
+        // number of leading characters to ignore
+        let offset = match firstchar {
+            '+' | '-' => 1,
+            '0'...'9' | '.' => 0,
+            _ => panic!("Unexpected beginning character"),
+        };
+
+        // storage buffer
+        let mut buff = Vec::with_capacity(s.len());
+
+        // this optional decimal point
+        let mut decimal_found = None;
+
+        // keep track of double underscores
+        let mut prev_underscore = false;
+        for (i, c) in chars.skip(offset).enumerate() {
+
+            if c == '_' && prev_underscore {
+                panic!("Malformed string (multiple _ characters)");
+            } else if c == '_' {
+                prev_underscore = true;
+                continue;
+            } else {
+                prev_underscore = false;
+            }
+
+            //
+            if c == '.' {
+                if decimal_found == None {
+                    decimal_found = Some(i);
+                    continue;
+                } else {
+                    panic!("Multiple decimal points");
+                }
+            }
+
+            // foo
+            let d = match c {
+                '0'...'9' | 'a'...'f' | 'A'...'F' => c as u8,
+                // Some(digit) => buff.push(digit),
+                _ => panic!("Unexpected character {:?}", c),
+            };
+
+            // println!("{}", c.to_digit());
+            buff.push(d);
+        }
+
+        let scale = match decimal_found {
+            Some(val) => (s.len() as u64) - (val as u64) - 1,
             None => 0,
         };
 
-        match BigInt::from_str_radix(s, radix) {
-            Ok(bi) => Ok(BigDecimal::new(bi, scale as i64)),
-            Err(_) => Err(ParseBigDecimalError::Other), // ParseDecimal(error)),
-        }
+        let big_uint = match BigUint::parse_bytes(&buff, radix) {
+            Some(x) => x,
+            None => BigUint::zero(),
+        };
+
+
+        let big_int = BigInt::from_biguint(sign, big_uint);
+        return Ok(BigDecimal {
+            int_val: big_int,
+            scale: scale as i64,
+        });
     }
 }
 
@@ -349,7 +423,9 @@ impl Num for BigDecimal {
 mod bigdecimal_tests {
     use super::BigDecimal;
     use bigint::BigInt;
-    use traits::Num;
+    use traits::{Num, ToPrimitive};
+
+    use std::str::FromStr;
 
     /// Assert that an op works for all val/ref combinations
     macro_rules! assert_op {
@@ -405,18 +481,18 @@ mod bigdecimal_tests {
 
     #[test]
     fn test_from_str() {
-        let a = BigDecimal::from_str_radix("1", 10).unwrap();
+        let vals = vec![
+            ("1331.107", 1331107, 3),
+            ("1.0", 10, 1),
+            ("0.00123", 123, 5),
+            ("-123", -123, 0),
+            ("-1230", -1230, 0),
+        ];
 
-        // for &(x, y) in [("100.4", "1.0000"), ("4.5", "4.50")].iter() {
-        //     println!("X: {}", x);
-        //     let a = BigDecimal::from_str_radix(x, 10);
-        //     match a {
-        //         Ok(_) => println!("OK"),
-        //         Err(_) => println!("Err"),
-        //     }
-        //     // println!(">> {}", a);
-        //     a.unwrap();
-        //     // let b = BigDecimal::from_str_radix(y, 10).unwrap();
-        // }
+        for &(source, val, scale) in vals.iter() {
+            let x = BigDecimal::from_str(source).unwrap();
+            assert_eq!(x.int_val.to_i32().unwrap(), val);
+            assert_eq!(x.scale, scale);
+        }
     }
 }
