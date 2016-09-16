@@ -41,7 +41,6 @@ use std::num::ParseFloatError;
 use std::ops::{Add, Div, Mul, Rem, Sub};
 use std::str::{self, FromStr};
 use std::fmt;
-use std::cmp::Ordering::Equal;
 use std::cmp::max;
 use bigint::{BigInt, BigUint, ParseBigIntError, Sign};
 use traits::{Num, Zero, One, FromPrimitive};
@@ -214,15 +213,32 @@ impl FromStr for BigDecimal {
 
 impl PartialEq for BigDecimal {
     #[inline]
-    fn eq(&self, other: &BigDecimal) -> bool {
-        match self.int_val.cmp(&other.int_val) {
-            Equal => true,
-            _ => return false,
+    fn eq(&self, rhs: &BigDecimal) -> bool {
+        // println!("{}E{} =?= {}E{}",
+        //          self.int_val,
+        //          self.scale,
+        //          rhs.int_val,
+        //          rhs.scale);
+
+        let scale_diff = (self.scale - rhs.scale).abs() as u32;
+
+        let scale_bigint = if scale_diff <= 8 {
+            BigInt::from_u64(10u64.pow(scale_diff)).unwrap()
+        } else {
+            BigInt::one()
         };
-        match self.scale.cmp(&other.scale) {
-            Equal => true,
-            _ => false,
-        }
+
+        let result = if self.scale > rhs.scale {
+            let shifted_int = &rhs.int_val * scale_bigint;
+            shifted_int == self.int_val
+        } else if self.scale < rhs.scale {
+            let shifted_int = &self.int_val * scale_bigint;
+            shifted_int == rhs.int_val
+        } else {
+            self.int_val == rhs.int_val
+        };
+
+        return result;
     }
 }
 
@@ -359,11 +375,11 @@ impl Num for BigDecimal {
         assert!(2 <= radix && radix <= 36, "The radix must be within 2...36");
 
         // interpret as characters
-        let mut chars = s.chars().peekable();
+        let mut chars = s.chars();
 
         // get the value of the first character
-        let firstchar = match chars.peek() {
-            Some(&c) => c,
+        let firstchar = match chars.next() {
+            Some(c) => c,
 
             // empty string returns zero
             None => return Ok(BigDecimal::zero()),
@@ -376,68 +392,67 @@ impl Num for BigDecimal {
             Sign::Plus
         };
 
-        // number of leading characters to ignore
-        let offset = match firstchar {
-            '+' | '-' => 1,
-            '0'...'9' | '.' => 0,
-            _ => panic!("Unexpected beginning character"),
+        // storage buffer
+        let mut digit_vec = Vec::with_capacity(s.len());
+
+        // optional decimal point
+        let mut decimal_found = if firstchar == '.' {
+            Some(0)
+        } else if '0' <= firstchar && firstchar <= '9' {
+            digit_vec.push(firstchar as u8);
+            None
+        } else {
+            None
         };
 
-        // storage buffer
-        let mut buff = Vec::with_capacity(s.len());
-
-        // this optional decimal point
-        let mut decimal_found = None;
-
-        // keep track of double underscores
-        let mut prev_underscore = false;
-        for (i, c) in chars.skip(offset).enumerate() {
-
-            if c == '_' && prev_underscore {
-                panic!("Malformed string (multiple _ characters)");
-            } else if c == '_' {
-                prev_underscore = true;
+        for c in chars.by_ref() {
+            // skip underscores
+            if c == '_' {
                 continue;
-            } else {
-                prev_underscore = false;
             }
 
-            //
+            // found decimal point
             if c == '.' {
                 if decimal_found == None {
-                    decimal_found = Some(i);
+                    decimal_found = Some(digit_vec.len());
                     continue;
                 } else {
                     panic!("Multiple decimal points");
                 }
             }
 
-            // foo
+            // found exponential marker - stop reading values
+            if c == 'e' || c == 'E' {
+                break;
+            }
+
+            // get the byte value of the character and store in buff
             let d = match c {
                 '0'...'9' | 'a'...'f' | 'A'...'F' => c as u8,
-                // Some(digit) => buff.push(digit),
                 _ => panic!("Unexpected character {:?}", c),
             };
 
-            // println!("{}", c.to_digit());
-            buff.push(d);
+            digit_vec.push(d);
         }
 
+        // determine scale from number of digits stored
         let scale = match decimal_found {
-            Some(val) => (s.len() as u64) - (val as u64) - 1,
+            Some(val) => (digit_vec.len() as i64) - (val as i64),
             None => 0,
         };
 
-        let big_uint = match BigUint::parse_bytes(&buff, radix) {
+        // modify scale by examining remaining characters (exponent)
+        let scale = scale - i64::from_str(chars.as_str()).unwrap_or(0);
+
+        let big_uint = match BigUint::parse_bytes(&digit_vec, radix) {
             Some(x) => x,
             None => BigUint::zero(),
         };
 
-
         let big_int = BigInt::from_biguint(sign, big_uint);
         return Ok(BigDecimal {
             int_val: big_int,
-            scale: scale as i64,
+            scale: scale,
         });
     }
 }
@@ -493,10 +508,13 @@ mod bigdecimal_tests {
     fn test_div() {
         let vals = vec![
             ("2", "1", "2"),
+            ("2e1", "1", "20"),
             ("1", "2", "0.5"),
-            ("1", ".2", "5"),
+            ("1", "2e-2", "5e1"),
             ("5", "4", "1.25"),
+            ("5", "4", "125e-2"),
             ("100", "5", "20"),
+            ("-50", "5", "-10"),
             ("200", "5", "40."),
             ("1", "3", ".3333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333"),
             ("12.34", "1.233", "10.008110300081103000811030008110300081103000811030008110300081103000811030008110300081103000811030008"),
@@ -518,9 +536,16 @@ mod bigdecimal_tests {
         let vals = vec![
             ("1331.107", 1331107, 3),
             ("1.0", 10, 1),
+            ("2e1", 2, -1),
             ("0.00123", 123, 5),
             ("-123", -123, 0),
             ("-1230", -1230, 0),
+            ("12.3", 123, 1),
+            ("123e-1", 123, 1),
+            ("1.23e+1", 123, 1),
+            ("1.23E+3", 123, -1),
+            ("1.23E-8", 123, 10),
+            ("-1.23E-10", -123, 12),
         ];
 
         for &(source, val, scale) in vals.iter() {
