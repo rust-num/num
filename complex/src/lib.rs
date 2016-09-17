@@ -108,7 +108,7 @@ impl<T: Clone + Float> Complex<T> {
     pub fn arg(&self) -> T {
         self.im.atan2(self.re)
     }
-    /// Convert to polar form $(r, \theta)$, such that $z = re\^{i\theta}$
+    /// Convert to polar form $(\rho, \theta)$, such that $z = \rho e\^{i\theta}$
     #[inline]
     pub fn to_polar(&self) -> (T, T) {
         (self.norm(), self.arg())
