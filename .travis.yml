@@ -19,3 +19,6 @@ after_success: |
 notifications:
   email:
     on_success: never
+env:
+  global:
+    - RUSTDOCFLAGS="--html-in-header doc/header.html --html-after-content doc/after.html"
