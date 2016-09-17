@@ -29,6 +29,13 @@ use traits::{Zero, One, Num, Float};
 // probably doesn't map to C's _Complex correctly.
 
 /// A complex number in Cartesian form.
+///
+/// \\[ z = a + bi \\]
+///
+/// Where:
+///
+/// - $a$ is called real portion and is denoted $\Re(z)$
+/// - $b$ is called imaginary portion and is denoted $\Im(z)$.
 #[derive(PartialEq, Copy, Clone, Hash, Debug, Default)]
 #[cfg_attr(feature = "rustc-serialize", derive(RustcEncodable, RustcDecodable))]
 pub struct Complex<T> {
@@ -48,26 +55,26 @@ impl<T: Clone + Num> Complex<T> {
         Complex { re: re, im: im }
     }
 
-    /// Returns imaginary unit
+    /// Returns imaginary unit $z = 0 + i$
     #[inline]
     pub fn i() -> Complex<T> {
         Self::new(T::zero(), T::one())
     }
 
     /// Returns the square of the norm (since `T` doesn't necessarily
-    /// have a sqrt function), i.e. `re^2 + im^2`.
+    /// have a sqrt function), i.e. $\Re(z)\^{2} + \Im(z)\^{2}$.
     #[inline]
     pub fn norm_sqr(&self) -> T {
         self.re.clone() * self.re.clone() + self.im.clone() * self.im.clone()
     }
 
-    /// Multiplies `self` by the scalar `t`.
+    /// Multiplies `self` by the scalar $t$.
     #[inline]
     pub fn scale(&self, t: T) -> Complex<T> {
         Complex::new(self.re.clone() * t.clone(), self.im.clone() * t)
     }
 
-    /// Divides `self` by the scalar `t`.
+    /// Divides `self` by the scalar $t$.
     #[inline]
     pub fn unscale(&self, t: T) -> Complex<T> {
         Complex::new(self.re.clone() / t.clone(), self.im.clone() / t)
@@ -75,13 +82,13 @@ impl<T: Clone + Num> Complex<T> {
 }
 
 impl<T: Clone + Num + Neg<Output = T>> Complex<T> {
-    /// Returns the complex conjugate. i.e. `re - i im`
+    /// Returns the complex conjugate. i.e. $\Re(z) - i\Im(z)$
     #[inline]
     pub fn conj(&self) -> Complex<T> {
         Complex::new(self.re.clone(), -self.im.clone())
     }
 
-    /// Returns `1/self`
+    /// Returns $\frac{1}{z}$
     #[inline]
     pub fn inv(&self) -> Complex<T> {
         let norm_sqr = self.norm_sqr();
@@ -91,7 +98,7 @@ impl<T: Clone + Num + Neg<Output = T>> Complex<T> {
 }
 
 impl<T: Clone + Float> Complex<T> {
-    /// Calculate |self|
+    /// Calculate $\lvert{}z\rvert$
     #[inline]
     pub fn norm(&self) -> T {
         self.re.hypot(self.im)
@@ -101,8 +108,7 @@ impl<T: Clone + Float> Complex<T> {
     pub fn arg(&self) -> T {
         self.im.atan2(self.re)
     }
-    /// Convert to polar form (r, theta), such that `self = r * exp(i
-    /// * theta)`
+    /// Convert to polar form $(r, \theta)$, such that $z = re\^{i\theta}$
     #[inline]
     pub fn to_polar(&self) -> (T, T) {
         (self.norm(), self.arg())
@@ -113,7 +119,7 @@ impl<T: Clone + Float> Complex<T> {
         Complex::new(*r * theta.cos(), *r * theta.sin())
     }
 
-    /// Computes `e^(self)`, where `e` is the base of the natural logarithm.
+    /// Computes $e\^z$, where $e$ is the base of the natural logarithm.
     #[inline]
     pub fn exp(&self) -> Complex<T> {
         // formula: e^(a + bi) = e^a (cos(b) + i*sin(b))
@@ -125,9 +131,9 @@ impl<T: Clone + Float> Complex<T> {
     ///
     /// This function has one branch cut:
     ///
-    /// * `(-∞, 0]`, continuous from above.
+    /// * $(-\infty, 0]$, continuous from above.
     ///
-    /// The branch satisfies `-π ≤ arg(ln(z)) ≤ π`.
+    /// The branch satisfies $-\pi \leq \arg(\ln{z}) \leq \pi$.
     #[inline]
     pub fn ln(&self) -> Complex<T> {
         // formula: ln(z) = ln|z| + i*arg(z)
@@ -139,9 +145,9 @@ impl<T: Clone + Float> Complex<T> {
     ///
     /// This function has one branch cut:
     ///
-    /// * `(-∞, 0)`, continuous from above.
+    /// * $(-\infty, 0)$, continuous from above.
     ///
-    /// The branch satisfies `-π/2 ≤ arg(sqrt(z)) ≤ π/2`.
+    /// The branch satisfies $-\frac{\pi}{2} \leq \arg(\sqrt{z}) \leq \frac{\pi}{2}$.
     #[inline]
     pub fn sqrt(&self) -> Complex<T> {
         // formula: sqrt(r e^(it)) = sqrt(r) e^(it/2)
@@ -149,8 +155,16 @@ impl<T: Clone + Float> Complex<T> {
         let (r, theta) = self.to_polar();
         Complex::from_polar(&(r.sqrt()), &(theta/two))
     }
-    
+
     /// Raises `self` to a floating point power.
+    ///
+    /// ## Formula
+    ///
+    /// \\[ x\^y = (\rho e\^{i\theta})\^y = \rho\^y e\^{i \theta y} \\]
+    ///
+    /// which is equivalent to:
+    ///
+    /// \\[ from\\_polar(\rho\^y, \theta y) \\]
     #[inline]
     pub fn powf(&self, exp: T) -> Complex<T> {
         // formula: x^y = (ρ e^(i θ))^y = ρ^y e^(i θ y)
@@ -158,25 +172,36 @@ impl<T: Clone + Float> Complex<T> {
         let (r, theta) = self.to_polar();
         Complex::from_polar(&r.powf(exp), &(theta*exp))
     }
-    
+
     /// Returns the logarithm of `self` with respect to an arbitrary base.
+    ///
+    /// ## Formula
+    ///
+    /// \\[
+    /// \begin{aligned}
+    ///     \log_y z&{}= \log_y(\rho e\^{i \theta}) \\\\
+    ///             &{}= \log_y \rho + \log_y e\^{i \theta} \\\\
+    ///             &{}= \log_y \rho + \frac{\ln e\^{i \theta}}{\ln y} \\\\
+    ///             &{}= \log_y \rho + \frac{i \theta}{\ln y}
+    /// \end{aligned}
+    /// \\]
     #[inline]
     pub fn log(&self, base: T) -> Complex<T> {
-        // formula: log_y(x) = log_y(ρ e^(i θ)) 
-        // = log_y(ρ) + log_y(e^(i θ)) = log_y(ρ) + ln(e^(i θ)) / ln(y) 
-        // = log_y(ρ) + i θ / ln(y) 
+        // formula: log_y(x) = log_y(ρ e^(i θ))
+        // = log_y(ρ) + log_y(e^(i θ)) = log_y(ρ) + ln(e^(i θ)) / ln(y)
+        // = log_y(ρ) + i θ / ln(y)
         let (r, theta) = self.to_polar();
         Complex::new(r.log(base), theta / base.ln())
     }
-    
+
     /// Raises `self` to a complex power.
     #[inline]
     pub fn powc(&self, exp: Complex<T>) -> Complex<T> {
         // formula: x^y = (a + i b)^(c + i d)
-        // = (ρ e^(i θ))^c (ρ e^(i θ))^(i d) 
+        // = (ρ e^(i θ))^c (ρ e^(i θ))^(i d)
         //    where ρ=|x| and θ=arg(x)
         // = ρ^c e^(−d θ) e^(i c θ) ρ^(i d)
-        // = p^c e^(−d θ) (cos(c θ) 
+        // = p^c e^(−d θ) (cos(c θ)
         //   + i sin(c θ)) (cos(d ln(ρ)) + i sin(d ln(ρ)))
         // = p^c e^(−d θ) (
         //   cos(c θ) cos(d ln(ρ)) − sin(c θ) sin(d ln(ρ))
@@ -185,14 +210,14 @@ impl<T: Clone + Float> Complex<T> {
         // = from_polar(p^c e^(−d θ), c θ + d ln(ρ))
         let (r, theta) = self.to_polar();
         Complex::from_polar(
-            &(r.powf(exp.re) * (-exp.im * theta).exp()), 
+            &(r.powf(exp.re) * (-exp.im * theta).exp()),
             &(exp.re * theta + exp.im * r.ln()))
     }
-    
+
     /// Raises a floating point number to the complex power `self`.
     #[inline]
     pub fn expf(&self, base: T) -> Complex<T> {
-        // formula: x^(a+bi) = x^a x^bi = x^a e^(b ln(x) i) 
+        // formula: x^(a+bi) = x^a x^bi = x^a e^(b ln(x) i)
         // = from_polar(x^a, b ln(x))
         Complex::from_polar(&base.powf(self.re), &(self.im * base.ln()))
     }
@@ -223,10 +248,10 @@ impl<T: Clone + Float> Complex<T> {
     ///
     /// This function has two branch cuts:
     ///
-    /// * `(-∞, -1)`, continuous from above.
-    /// * `(1, ∞)`, continuous from below.
+    /// * $(-\infty, -1)$, continuous from above.
+    /// * $(1, \infty)$, continuous from below.
     ///
-    /// The branch satisfies `-π/2 ≤ Re(asin(z)) ≤ π/2`.
+    /// The branch satisfies $-\frac{\pi}{2} \leq \Re(\arcsin(z)) \leq \frac{\pi}{2}$.
     #[inline]
     pub fn asin(&self) -> Complex<T> {
         // formula: arcsin(z) = -i ln(sqrt(1-z^2) + iz)
@@ -238,10 +263,10 @@ impl<T: Clone + Float> Complex<T> {
     ///
     /// This function has two branch cuts:
     ///
-    /// * `(-∞, -1)`, continuous from above.
-    /// * `(1, ∞)`, continuous from below.
+    /// * $(-\infty, -1)$, continuous from above.
+    /// * $(1, \infty)$, continuous from below.
     ///
-    /// The branch satisfies `0 ≤ Re(acos(z)) ≤ π`.
+    /// The branch satisfies $0 \leq \Re(\arccos(z)) \leq \pi$.
     #[inline]
     pub fn acos(&self) -> Complex<T> {
         // formula: arccos(z) = -i ln(i sqrt(1-z^2) + z)
@@ -253,10 +278,10 @@ impl<T: Clone + Float> Complex<T> {
     ///
     /// This function has two branch cuts:
     ///
-    /// * `(-∞i, -i]`, continuous from the left.
-    /// * `[i, ∞i)`, continuous from the right.
+    /// * $(-\infty i, -i]$, continuous from the left.
+    /// * $[i, \infty i)$, continuous from the right.
     ///
-    /// The branch satisfies `-π/2 ≤ Re(atan(z)) ≤ π/2`.
+    /// The branch satisfies $-\frac{\pi}{2} \leq \Re(\arctan(z)) \leq \frac{\pi}{2}$.
     #[inline]
     pub fn atan(&self) -> Complex<T> {
         // formula: arctan(z) = (ln(1+iz) - ln(1-iz))/(2i)
@@ -298,10 +323,10 @@ impl<T: Clone + Float> Complex<T> {
     ///
     /// This function has two branch cuts:
     ///
-    /// * `(-∞i, -i)`, continuous from the left.
-    /// * `(i, ∞i)`, continuous from the right.
+    /// * $(-\infty i, -i)$, continuous from the left.
+    /// * $(i, \infty i)$, continuous from the right.
     ///
-    /// The branch satisfies `-π/2 ≤ Im(asinh(z)) ≤ π/2`.
+    /// The branch satisfies $-\frac{\pi}{2} \leq \Im(\mathrm{arcsinh}(z)) \leq \frac{\pi}{2}$.
     #[inline]
     pub fn asinh(&self) -> Complex<T> {
         // formula: arcsinh(z) = ln(z + sqrt(1+z^2))
@@ -313,9 +338,10 @@ impl<T: Clone + Float> Complex<T> {
     ///
     /// This function has one branch cut:
     ///
-    /// * `(-∞, 1)`, continuous from above.
+    /// * $(-\infty, 1)$, continuous from above.
     ///
-    /// The branch satisfies `-π ≤ Im(acosh(z)) ≤ π` and `0 ≤ Re(acosh(z)) < ∞`.
+    /// The branch satisfies $-\pi \leq \Im(\mathrm{arccosh}(z)) \leq \pi$
+    /// and $0 \leq \Re(\mathrm{arccosh}(z)) < \infty$.
     #[inline]
     pub fn acosh(&self) -> Complex<T> {
         // formula: arccosh(z) = 2 ln(sqrt((z+1)/2) + sqrt((z-1)/2))
@@ -328,10 +354,10 @@ impl<T: Clone + Float> Complex<T> {
     ///
     /// This function has two branch cuts:
     ///
-    /// * `(-∞, -1]`, continuous from above.
-    /// * `[1, ∞)`, continuous from below.
+    /// * $(-\infty, -1]$, continuous from above.
+    /// * $[1, \infty)$, continuous from below.
     ///
-    /// The branch satisfies `-π/2 ≤ Im(atanh(z)) ≤ π/2`.
+    /// The branch satisfies $-\frac{\pi}{2} \leq \Im(\mathrm{arctanh}(z)) \leq \frac{\pi}{2}$.
     #[inline]
     pub fn atanh(&self) -> Complex<T> {
         // formula: arctanh(z) = (ln(1+z) - ln(1-z))/2
@@ -764,7 +790,7 @@ mod test {
     fn close(a: Complex64, b: Complex64) -> bool {
         close_to_tol(a, b, 1e-10)
     }
-    
+
     fn close_to_tol(a: Complex64, b: Complex64, tol: f64) -> bool {
         // returns true if a and b are reasonably close
         (a == b) || (a-b).norm() < tol
@@ -798,7 +824,7 @@ mod test {
             assert!(-f64::consts::PI <= c.ln().arg() && c.ln().arg() <= f64::consts::PI);
         }
     }
-    
+
     #[test]
     fn test_powc()
     {
@@ -809,7 +835,7 @@ mod test {
         let c = Complex::new(1.0 / 3.0, 0.1);
         assert!(close_to_tol(a.powc(c), Complex::new(1.65826, -0.33502), 1e-5));
     }
-    
+
     #[test]
     fn test_powf()
     {
@@ -817,7 +843,7 @@ mod test {
         let r = c.powf(3.5);
         assert!(close_to_tol(r, Complex::new(-0.8684746, -16.695934), 1e-5));
     }
-    
+
     #[test]
     fn test_log()
     {
@@ -825,18 +851,18 @@ mod test {
         let r = c.log(10.0);
         assert!(close_to_tol(r, Complex::new(0.349485, -0.20135958), 1e-5));
     }
-    
+
     #[test]
     fn test_some_expf_cases()
     {
         let c = Complex::new(2.0, -1.0);
         let r = c.expf(10.0);
         assert!(close_to_tol(r, Complex::new(-66.82015, -74.39803), 1e-5));
-        
+
         let c = Complex::new(5.0, -2.0);
         let r = c.expf(3.4);
         assert!(close_to_tol(r, Complex::new(-349.25, -290.63), 1e-2));
-        
+
         let c = Complex::new(-1.5, 2.0 / 3.0);
         let r = c.expf(1.0 / 3.0);
         assert!(close_to_tol(r, Complex::new(3.8637, -3.4745), 1e-2));
