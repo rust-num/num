@@ -89,6 +89,18 @@ pub trait Float
     /// ```
     fn min_positive_value() -> Self;
 
+    /// Returns epsilon, a small positive value.
+    ///
+    /// ```
+    /// use num_traits::Float;
+    /// use std::f64;
+    ///
+    /// let x: f64 = Float::epsilon();
+    ///
+    /// assert_eq!(x, f64::EPSILON);
+    /// ```
+    fn epsilon() -> Self;
+
     /// Returns the largest finite value that this type can represent.
     ///
     /// ```
@@ -934,6 +946,11 @@ macro_rules! float_impl {
             #[inline]
             fn min_positive_value() -> Self {
                 ::std::$T::MIN_POSITIVE
+            }
+
+            #[inline]
+            fn epsilon() -> Self {
+                ::std::$T::EPSILON
             }
 
             #[inline]
