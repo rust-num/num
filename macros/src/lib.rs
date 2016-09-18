@@ -8,43 +8,24 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-#![feature(plugin_registrar, rustc_private)]
+#![crate_type = "rustc-macro"]
+#![feature(rustc_macro, rustc_macro_lib)]
 
-extern crate syntax;
-extern crate syntax_ext;
-extern crate rustc_plugin;
+extern crate syn;
+#[macro_use]
+extern crate quote;
+extern crate rustc_macro;
 
-use syntax::ast::{MetaItem, Expr, BinOpKind};
-use syntax::ast;
-use syntax::codemap::Span;
-use syntax::ext::base::{ExtCtxt, Annotatable};
-use syntax::ext::build::AstBuilder;
-use syntax_ext::deriving::generic::*;
-use syntax_ext::deriving::generic::ty::*;
-use syntax::parse::token::InternedString;
-use syntax::ptr::P;
-use syntax::ext::base::MultiDecorator;
-use syntax::parse::token;
+use rustc_macro::TokenStream;
 
-use rustc_plugin::Registry;
+use syn::Body::Enum;
 
-macro_rules! pathvec {
-    ($($x:ident)::+) => (
-        vec![ $( stringify!($x) ),+ ]
-    )
-}
+#[rustc_macro_derive(FromPrimitive)]
+pub fn from_primitive(input: TokenStream) -> TokenStream {
+    let source = input.to_string();
 
-macro_rules! path {
-    ($($x:tt)*) => (
-        ::syntax_ext::deriving::generic::ty::Path::new( pathvec!( $($x)* ) )
-    )
-}
-
-macro_rules! path_local {
-    ($x:ident) => (
-        ::syntax_ext::deriving::generic::ty::Path::new_local(stringify!($x))
-    )
-}
+    let ast = syn::parse_item(&source).unwrap();
+    // panic!("{:?}", ast);
 
 macro_rules! pathvec_std {
     ($cx:expr, $first:ident :: $($rest:ident)::+) => ({
@@ -111,91 +92,32 @@ pub fn expand_deriving_from_primitive(cx: &mut ExtCtxt,
         supports_unions: false,
     };
 
-    trait_def.expand(cx, mitem, &item, push)
-}
+    let mut idx = 0;
+    let variants: Vec<_> = variants.iter()
+        .map(|variant| {
+            let ident = &variant.ident;
+            let tt = quote!(#idx => Some(#name::#ident));
+            idx += 1;
+            tt
+        })
+        .collect();
 
-fn cs_from(name: &str, cx: &mut ExtCtxt, trait_span: Span, substr: &Substructure) -> P<Expr> {
-    if substr.nonself_args.len() != 1 {
-        cx.span_bug(trait_span, "incorrect number of arguments in `derive(FromPrimitive)`")
-    }
+    let res = quote! {
+        #ast
 
-    let n = &substr.nonself_args[0];
-
-    match *substr.fields {
-        StaticStruct(..) => {
-            cx.span_err(trait_span, "`FromPrimitive` cannot be derived for structs");
-            return cx.expr_fail(trait_span, InternedString::new(""));
-        }
-        StaticEnum(enum_def, _) => {
-            if enum_def.variants.is_empty() {
-                cx.span_err(trait_span,
-                            "`FromPrimitive` cannot be derived for enums with no variants");
-                return cx.expr_fail(trait_span, InternedString::new(""));
+        impl ::num::traits::FromPrimitive for #name {
+            fn from_i64(n: i64) -> Option<Self> {
+                Self::from_u64(n as u64)
             }
 
-            let mut arms = Vec::new();
-
-            for variant in &enum_def.variants {
-                match variant.node.data {
-                    ast::VariantData::Unit(..) => {
-                        let span = variant.span;
-
-                        // expr for `$n == $variant as $name`
-                        let path = cx.path(span, vec![substr.type_ident, variant.node.name]);
-                        let variant = cx.expr_path(path);
-                        let ty = cx.ty_ident(span, cx.ident_of(name));
-                        let cast = cx.expr_cast(span, variant.clone(), ty);
-                        let guard = cx.expr_binary(span, BinOpKind::Eq, n.clone(), cast);
-
-                        // expr for `Some($variant)`
-                        let body = cx.expr_some(span, variant);
-
-                        // arm for `_ if $guard => $body`
-                        let arm = ast::Arm {
-                            attrs: vec!(),
-                            pats: vec!(cx.pat_wild(span)),
-                            guard: Some(guard),
-                            body: body,
-                        };
-
-                        arms.push(arm);
-                    }
-                    ast::VariantData::Tuple(..) => {
-                        cx.span_err(trait_span,
-                                    "`FromPrimitive` cannot be derived for \
-                                    enum variants with arguments");
-                        return cx.expr_fail(trait_span,
-                                            InternedString::new(""));
-                    }
-                    ast::VariantData::Struct(..) => {
-                        cx.span_err(trait_span,
-                                    "`FromPrimitive` cannot be derived for enums \
-                                    with struct variants");
-                        return cx.expr_fail(trait_span,
-                                            InternedString::new(""));
-                    }
+            fn from_u64(n: u64) -> Option<Self> {
+                match n {
+                    #(variants,)*
+                    _ => None,
                 }
             }
-
-            // arm for `_ => None`
-            let arm = ast::Arm {
-                attrs: vec!(),
-                pats: vec!(cx.pat_wild(trait_span)),
-                guard: None,
-                body: cx.expr_none(trait_span),
-            };
-            arms.push(arm);
-
-            cx.expr_match(trait_span, n.clone(), arms)
         }
-        _ => cx.span_bug(trait_span, "expected StaticEnum in derive(FromPrimitive)")
-    }
-}
+    };
 
-#[plugin_registrar]
-#[doc(hidden)]
-pub fn plugin_registrar(reg: &mut Registry) {
-    reg.register_syntax_extension(
-        token::intern("derive_NumFromPrimitive"),
-        MultiDecorator(Box::new(expand_deriving_from_primitive)));
+    res.to_string().parse().unwrap()
 }

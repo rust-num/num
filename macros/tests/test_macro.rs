@@ -8,12 +8,13 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-#![feature(custom_derive, plugin)]
-#![plugin(num_macros)]
+#![feature(rustc_macro)]
 
 extern crate num;
+#[macro_use]
+extern crate num_macros;
 
-#[derive(Debug, PartialEq, NumFromPrimitive)]
+#[derive(Debug, PartialEq, FromPrimitive)]
 enum Color {
     Red,
     Blue,
@@ -22,15 +23,11 @@ enum Color {
 
 #[test]
 fn test_from_primitive() {
-    let v: Vec<Option<Color>> = vec![
-        num::FromPrimitive::from_u64(0),
-        num::FromPrimitive::from_u64(1),
-        num::FromPrimitive::from_u64(2),
-        num::FromPrimitive::from_u64(3),
-    ];
+    let v: [Option<Color>; 4] = [num::FromPrimitive::from_u64(0),
+                                 num::FromPrimitive::from_u64(1),
+                                 num::FromPrimitive::from_u64(2),
+                                 num::FromPrimitive::from_u64(3)];
 
-    assert_eq!(
-        v,
-        vec![Some(Color::Red), Some(Color::Blue), Some(Color::Green), None]
-    );
+    assert_eq!(v,
+               [Some(Color::Red), Some(Color::Blue), Some(Color::Green), None]);
 }
