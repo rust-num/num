@@ -25,7 +25,6 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
     let source = input.to_string();
 
     let ast = syn::parse_item(&source).unwrap();
-    // panic!("{:?}", ast);
 
 macro_rules! pathvec_std {
     ($cx:expr, $first:ident :: $($rest:ident)::+) => ({

@@ -22,7 +22,7 @@ enum Color {
 }
 
 #[test]
-fn test_from_primitive() {
+fn test_from_primitive_for_trivial_case() {
     let v: [Option<Color>; 4] = [num::FromPrimitive::from_u64(0),
                                  num::FromPrimitive::from_u64(1),
                                  num::FromPrimitive::from_u64(2),
