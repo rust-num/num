@@ -108,6 +108,7 @@ pub fn expand_deriving_from_primitive(cx: &mut ExtCtxt,
             }
         ),
         associated_types: Vec::new(),
+        supports_unions: false,
     };
 
     trait_def.expand(cx, mitem, &item, push)
