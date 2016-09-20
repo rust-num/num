@@ -455,7 +455,13 @@ impl Num for BigDecimal {
         };
 
         // modify scale by examining remaining characters (exponent)
-        let scale = scale - i64::from_str(chars.as_str()).unwrap_or(0);
+        let remaining_chars = chars.as_str();
+
+        let scale = if remaining_chars == "" {
+            scale
+        } else {
+            scale - i64::from_str(remaining_chars).unwrap()
+        };
 
         let big_uint = match BigUint::parse_bytes(&digit_vec, radix) {
             Some(x) => x,
@@ -569,6 +575,12 @@ mod bigdecimal_tests {
     fn test_equal() {
         let vals = vec![
             ("2", ".2e1"),
+            ("0e1", "0.0"),
+            ("0e0", "0.0"),
+            ("0e-0", "0.0"),
+            ("-0901300e-3", "-901.3"),
+            ("-0.901300e+3", "-901.3"),
+            ("-0e-1", "-0.0"),
             ("2123121e1231", "212.3121e1235"),
         ];
         for &(x, y) in vals.iter() {
@@ -583,6 +595,7 @@ mod bigdecimal_tests {
         let vals = vec![
             ("2", ".2e2"),
             ("1e45", "1e-900"),
+            ("1e+900", "1e-900"),
         ];
         for &(x, y) in vals.iter() {
             let a = BigDecimal::from_str(x).unwrap();
