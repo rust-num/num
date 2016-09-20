@@ -171,6 +171,7 @@ impl BigDecimal {
 #[derive(Debug, PartialEq)]
 pub enum ParseBigDecimalError {
     ParseDecimal(ParseFloatError),
+    Empty,
     Other,
 }
 
@@ -178,6 +179,7 @@ impl fmt::Display for ParseBigDecimalError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             &ParseBigDecimalError::ParseDecimal(ref e) => e.fmt(f),
+            &ParseBigDecimalError::Empty => "Failed to parse empty string".fmt(f),
             &ParseBigDecimalError::Other => "failed to parse provided string".fmt(f),
         }
     }
@@ -394,8 +396,8 @@ impl Num for BigDecimal {
         let firstchar = match chars.next() {
             Some(c) => c,
 
-            // empty string returns zero
-            None => return Ok(BigDecimal::zero()),
+            // empty string returns error
+            None => return Err(ParseBigDecimalError::Empty),
         };
 
         // is this a negative number
@@ -418,6 +420,9 @@ impl Num for BigDecimal {
             None
         };
 
+        // boolean to keep track of exponent position
+        let mut e_found = false;
+
         for c in chars.by_ref() {
             // skip underscores
             if c == '_' {
@@ -430,19 +435,22 @@ impl Num for BigDecimal {
                     decimal_found = Some(digit_vec.len());
                     continue;
                 } else {
-                    panic!("Multiple decimal points");
+                    // panic!("Multiple decimal points");
+                    return Err(ParseBigDecimalError::Other);
                 }
             }
 
             // found exponential marker - stop reading values
             if c == 'e' || c == 'E' {
+                e_found = true;
                 break;
             }
 
             // get the byte value of the character and store in buff
             let d = match c {
                 '0'...'9' | 'a'...'f' | 'A'...'F' => c as u8,
-                _ => panic!("Unexpected character {:?}", c),
+                // _ => panic!("Unexpected character {:?}", c),
+                _ => return Err(ParseBigDecimalError::Other),
             };
 
             digit_vec.push(d);
@@ -457,10 +465,14 @@ impl Num for BigDecimal {
         // modify scale by examining remaining characters (exponent)
         let remaining_chars = chars.as_str();
 
-        let scale = if remaining_chars == "" {
+        let scale = if !e_found {
+            assert_eq!(remaining_chars, "");
             scale
         } else {
-            scale - i64::from_str(remaining_chars).unwrap()
+            match i64::from_str(remaining_chars) {
+                Ok(exponent) => scale - exponent,
+                Err(_) => return Err(ParseBigDecimalError::Other),
+            }
         };
 
         let big_uint = match BigUint::parse_bytes(&digit_vec, radix) {
@@ -574,7 +586,7 @@ mod bigdecimal_tests {
     #[test]
     fn test_equal() {
         let vals = vec![
-            ("2", ".2e1"),
+            ("2_", ".2e1"),
             ("0e1", "0.0"),
             ("0e0", "0.0"),
             ("0e-0", "0.0"),
@@ -628,4 +640,34 @@ mod bigdecimal_tests {
         }
     }
 
+    #[test]
+    #[should_panic(expected = "Other")]
+    fn test_bad_string_nan() {
+        BigDecimal::from_str("hello").unwrap();
+    }
+    #[test]
+    #[should_panic(expected = "Empty")]
+    fn test_bad_string_empty() {
+        BigDecimal::from_str("").unwrap();
+    }
+    #[test]
+    #[should_panic(expected = "Other")]
+    fn test_bad_string_invalid_char() {
+        BigDecimal::from_str("12z3.12").unwrap();
+    }
+    #[test]
+    #[should_panic(expected = "Other")]
+    fn test_bad_string_nan_exponent() {
+        BigDecimal::from_str("123.123eg").unwrap();
+    }
+    #[test]
+    #[should_panic(expected = "Other")]
+    fn test_bad_string_empty_exponent() {
+        BigDecimal::from_str("123.123E").unwrap();
+    }
+    #[test]
+    #[should_panic(expected = "Other")]
+    fn test_bad_string_multiple_decimal_points() {
+        BigDecimal::from_str("123.12.45").unwrap();
+    }
 }
