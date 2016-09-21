@@ -395,10 +395,6 @@ impl Num for BigDecimal {
     fn from_str_radix(s: &str, radix: u32) -> Result<BigDecimal, ParseBigDecimalError> {
         assert!(2 <= radix && radix <= 36, "The radix must be within 2...36");
 
-        // TEMPORARY: Remove underscores until BigInt supports parsing them
-        let s: String = s.chars().filter(|&c| c != '_').collect();
-        let s = s.as_str();
-
         let exp_separator: &[_] = &['e', 'E'];
 
         // split slice into base and exponent parts
@@ -413,7 +409,7 @@ impl Num for BigDecimal {
             None => (s, 0),
         };
 
-        // TEMPORARY: Test for emptiness - skip once BigInt supports this error
+        // TEMPORARY: Test for emptiness - remove once BigInt supports similar error
         if base_part == "" {
             return Err(ParseBigDecimalError::Empty);
         }
@@ -431,26 +427,23 @@ impl Num for BigDecimal {
                 // copy all leading characters into 'digits' string
                 let mut digits = String::from_str(lead).unwrap();
 
-                // save characters
+                // save character count for later
                 let leading_char_len = digits.len();
 
                 // copy all non-underscore digits into the digits string
                 digits.extend(trail.chars().skip(1).filter(|&c| c != '_'));
 
-                // determine number of decimal digits
-                let decimal_digit_count = (digits.len() - leading_char_len) as i64;
+                // determine number of copied decimal digits
+                let decimal_digit_count = digits.len() - leading_char_len;
 
-                (digits, decimal_digit_count)
+                (digits, decimal_digit_count as i64)
             }
         };
 
         let scale = decimal_offset - exponent_value;
         let big_int = try!(BigInt::from_str_radix(digits.as_str(), radix));
 
-        return Ok(BigDecimal {
-            int_val: big_int,
-            scale: scale,
-        });
+        return Ok(BigDecimal::new(big_int, scale));
     }
 }
 
@@ -552,7 +545,7 @@ mod bigdecimal_tests {
     #[test]
     fn test_equal() {
         let vals = vec![
-            ("2_", ".2e1"),
+            ("2", ".2e1"),
             ("0e1", "0.0"),
             ("0e0", "0.0"),
             ("0e-0", "0.0"),
@@ -585,7 +578,7 @@ mod bigdecimal_tests {
     #[test]
     fn test_from_str() {
         let vals = vec![
-            ("1_331.107", 1331107, 3),
+            ("1331.107", 1331107, 3),
             ("1.0", 10, 1),
             ("2e1", 2, -1),
             ("0.00123", 123, 5),
