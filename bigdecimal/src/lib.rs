@@ -37,12 +37,12 @@ extern crate num_traits as traits;
 
 use std::default::Default;
 use std::error::Error;
-use std::num::ParseFloatError;
+use std::num::{ParseFloatError, ParseIntError};
 use std::ops::{Add, Div, Mul, Rem, Sub};
 use std::str::{self, FromStr};
 use std::fmt;
 use std::cmp::max;
-use bigint::{BigInt, BigUint, ParseBigIntError, Sign};
+use bigint::{BigInt, ParseBigIntError};
 use traits::{Num, Zero, One, FromPrimitive};
 use integer::Integer;
 
@@ -194,6 +194,12 @@ impl Error for ParseBigDecimalError {
 impl From<ParseFloatError> for ParseBigDecimalError {
     fn from(err: ParseFloatError) -> ParseBigDecimalError {
         ParseBigDecimalError::ParseDecimal(err)
+    }
+}
+
+impl From<ParseIntError> for ParseBigDecimalError {
+    fn from(_: ParseIntError) -> ParseBigDecimalError {
+        ParseBigDecimalError::Other
     }
 }
 
@@ -389,98 +395,58 @@ impl Num for BigDecimal {
     fn from_str_radix(s: &str, radix: u32) -> Result<BigDecimal, ParseBigDecimalError> {
         assert!(2 <= radix && radix <= 36, "The radix must be within 2...36");
 
-        // interpret as characters
-        let mut chars = s.chars();
+        // TEMPORARY: Remove underscores until BigInt supports parsing them
+        let s: String = s.chars().filter(|&c| c != '_').collect();
+        let s = s.as_str();
 
-        // get the value of the first character
-        let firstchar = match chars.next() {
-            Some(c) => c,
+        let exp_separator: &[_] = &['e', 'E'];
 
-            // empty string returns error
-            None => return Err(ParseBigDecimalError::Empty),
+        // split slice into base and exponent parts
+        let (base_part, exponent_value) = match s.find(exp_separator) {
+            // split and parse exponent field
+            Some(loc) => {
+                let (base, exp) = s.split_at(loc);
+                // slice after 1 to skip the 'e' char
+                (base, try!(i64::from_str(&exp[1..])))
+            }
+            // exponent defaults to 0 if (e|E) not found
+            None => (s, 0),
         };
 
-        // is this a negative number
-        let sign = if firstchar == '-' {
-            Sign::Minus
-        } else {
-            Sign::Plus
-        };
-
-        // storage buffer
-        let mut digit_vec = Vec::with_capacity(s.len());
-
-        // optional decimal point
-        let mut decimal_found = if firstchar == '.' {
-            Some(0)
-        } else if '0' <= firstchar && firstchar <= '9' {
-            digit_vec.push(firstchar as u8);
-            None
-        } else {
-            None
-        };
-
-        // boolean to keep track of exponent position
-        let mut e_found = false;
-
-        for c in chars.by_ref() {
-            // skip underscores
-            if c == '_' {
-                continue;
-            }
-
-            // found decimal point
-            if c == '.' {
-                if decimal_found == None {
-                    decimal_found = Some(digit_vec.len());
-                    continue;
-                } else {
-                    // panic!("Multiple decimal points");
-                    return Err(ParseBigDecimalError::Other);
-                }
-            }
-
-            // found exponential marker - stop reading values
-            if c == 'e' || c == 'E' {
-                e_found = true;
-                break;
-            }
-
-            // get the byte value of the character and store in buff
-            let d = match c {
-                '0'...'9' | 'a'...'f' | 'A'...'F' => c as u8,
-                // _ => panic!("Unexpected character {:?}", c),
-                _ => return Err(ParseBigDecimalError::Other),
-            };
-
-            digit_vec.push(d);
+        // TEMPORARY: Test for emptiness - skip once BigInt supports this error
+        if base_part == "" {
+            return Err(ParseBigDecimalError::Empty);
         }
 
-        // determine scale from number of digits stored
-        let scale = match decimal_found {
-            Some(val) => (digit_vec.len() as i64) - (val as i64),
-            None => 0,
-        };
+        // split decimal into a digit string and decimal-point offset
+        let (digits, decimal_offset) = match base_part.find('.') {
+            // No dot! pass directly to BigInt
+            None => (base_part.to_string(), 0),
 
-        // modify scale by examining remaining characters (exponent)
-        let remaining_chars = chars.as_str();
+            // decimal point found - necessary copy into new string buffer
+            Some(loc) => {
+                // split into leading and trailing digits
+                let (lead, trail) = base_part.split_at(loc);
 
-        let scale = if !e_found {
-            assert_eq!(remaining_chars, "");
-            scale
-        } else {
-            match i64::from_str(remaining_chars) {
-                Ok(exponent) => scale - exponent,
-                Err(_) => return Err(ParseBigDecimalError::Other),
+                // copy all leading characters into 'digits' string
+                let mut digits = String::from_str(lead).unwrap();
+
+                // save characters
+                let leading_char_len = digits.len();
+
+                // copy all non-underscore digits into the digits string
+                digits.extend(trail.chars().skip(1).filter(|&c| c != '_'));
+
+                // determine number of decimal digits
+                let decimal_digit_count = (digits.len() - leading_char_len) as i64;
+
+                (digits, decimal_digit_count)
             }
         };
 
-        let big_uint = match BigUint::parse_bytes(&digit_vec, radix) {
-            Some(x) => x,
-            None => BigUint::zero(),
-        };
+        let scale = decimal_offset - exponent_value;
+        let big_int = try!(BigInt::from_str_radix(digits.as_str(), radix));
 
-        let big_int = BigInt::from_biguint(sign, big_uint);
         return Ok(BigDecimal {
             int_val: big_int,
             scale: scale,
@@ -619,7 +585,7 @@ mod bigdecimal_tests {
     #[test]
     fn test_from_str() {
         let vals = vec![
-            ("1331.107", 1331107, 3),
+            ("1_331.107", 1331107, 3),
             ("1.0", 10, 1),
             ("2e1", 2, -1),
             ("0.00123", 123, 5),
@@ -669,5 +635,15 @@ mod bigdecimal_tests {
     #[should_panic(expected = "Other")]
     fn test_bad_string_multiple_decimal_points() {
         BigDecimal::from_str("123.12.45").unwrap();
+    }
+    #[test]
+    #[should_panic(expected = "Other")]
+    fn test_bad_string_only_decimal() {
+        BigDecimal::from_str(".").unwrap();
+    }
+    #[test]
+    #[should_panic(expected = "Other")]
+    fn test_bad_string_only_decimal_and_exponent() {
+        BigDecimal::from_str(".e4").unwrap();
     }
 }
