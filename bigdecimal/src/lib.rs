@@ -399,14 +399,15 @@ impl Num for BigDecimal {
 
         // split slice into base and exponent parts
         let (base_part, exponent_value) = match s.find(exp_separator) {
+            // exponent defaults to 0 if (e|E) not found
+            None => (s, 0),
+
             // split and parse exponent field
             Some(loc) => {
                 let (base, exp) = s.split_at(loc);
                 // slice after 1 to skip the 'e' char
                 (base, try!(i64::from_str(&exp[1..])))
             }
-            // exponent defaults to 0 if (e|E) not found
-            None => (s, 0),
         };
 
         // TEMPORARY: Test for emptiness - remove once BigInt supports similar error
@@ -427,16 +428,10 @@ impl Num for BigDecimal {
                 // copy all leading characters into 'digits' string
                 let mut digits = String::from_str(lead).unwrap();
 
-                // save character count for later
-                let leading_char_len = digits.len();
+                // copy all trailing characters after '.' into the digits string
+                digits.extend(trail.chars().skip(1));
 
-                // copy all non-underscore digits into the digits string
-                digits.extend(trail.chars().skip(1).filter(|&c| c != '_'));
-
-                // determine number of copied decimal digits
-                let decimal_digit_count = digits.len() - leading_char_len;
-
-                (digits, decimal_digit_count as i64)
+                (digits, trail.len() as i64 - 1)
             }
         };
 
