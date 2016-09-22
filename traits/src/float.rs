@@ -2,6 +2,9 @@ use std::mem;
 use std::ops::Neg;
 use std::num::FpCategory;
 
+// Used for default implementation of `epsilon`
+use std::f32;
+
 use {Num, NumCast};
 
 // FIXME: these doctests aren't actually helpful, because they're using and
@@ -88,6 +91,25 @@ pub trait Float
     /// assert_eq!(x, f64::MIN_POSITIVE);
     /// ```
     fn min_positive_value() -> Self;
+
+    /// Returns epsilon, a small positive value.
+    ///
+    /// ```
+    /// use num_traits::Float;
+    /// use std::f64;
+    ///
+    /// let x: f64 = Float::epsilon();
+    ///
+    /// assert_eq!(x, f64::EPSILON);
+    /// ```
+    ///
+    /// # Panics
+    ///
+    /// The default implementation will panic if `f32::EPSILON` cannot
+    /// be cast to `Self`.
+    fn epsilon() -> Self {
+        Self::from(f32::EPSILON).expect("Unable to cast from f32::EPSILON")
+    }
 
     /// Returns the largest finite value that this type can represent.
     ///
@@ -934,6 +956,11 @@ macro_rules! float_impl {
             #[inline]
             fn min_positive_value() -> Self {
                 ::std::$T::MIN_POSITIVE
+            }
+
+            #[inline]
+            fn epsilon() -> Self {
+                ::std::$T::EPSILON
             }
 
             #[inline]
