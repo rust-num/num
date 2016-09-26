@@ -1,4 +1,4 @@
-// Copyright 2013-2014 The Rust Project Developers. See the COPYRIGHT
+// Copyright 2013-2016 The Rust Project Developers. See the COPYRIGHT
 // file at the top-level directory of this distribution and at
 // http://rust-lang.org/COPYRIGHT.
 //
@@ -8,7 +8,7 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-//! A Big decimal
+//! A Big Decimal
 //!
 //! BigDecimal allows storing any real number to arbitrary precision; which
 //! avoids common floating point errors (such as 0.1 + 0.2 ≠ 0.3) at the
@@ -171,6 +171,8 @@ impl BigDecimal {
 #[derive(Debug, PartialEq)]
 pub enum ParseBigDecimalError {
     ParseDecimal(ParseFloatError),
+    ParseInt(ParseIntError),
+    ParseBigInt(ParseBigIntError),
     Empty,
     Other,
 }
@@ -179,6 +181,8 @@ impl fmt::Display for ParseBigDecimalError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             &ParseBigDecimalError::ParseDecimal(ref e) => e.fmt(f),
+            &ParseBigDecimalError::ParseInt(ref e) => e.fmt(f),
+            &ParseBigDecimalError::ParseBigInt(ref e) => e.fmt(f),
             &ParseBigDecimalError::Empty => "Failed to parse empty string".fmt(f),
             &ParseBigDecimalError::Other => "failed to parse provided string".fmt(f),
         }
@@ -198,15 +202,14 @@ impl From<ParseFloatError> for ParseBigDecimalError {
 }
 
 impl From<ParseIntError> for ParseBigDecimalError {
-    fn from(_: ParseIntError) -> ParseBigDecimalError {
-        ParseBigDecimalError::Other
+    fn from(err: ParseIntError) -> ParseBigDecimalError {
+        ParseBigDecimalError::ParseInt(err)
     }
 }
 
 impl From<ParseBigIntError> for ParseBigDecimalError {
-    fn from(_: ParseBigIntError) -> ParseBigDecimalError {
-        // ParseBigDecimalError::ParseDecimal(err)
-        ParseBigDecimalError::Other
+    fn from(err: ParseBigIntError) -> ParseBigDecimalError {
+        ParseBigDecimalError::ParseBigInt(err)
     }
 }
 
@@ -404,9 +407,9 @@ impl Num for BigDecimal {
 
             // split and parse exponent field
             Some(loc) => {
-                let (base, exp) = s.split_at(loc);
-                // slice after 1 to skip the 'e' char
-                (base, try!(i64::from_str(&exp[1..])))
+                // slice up to `loc` and 1 after to skip the 'e' char
+                let (base, exp) = (&s[..loc], &s[loc + 1..]);
+                (base, try!(i64::from_str(exp)))
             }
         };
 
@@ -423,15 +426,15 @@ impl Num for BigDecimal {
             // decimal point found - necessary copy into new string buffer
             Some(loc) => {
                 // split into leading and trailing digits
-                let (lead, trail) = base_part.split_at(loc);
+                let (lead, trail) = (&base_part[..loc], &base_part[loc + 1..]);
 
                 // copy all leading characters into 'digits' string
                 let mut digits = String::from_str(lead).unwrap();
 
                 // copy all trailing characters after '.' into the digits string
-                digits.extend(trail.chars().skip(1));
+                digits.extend(trail.chars());
 
-                (digits, trail.len() as i64 - 1)
+                (digits, trail.len() as i64)
             }
         };
 
@@ -595,7 +598,7 @@ mod bigdecimal_tests {
     }
 
     #[test]
-    #[should_panic(expected = "Other")]
+    #[should_panic(expected = "InvalidDigit")]
     fn test_bad_string_nan() {
         BigDecimal::from_str("hello").unwrap();
     }
@@ -605,32 +608,32 @@ mod bigdecimal_tests {
         BigDecimal::from_str("").unwrap();
     }
     #[test]
-    #[should_panic(expected = "Other")]
+    #[should_panic(expected = "InvalidDigit")]
     fn test_bad_string_invalid_char() {
         BigDecimal::from_str("12z3.12").unwrap();
     }
     #[test]
-    #[should_panic(expected = "Other")]
+    #[should_panic(expected = "InvalidDigit")]
     fn test_bad_string_nan_exponent() {
         BigDecimal::from_str("123.123eg").unwrap();
     }
     #[test]
-    #[should_panic(expected = "Other")]
+    #[should_panic(expected = "Empty")]
     fn test_bad_string_empty_exponent() {
         BigDecimal::from_str("123.123E").unwrap();
     }
     #[test]
-    #[should_panic(expected = "Other")]
+    #[should_panic(expected = "InvalidDigit")]
     fn test_bad_string_multiple_decimal_points() {
         BigDecimal::from_str("123.12.45").unwrap();
     }
     #[test]
-    #[should_panic(expected = "Other")]
+    #[should_panic(expected = "Empty")]
     fn test_bad_string_only_decimal() {
         BigDecimal::from_str(".").unwrap();
     }
     #[test]
-    #[should_panic(expected = "Other")]
+    #[should_panic(expected = "Empty")]
     fn test_bad_string_only_decimal_and_exponent() {
         BigDecimal::from_str(".e4").unwrap();
     }
