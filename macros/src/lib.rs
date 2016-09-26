@@ -24,12 +24,21 @@ use syn::Body::Enum;
 pub fn from_primitive(input: TokenStream) -> TokenStream {
     let source = input.to_string();
 
-    let ast = syn::parse_item(&source).unwrap();
+    let ast = syn::parse_macro_input(&source).unwrap();
+    let name = &ast.ident;
+
+    let variants = match ast.body {
+        Enum(ref variants) => variants,
+        _ => panic!("`FromPrimitive` can be applied only to the enums, {} is not an enum", name),
+    };
 
     let mut idx = 0;
     let variants: Vec<_> = variants.iter()
         .map(|variant| {
             let ident = &variant.ident;
+            if let Some(val) = variant.discriminant {
+                idx = val.value;
+            }
             let tt = quote!(#idx => Some(#name::#ident));
             idx += 1;
             tt
