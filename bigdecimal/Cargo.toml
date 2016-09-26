@@ -1,6 +1,6 @@
 [package]
 authors = ["The Rust Project Developers"]
-description = "Big integer implementation for Rust"
+description = "Big decimal implementation for Rust"
 documentation = "http://rust-num.github.io/num"
 homepage = "https://github.com/rust-num/num"
 keywords = ["mathematics", "numerics"]
@@ -23,17 +23,13 @@ version = "0.1.32"
 path = "../traits"
 version = "0.1.35"
 
-[dependencies.rand]
-optional = true
-version = "0.3.14"
-
 [dependencies.rustc-serialize]
 optional = true
 version = "0.3.19"
 
 [dependencies.serde]
 optional = true
-version = "0.7.0"
+version = ">= 0.7.0, < 0.9.0"
 
 [features]
-default = ["rand", "rustc-serialize"]
+default = ["rustc-serialize"]
