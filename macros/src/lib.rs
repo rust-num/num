@@ -19,6 +19,7 @@ extern crate rustc_macro;
 use rustc_macro::TokenStream;
 
 use syn::Body::Enum;
+use syn::VariantData::Unit;
 
 #[rustc_macro_derive(FromPrimitive)]
 pub fn from_primitive(input: TokenStream) -> TokenStream {
@@ -29,13 +30,22 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
 
     let variants = match ast.body {
         Enum(ref variants) => variants,
-        _ => panic!("`FromPrimitive` can be applied only to the enums, {} is not an enum", name),
+        _ => {
+            panic!("`FromPrimitive` can be applied only to the enums, {} is not an enum",
+                   name)
+        }
     };
 
     let mut idx = 0;
     let variants: Vec<_> = variants.iter()
         .map(|variant| {
             let ident = &variant.ident;
+            match variant.data {
+                Unit => (),
+                _ => {
+                    panic!("`FromPrimitive` can be applied only to unitary enums, {}::{} is either struct or tuple", name, ident)
+                },
+            }
             if let Some(val) = variant.discriminant {
                 idx = val.value;
             }
