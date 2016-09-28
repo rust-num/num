@@ -1,4 +1,3 @@
-
 // Copyright 2013-2015 The Rust Project Developers. See the COPYRIGHT
 // file at the top-level directory of this distribution and at
 // http://rust-lang.org/COPYRIGHT.
@@ -9,18 +8,29 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-#![feature(rustc_macro)]
+#![feature(custom_derive, plugin)]
+#![plugin(num_macros)]
 
 extern crate num;
-#[macro_use]
-extern crate num_macros;
 
-#[derive(Debug, PartialEq, FromPrimitive)]
-enum Color {}
+#[derive(Debug, PartialEq, NumFromPrimitive)]
+enum Color {
+    Red,
+    Blue,
+    Green,
+}
 
 #[test]
-fn test_empty_enum() {
-    let v: [Option<Color>; 1] = [num::FromPrimitive::from_u64(0)];
+fn test_from_primitive() {
+    let v: Vec<Option<Color>> = vec![
+        num::FromPrimitive::from_u64(0),
+        num::FromPrimitive::from_u64(1),
+        num::FromPrimitive::from_u64(2),
+        num::FromPrimitive::from_u64(3),
+    ];
 
-    assert_eq!(v, [None]);
+    assert_eq!(
+        v,
+        vec![Some(Color::Red), Some(Color::Blue), Some(Color::Green), None]
+    );
 }

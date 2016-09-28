@@ -1,27 +1,17 @@
 [package]
-authors = ["The Rust Project Developers"]
-description = "Numeric syntax extensions"
-documentation = "http://rust-num.github.io/num"
-homepage = "https://github.com/rust-num/num"
-keywords = ["mathematics", "numerics"]
-license = "MIT/Apache-2.0"
 name = "num-macros"
-repository = "https://github.com/rust-num/num"
 version = "0.1.33"
-
-[dependencies]
-quote = "0.1.3"
-syn = "0.6.0"
-
-[dev-dependencies]
-compiletest_rs = "0.2.2"
-
-[dev-dependencies.num]
-path = ".."
-version = "0.1"
+authors = ["The Rust Project Developers"]
+license = "MIT/Apache-2.0"
+homepage = "https://github.com/rust-num/num"
+repository = "https://github.com/rust-num/num"
+documentation = "http://rust-num.github.io/num"
+keywords = ["mathematics", "numerics"]
+description = "Numeric syntax extensions"
 
 [lib]
-crate-type = ["rustc-macro"]
 name = "num_macros"
-rustc-macro = true
-test = false
+plugin = true
+
+[dev-dependencies]
+num = { path = "..", version = "0.1" }

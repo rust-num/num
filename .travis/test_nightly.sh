@@ -5,6 +5,7 @@ set -ex
 cargo bench --verbose
 
 cargo test --verbose --manifest-path=macros/Cargo.toml
+cargo test --verbose --manifest-path=derive/Cargo.toml
 
 # Build test for the serde feature
 cargo build --verbose --features "serde"

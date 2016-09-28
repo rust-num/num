@@ -1,4 +1,3 @@
-
 // Copyright 2013-2015 The Rust Project Developers. See the COPYRIGHT
 // file at the top-level directory of this distribution and at
 // http://rust-lang.org/COPYRIGHT.
@@ -13,12 +12,22 @@
 
 extern crate num;
 #[macro_use]
-extern crate num_macros;
+extern crate num_derive;
 
-#[derive(Debug, PartialEq, FromPrimitive)] //~ ERROR
+#[derive(Debug, PartialEq, FromPrimitive)]
 enum Color {
-    Rgb(u8, u8, u8),
-    Hsv(u8, u8, u8),
+    Red,
+    Blue,
+    Green,
 }
 
-fn main() {}
+#[test]
+fn test_from_primitive_for_trivial_case() {
+    let v: [Option<Color>; 4] = [num::FromPrimitive::from_u64(0),
+                                 num::FromPrimitive::from_u64(1),
+                                 num::FromPrimitive::from_u64(2),
+                                 num::FromPrimitive::from_u64(3)];
+
+    assert_eq!(v,
+               [Some(Color::Red), Some(Color::Blue), Some(Color::Green), None]);
+}

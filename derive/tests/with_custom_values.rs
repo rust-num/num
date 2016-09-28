@@ -12,20 +12,20 @@
 
 extern crate num;
 #[macro_use]
-extern crate num_macros;
+extern crate num_derive;
 
 #[derive(Debug, PartialEq, FromPrimitive)]
 enum Color {
     Red,
-    Blue,
+    Blue = 5,
     Green,
 }
 
 #[test]
-fn test_from_primitive_for_trivial_case() {
+fn test_from_primitive_for_enum_with_custom_value() {
     let v: [Option<Color>; 4] = [num::FromPrimitive::from_u64(0),
-                                 num::FromPrimitive::from_u64(1),
-                                 num::FromPrimitive::from_u64(2),
+                                 num::FromPrimitive::from_u64(5),
+                                 num::FromPrimitive::from_u64(6),
                                  num::FromPrimitive::from_u64(3)];
 
     assert_eq!(v,

@@ -13,13 +13,12 @@
 
 extern crate num;
 #[macro_use]
-extern crate num_macros;
+extern crate num_derive;
 
 #[derive(Debug, PartialEq, FromPrimitive)] //~ ERROR
-struct Color {
-    r: u8,
-    g: u8,
-    b: u8,
+enum Color {
+    Rgb(u8, u8, u8),
+    Hsv(u8, u8, u8),
 }
 
 fn main() {}
