@@ -7,7 +7,7 @@ keywords = ["mathematics", "numerics"]
 license = "MIT/Apache-2.0"
 repository = "https://github.com/rust-num/num"
 name = "num"
-version = "0.1.35"
+version = "0.1.36"
 
 [[bench]]
 name = "bigint"
@@ -44,7 +44,7 @@ version = "0.1.35"
 
 [dependencies.num-traits]
 path = "./traits"
-version = "0.1.35"
+version = "0.1.36"
 
 [dev-dependencies]
 
