@@ -114,15 +114,18 @@ macro_rules! forward_all_binop_to_ref_ref {
 #[inline]
 fn ten_to_the(pow: u64) -> BigInt {
     if pow < 20 {
-        return BigInt::from(10u64.pow(pow as u32));
+        BigInt::from(10u64.pow(pow as u32))
+    } else {
+        let (half, rem) = pow.div_rem(&16);
+
+        let mut x = ten_to_the(half);
+
+        for _ in 0..4 {
+            x = &x * &x;
+        }
+
+        if rem == 0 { x } else { x * ten_to_the(rem) }
     }
-    let mut result = BigInt::from(10u64.pow(19));
-    let mut pow = pow - 19;
-    while pow > 19 {
-        result = result * BigInt::from(10u64.pow(19));
-        pow -= 19;
-    }
-    return result * BigInt::from(10u64.pow(pow as u32));
 }
 
 /// A big decimal type.
@@ -163,6 +166,7 @@ impl BigDecimal {
     /// If the new_scale is lower than the current value, digits will
     /// be dropped.
     ///
+    #[inline]
     pub fn with_scale(&self, new_scale: i64) -> BigDecimal {
 
         if self.int_val.is_zero() {
@@ -173,10 +177,12 @@ impl BigDecimal {
             let scale_diff = new_scale - self.scale;
             let int_val = &self.int_val * ten_to_the(scale_diff as u64);
             return BigDecimal::new(int_val, new_scale);
+
         } else if new_scale < self.scale {
             let scale_diff = self.scale - new_scale;
             let int_val = &self.int_val / ten_to_the(scale_diff as u64);
             return BigDecimal::new(int_val, new_scale);
+
         } else {
             return self.clone();
         }
@@ -247,38 +253,18 @@ impl PartialEq for BigDecimal {
         //          rhs.int_val,
         //          rhs.scale);
 
-        // difference in scale between the two decimals
-        let scale_diff = (self.scale - rhs.scale).abs() as u32;
-
-        // the scale as a bigint number power of ten
-        // e.g. diff == 3 -> scale_bigint == 1000
-        let scale_bigint = if scale_diff <= 9 {
-            BigInt::from_u64(10u64.pow(scale_diff)).unwrap()
-        } else {
-            let billion = &BigInt::from_u64(10u64.pow(9)).unwrap();
-
-            let mut scale_diff = scale_diff;
-            let mut tmp_bigint = BigInt::one();
-            while scale_diff > 9 {
-                tmp_bigint = tmp_bigint * billion;
-                scale_diff -= 9;
-            }
-
-            tmp_bigint * BigInt::from_u64(10u64.pow(scale_diff)).unwrap()
-        };
-
         // fix scale and test equality
-        let result = if self.scale > rhs.scale {
-            let shifted_int = &rhs.int_val * scale_bigint;
-            shifted_int == self.int_val
-        } else if self.scale < rhs.scale {
-            let shifted_int = &self.int_val * scale_bigint;
-            shifted_int == rhs.int_val
-        } else {
-            self.int_val == rhs.int_val
-        };
+        if self.scale > rhs.scale {
+            let scaled_int_val = &rhs.int_val * ten_to_the((self.scale - rhs.scale) as u64);
+            return self.int_val == scaled_int_val;
 
-        return result;
+        } else if self.scale < rhs.scale {
+            let scaled_int_val = &self.int_val * ten_to_the((rhs.scale - self.scale) as u64);
+            return scaled_int_val == rhs.int_val;
+
+        } else {
+            return self.int_val == rhs.int_val;
+        }
     }
 }
 
@@ -477,7 +463,7 @@ impl Num for BigDecimal {
         };
 
         let scale = decimal_offset - exponent_value;
-        let big_int = try!(BigInt::from_str_radix(&digits[..], radix));
+        let big_int = try!(BigInt::from_str_radix(&digits, radix));
 
         return Ok(BigDecimal::new(big_int, scale));
     }
@@ -497,6 +483,7 @@ mod bigdecimal_tests {
             ("1234e6", "1234e-6", "1234000000.001234"),
             ("1234e-6", "1234e6", "1234000000.001234"),
             ("18446744073709551616.0", "1", "18446744073709551617"),
+            ("184467440737e3380", "0", "184467440737e3380"),
         ];
 
         for &(x, y, z) in vals.iter() {
