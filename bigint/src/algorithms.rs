@@ -270,7 +270,7 @@ fn mac3(acc: &mut [BigDigit], b: &[BigDigit], c: &[BigDigit]) {
          * Let p0 = x0 * y0 and p2 = x1 * y1:
          *
          * x * y = p0
-         *       + (x0 * y1 + x1 * p0) * b
+         *       + (x0 * y1 + x1 * y0) * b
          *       + p2 * b^2
          *
          * The real trick is that middle term:
@@ -343,7 +343,7 @@ fn mac3(acc: &mut [BigDigit], b: &[BigDigit], c: &[BigDigit]) {
         mac3(&mut p.data[..], x0, y0);
         p = p.normalize();
 
-        add2(&mut acc[..],                &p.data[..]);
+        add2(&mut acc[..],         &p.data[..]);
         add2(&mut acc[b..],        &p.data[..]);
 
         // p1 = (x1 - x0) * (y1 - y0)
