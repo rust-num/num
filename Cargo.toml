@@ -61,7 +61,7 @@ bigint = ["num-bigint"]
 bigdecimal = ["num-bigdecimal"]
 complex = ["num-complex"]
 rational = ["num-rational"]
-default = ["bigint", "complex", "rational", "rustc-serialize"]
+default = ["bigdecimal", "bigint", "complex", "rational", "rustc-serialize"]
 
 serde = [
   "num-bigint/serde",
