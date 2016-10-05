@@ -191,7 +191,7 @@ pub enum ParseBigDecimalError {
     ParseInt(ParseIntError),
     ParseBigInt(ParseBigIntError),
     Empty,
-    Other,
+    Other(String),
 }
 
 impl fmt::Display for ParseBigDecimalError {
@@ -201,7 +201,7 @@ impl fmt::Display for ParseBigDecimalError {
             &ParseBigDecimalError::ParseInt(ref e) => e.fmt(f),
             &ParseBigDecimalError::ParseBigInt(ref e) => e.fmt(f),
             &ParseBigDecimalError::Empty => "Failed to parse empty string".fmt(f),
-            &ParseBigDecimalError::Other => "failed to parse provided string".fmt(f),
+            &ParseBigDecimalError::Other(ref reason) => reason.as_str().fmt(f),
         }
     }
 }
@@ -424,7 +424,10 @@ impl Num for BigDecimal {
     /// Creates and initializes a BigDecimal.
     #[inline]
     fn from_str_radix(s: &str, radix: u32) -> Result<BigDecimal, ParseBigDecimalError> {
-        assert!(2 <= radix && radix <= 36, "The radix must be within 2...36");
+        if radix != 10 {
+            return Err(ParseBigDecimalError::Other(String::from("The radix for decimal MUST be \
+                                                                 10")));
+        }
 
         let exp_separator: &[_] = &['e', 'E'];
 
