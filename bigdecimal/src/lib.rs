@@ -35,16 +35,15 @@ extern crate num_bigint as bigint;
 extern crate num_integer as integer;
 extern crate num_traits as traits;
 
-use std::default::Default;
-use std::error::Error;
-use std::num::{ParseFloatError, ParseIntError};
-use std::ops::{Add, Div, Mul, Rem, Sub};
-use std::str::{self, FromStr};
 use std::fmt;
-use bigint::{BigInt, ParseBigIntError};
-use traits::{Num, Zero, One, FromPrimitive};
 use integer::Integer;
-
+use std::error::Error;
+use std::default::Default;
+use std::str::{self, FromStr};
+use bigint::{BigInt, ParseBigIntError};
+use std::ops::{Add, Div, Mul, Rem, Sub};
+use traits::{Num, Zero, One, FromPrimitive};
+use std::num::{ParseFloatError, ParseIntError};
 
 macro_rules! forward_val_val_binop {
     (impl $imp:ident for $res:ty, $method:ident) => {
@@ -201,7 +200,7 @@ impl fmt::Display for ParseBigDecimalError {
             &ParseBigDecimalError::ParseInt(ref e) => e.fmt(f),
             &ParseBigDecimalError::ParseBigInt(ref e) => e.fmt(f),
             &ParseBigDecimalError::Empty => "Failed to parse empty string".fmt(f),
-            &ParseBigDecimalError::Other(ref reason) => reason.as_str().fmt(f),
+            &ParseBigDecimalError::Other(ref reason) => reason[..].fmt(f),
         }
     }
 }
@@ -440,6 +439,14 @@ impl Num for BigDecimal {
             Some(loc) => {
                 // slice up to `loc` and 1 after to skip the 'e' char
                 let (base, exp) = (&s[..loc], &s[loc + 1..]);
+
+                // special consideration for rust 1.0.0 which would not
+                // parse a leading '+'
+                let exp = match exp.chars().next() {
+                    Some('+') => &exp[1..],
+                    _ => exp,
+                };
+
                 (base, try!(i64::from_str(exp)))
             }
         };
@@ -450,7 +457,7 @@ impl Num for BigDecimal {
         }
 
         // split decimal into a digit string and decimal-point offset
-        let (digits, decimal_offset) = match base_part.find('.') {
+        let (digits, decimal_offset): (String, _) = match base_part.find('.') {
             // No dot! pass directly to BigInt
             None => (base_part.to_string(), 0),
 
@@ -460,7 +467,7 @@ impl Num for BigDecimal {
                 let (lead, trail) = (&base_part[..loc], &base_part[loc + 1..]);
 
                 // copy all leading characters into 'digits' string
-                let mut digits = String::from_str(lead).unwrap();
+                let mut digits = String::from(lead);
 
                 // copy all trailing characters after '.' into the digits string
                 digits.extend(trail.chars());
@@ -470,7 +477,7 @@ impl Num for BigDecimal {
         };
 
         let scale = decimal_offset - exponent_value;
-        let big_int = try!(BigInt::from_str_radix(digits.as_str(), radix));
+        let big_int = try!(BigInt::from_str_radix(&digits[..], radix));
 
         return Ok(BigDecimal::new(big_int, scale));
     }
