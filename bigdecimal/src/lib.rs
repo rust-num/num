@@ -41,7 +41,6 @@ use std::num::{ParseFloatError, ParseIntError};
 use std::ops::{Add, Div, Mul, Rem, Sub};
 use std::str::{self, FromStr};
 use std::fmt;
-use std::cmp::max;
 use bigint::{BigInt, ParseBigIntError};
 use traits::{Num, Zero, One, FromPrimitive};
 use integer::Integer;
@@ -112,6 +111,21 @@ macro_rules! forward_all_binop_to_ref_ref {
     };
 }
 
+
+#[inline]
+fn ten_to_the(pow: u64) -> BigInt {
+    if pow < 20 {
+        return BigInt::from(10u64.pow(pow as u32));
+    }
+    let mut result = BigInt::from(10u64.pow(19));
+    let mut pow = pow - 19;
+    while pow > 19 {
+        result = result * BigInt::from(10u64.pow(19));
+        pow -= 19;
+    }
+    return result * BigInt::from(10u64.pow(pow as u32));
+}
+
 /// A big decimal type.
 ///
 #[derive(Clone, Debug, Hash)]
@@ -145,26 +159,29 @@ impl BigDecimal {
         str::from_utf8(buf).ok().and_then(|s| BigDecimal::from_str_radix(s, radix).ok())
     }
 
-    pub fn set_scale(&self, new_scale: i64) -> BigDecimal {
-        if self.scale == new_scale {
-            return self.clone();
-        }
+    /// Return a new BigDecimal object equivalent to self, with internal
+    /// scaling set to the number specified.
+    /// If the new_scale is lower than the current value, digits will
+    /// be dropped.
+    ///
+    pub fn with_scale(&self, new_scale: i64) -> BigDecimal {
 
         if self.int_val.is_zero() {
             return BigDecimal::new(BigInt::zero(), new_scale);
         }
 
         if new_scale > self.scale {
-            let raise = new_scale - self.scale;
-            // println!("raise: {}", raise);
-            let exp = (10 as i64).pow(raise as u32);
-            let new = BigDecimal::new(self.int_val.clone() * BigInt::from(exp), new_scale);
-            // println!("new: {}", new);
-            return new;
+            let scale_diff = new_scale - self.scale;
+            let int_val = &self.int_val * ten_to_the(scale_diff as u64);
+            return BigDecimal::new(int_val, new_scale);
+        } else if new_scale < self.scale {
+            let scale_diff = self.scale - new_scale;
+            let int_val = &self.int_val / ten_to_the(scale_diff as u64);
+            return BigDecimal::new(int_val, new_scale);
+        } else {
+            return self.clone();
         }
 
-        // todo implement
-        self.clone()
     }
 }
 
@@ -298,12 +315,18 @@ impl<'a, 'b> Add<&'b BigDecimal> for &'a BigDecimal {
     type Output = BigDecimal;
 
     #[inline]
-    fn add(self, other: &BigDecimal) -> BigDecimal {
-        let scale = max(self.scale, other.scale);
-        let left = self.clone().set_scale(scale);
-        let right = other.clone().set_scale(scale);
+    fn add(self, rhs: &BigDecimal) -> BigDecimal {
+        if self.scale < rhs.scale {
+            let scaled = self.with_scale(rhs.scale);
+            BigDecimal::new(scaled.int_val + &rhs.int_val, rhs.scale)
 
-        BigDecimal::new(left.int_val + right.int_val, left.scale)
+        } else if self.scale > rhs.scale {
+            let scaled = rhs.with_scale(self.scale);
+            BigDecimal::new(&self.int_val + scaled.int_val, self.scale)
+
+        } else {
+            BigDecimal::new(&self.int_val + &rhs.int_val, self.scale)
+        }
     }
 }
 
@@ -313,12 +336,18 @@ impl<'a, 'b> Sub<&'b BigDecimal> for &'a BigDecimal {
     type Output = BigDecimal;
 
     #[inline]
-    fn sub(self, other: &BigDecimal) -> BigDecimal {
-        let scale = max(self.scale, other.scale);
-        let left = self.clone().set_scale(scale);
-        let right = other.clone().set_scale(scale);
+    fn sub(self, rhs: &BigDecimal) -> BigDecimal {
+        if self.scale < rhs.scale {
+            let scaled = self.with_scale(rhs.scale);
+            BigDecimal::new(scaled.int_val - &rhs.int_val, rhs.scale)
 
-        BigDecimal::new(left.int_val - right.int_val, left.scale)
+        } else if self.scale > rhs.scale {
+            let scaled = rhs.with_scale(self.scale);
+            BigDecimal::new(&self.int_val - scaled.int_val, self.scale)
+
+        } else {
+            BigDecimal::new(&self.int_val - &rhs.int_val, self.scale)
+        }
     }
 }
 
@@ -328,10 +357,9 @@ impl<'a, 'b> Mul<&'b BigDecimal> for &'a BigDecimal {
     type Output = BigDecimal;
 
     #[inline]
-    fn mul(self, other: &BigDecimal) -> BigDecimal {
-        let scale = self.scale + other.scale;
-
-        BigDecimal::new(self.int_val.clone() * other.int_val.clone(), scale)
+    fn mul(self, rhs: &BigDecimal) -> BigDecimal {
+        let scale = self.scale + rhs.scale;
+        BigDecimal::new(&self.int_val * &rhs.int_val, scale)
     }
 }
 
@@ -457,6 +485,7 @@ mod bigdecimal_tests {
             ("12.34", "1.234", "13.574"),
             ("12.34", "-1.234", "11.106"),
             ("1234e6", "1234e-6", "1234000000.001234"),
+            ("1234e-6", "1234e6", "1234000000.001234"),
             ("18446744073709551616.0", "1", "18446744073709551617"),
         ];
 
