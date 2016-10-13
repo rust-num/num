@@ -8,20 +8,20 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-#![crate_type = "rustc-macro"]
-#![feature(rustc_macro, rustc_macro_lib)]
+#![crate_type = "proc-macro"]
+#![feature(proc_macro, proc_macro_lib)]
 
 extern crate syn;
 #[macro_use]
 extern crate quote;
-extern crate rustc_macro;
+extern crate proc_macro;
 
-use rustc_macro::TokenStream;
+use proc_macro::TokenStream;
 
 use syn::Body::Enum;
 use syn::VariantData::Unit;
 
-#[rustc_macro_derive(FromPrimitive)]
+#[proc_macro_derive(FromPrimitive)]
 pub fn from_primitive(input: TokenStream) -> TokenStream {
     let source = input.to_string();
 
