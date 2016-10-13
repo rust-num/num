@@ -21,7 +21,6 @@ path = ".."
 version = "0.1"
 
 [lib]
-crate-type = ["rustc-macro"]
 name = "num_derive"
-rustc-macro = true
+proc-macro = true
 test = false
