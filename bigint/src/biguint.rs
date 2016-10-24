@@ -22,7 +22,7 @@ mod algorithms;
 pub use self::algorithms::big_digit;
 pub use self::big_digit::{BigDigit, DoubleBigDigit, ZERO_BIG_DIGIT};
 
-use self::algorithms::{mac_with_carry, mul3, div_rem, div_rem_digit};
+use self::algorithms::{mac_with_carry, mul3, scalar_mul, div_rem, div_rem_digit};
 use self::algorithms::{__add2, add2, sub2, sub2rev};
 use self::algorithms::{biguint_shl, biguint_shr};
 use self::algorithms::{cmp_slice, fls, ilog2};
@@ -428,6 +428,19 @@ impl<'a, 'b> Mul<&'b BigUint> for &'a BigUint {
     #[inline]
     fn mul(self, other: &BigUint) -> BigUint {
         mul3(&self.data[..], &other.data[..])
+    }
+}
+
+impl Mul<BigDigit> for BigUint {
+    type Output = BigUint;
+
+    #[inline]
+    fn mul(mut self, other: BigDigit) -> BigUint {
+        let carry = scalar_mul(&mut self.data[..], other);
+        if carry != 0 {
+            self.data.push(carry);
+        }
+        self
     }
 }
 

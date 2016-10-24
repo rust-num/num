@@ -85,6 +85,15 @@ pub fn mac_with_carry(a: BigDigit, b: BigDigit, c: BigDigit, carry: &mut BigDigi
     lo
 }
 
+#[inline]
+pub fn mul_with_carry(a: BigDigit, b: BigDigit, carry: &mut BigDigit) -> BigDigit {
+    let (hi, lo) = big_digit::from_doublebigdigit((a as DoubleBigDigit) * (b as DoubleBigDigit) +
+                                                  (*carry as DoubleBigDigit));
+
+    *carry = hi;
+    lo
+}
+
 /// Divide a two digit numerator by a one digit divisor, returns quotient and remainder:
 ///
 /// Note: the caller must ensure that both the quotient and remainder will fit into a single digit.
@@ -375,6 +384,14 @@ pub fn mul3(x: &[BigDigit], y: &[BigDigit]) -> BigUint {
 
     mac3(&mut prod.data[..], x, y);
     prod.normalize()
+}
+
+pub fn scalar_mul(a: &mut [BigDigit], b: BigDigit) -> BigDigit {
+    let mut carry = 0;
+    for a in a.iter_mut() {
+        *a = mul_with_carry(*a, b, &mut carry);
+    }
+    carry
 }
 
 pub fn div_rem(u: &BigUint, d: &BigUint) -> (BigUint, BigUint) {
