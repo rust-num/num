@@ -771,6 +771,26 @@ fn test_mul() {
 }
 
 #[test]
+fn test_scalar_mul() {
+    for elm in MUL_TRIPLES.iter() {
+        let (a_vec, b_vec, c_vec) = *elm;
+        let c = BigUint::from_slice(c_vec);
+
+        if a_vec.len() == 1 {
+            let b = BigUint::from_slice(b_vec);
+            let a = a_vec[0];
+            assert!(b * a == c);
+        }
+
+        if b_vec.len() == 1 {
+            let a = BigUint::from_slice(a_vec);
+            let b = b_vec[0];
+            assert!(a * b == c);
+        }
+    }
+}
+
+#[test]
 fn test_div_rem() {
     for elm in MUL_TRIPLES.iter() {
         let (a_vec, b_vec, c_vec) = *elm;
