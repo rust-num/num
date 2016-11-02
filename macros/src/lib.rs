@@ -12,7 +12,7 @@
 #![doc(html_logo_url = "https://rust-num.github.io/num/rust-logo-128x128-blk-v2.png",
        html_favicon_url = "https://rust-num.github.io/num/favicon.ico",
        html_root_url = "https://rust-num.github.io/num/",
-       html_playground_url = "https://play.rust-lang.org/")]
+       html_playground_url = "http://play.integer32.com/")]
 
 extern crate syntax;
 extern crate syntax_ext;
