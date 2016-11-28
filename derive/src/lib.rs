@@ -30,10 +30,7 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
 
     let variants = match ast.body {
         Enum(ref variants) => variants,
-        _ => {
-            panic!("`FromPrimitive` can be applied only to the enums, {} is not an enum",
-                   name)
-        }
+        _ => panic!("`FromPrimitive` can be applied only to the enums, {} is not an enum", name)
     };
 
     let mut idx = 0;
@@ -56,8 +53,6 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
         .collect();
 
     let res = quote! {
-        #ast
-
         impl ::num::traits::FromPrimitive for #name {
             fn from_i64(n: i64) -> Option<Self> {
                 Self::from_u64(n as u64)
