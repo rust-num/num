@@ -261,6 +261,13 @@ impl Ratio<BigInt> {
     }
 }
 
+// From integer
+impl<T> From<T> for Ratio<T> where T: Clone + Integer {
+    fn from(x: T) -> Ratio<T> {
+        Ratio::from_integer(x)
+    }
+}
+
 // Comparisons
 
 // Mathematically, comparing a/b and c/d is the same as comparing a*d and b*c, but it's very easy
