@@ -25,10 +25,9 @@ use syntax::ext::base::{ExtCtxt, Annotatable};
 use syntax::ext::build::AstBuilder;
 use syntax_ext::deriving::generic::*;
 use syntax_ext::deriving::generic::ty::*;
-use syntax::parse::token::InternedString;
+use syntax::symbol::Symbol;
 use syntax::ptr::P;
 use syntax::ext::base::MultiDecorator;
-use syntax::parse::token;
 
 use rustc_plugin::Registry;
 
@@ -66,7 +65,7 @@ pub fn expand_deriving_from_primitive(cx: &mut ExtCtxt,
                                       item: &Annotatable,
                                       push: &mut FnMut(Annotatable))
 {
-    let inline = cx.meta_word(span, InternedString::new("inline"));
+    let inline = cx.meta_word(span, Symbol::intern("inline"));
     let attrs = vec!(cx.attribute(span, inline));
     let trait_def = TraitDef {
         is_unsafe: false,
@@ -128,13 +127,13 @@ fn cs_from(name: &str, cx: &mut ExtCtxt, trait_span: Span, substr: &Substructure
     match *substr.fields {
         StaticStruct(..) => {
             cx.span_err(trait_span, "`FromPrimitive` cannot be derived for structs");
-            return cx.expr_fail(trait_span, InternedString::new(""));
+            return cx.expr_fail(trait_span, Symbol::intern(""));
         }
         StaticEnum(enum_def, _) => {
             if enum_def.variants.is_empty() {
                 cx.span_err(trait_span,
                             "`FromPrimitive` cannot be derived for enums with no variants");
-                return cx.expr_fail(trait_span, InternedString::new(""));
+                return cx.expr_fail(trait_span, Symbol::intern(""));
             }
 
             let mut arms = Vec::new();
@@ -169,14 +168,14 @@ fn cs_from(name: &str, cx: &mut ExtCtxt, trait_span: Span, substr: &Substructure
                                     "`FromPrimitive` cannot be derived for \
                                     enum variants with arguments");
                         return cx.expr_fail(trait_span,
-                                            InternedString::new(""));
+                                            Symbol::intern(""));
                     }
                     ast::VariantData::Struct(..) => {
                         cx.span_err(trait_span,
                                     "`FromPrimitive` cannot be derived for enums \
                                     with struct variants");
                         return cx.expr_fail(trait_span,
-                                            InternedString::new(""));
+                                            Symbol::intern(""));
                     }
                 }
             }
@@ -200,6 +199,6 @@ fn cs_from(name: &str, cx: &mut ExtCtxt, trait_span: Span, substr: &Substructure
 #[doc(hidden)]
 pub fn plugin_registrar(reg: &mut Registry) {
     reg.register_syntax_extension(
-        token::intern("derive_NumFromPrimitive"),
+        Symbol::intern("derive_NumFromPrimitive"),
         MultiDecorator(Box::new(expand_deriving_from_primitive)));
 }
