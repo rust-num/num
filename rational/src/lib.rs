@@ -261,6 +261,13 @@ impl Ratio<BigInt> {
     }
 }
 
+// From integer
+impl<T> From<T> for Ratio<T> where T: Clone + Integer {
+    fn from(x: T) -> Ratio<T> {
+        Ratio::from_integer(x)
+    }
+}
+
 // Comparisons
 
 // Mathematically, comparing a/b and c/d is the same as comparing a*d and b*c, but it's very easy
@@ -738,6 +745,7 @@ mod test {
         assert_eq!(_1_2, Ratio::new(1, 2));
         assert_eq!(_3_2, Ratio::new(3, 2));
         assert_eq!(_NEG1_2, Ratio::new(-1, 2));
+        assert_eq!(_2, From::from(2));
     }
 
     #[test]
