@@ -33,7 +33,7 @@ use traits::{Zero, One, Num, Float};
 // probably doesn't map to C's _Complex correctly.
 
 /// A complex number in Cartesian form.
-#[derive(PartialEq, Copy, Clone, Hash, Debug, Default)]
+#[derive(PartialEq, Eq, Copy, Clone, Hash, Debug, Default)]
 #[cfg_attr(feature = "rustc-serialize", derive(RustcEncodable, RustcDecodable))]
 pub struct Complex<T> {
     /// Real portion of the complex number
@@ -1218,6 +1218,20 @@ mod test {
         assert!(::hash(&a) != ::hash(&b));
         assert!(::hash(&b) != ::hash(&c));
         assert!(::hash(&c) != ::hash(&a));
+    }
+
+    #[test]
+    fn test_hashset() {
+        use std::collections::HashSet;
+        let a = Complex::new(0i32, 0i32);
+        let b = Complex::new(1i32, 0i32);
+        let c = Complex::new(0i32, 1i32);
+
+        let set: HashSet<_> = [a, b, c].iter().cloned().collect();
+        assert!(set.contains(&a));
+        assert!(set.contains(&b));
+        assert!(set.contains(&c));
+        assert!(!set.contains(&(a + b + c)));
     }
 
     #[test]
