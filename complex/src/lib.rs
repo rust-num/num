@@ -33,7 +33,7 @@ use traits::{Zero, One, Num, Float};
 // probably doesn't map to C's _Complex correctly.
 
 /// A complex number in Cartesian form.
-#[derive(PartialEq, Copy, Clone, Hash, Debug, Default)]
+#[derive(PartialEq, Eq, Copy, Clone, Hash, Debug, Default)]
 #[cfg_attr(feature = "rustc-serialize", derive(RustcEncodable, RustcDecodable))]
 pub struct Complex<T> {
     /// Real portion of the complex number
