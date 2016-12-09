@@ -594,6 +594,12 @@ impl<T: FromStr + Clone + Integer> FromStr for Ratio<T> {
     }
 }
 
+impl<T> Into<(T, T)> for Ratio<T> {
+    fn into(self) -> (T, T) {
+        (self.numer, self.denom)
+    }
+}
+
 #[cfg(feature = "serde")]
 impl<T> serde::Serialize for Ratio<T>
     where T: serde::Serialize + Clone + Integer + PartialOrd
@@ -1143,5 +1149,12 @@ mod test {
     fn test_hash() {
         assert!(::hash(&_0) != ::hash(&_1));
         assert!(::hash(&_0) != ::hash(&_3_2));
+    }
+
+    #[test]
+    fn test_into_pair() {
+        assert_eq! ((0, 1), _0.into());
+        assert_eq! ((-2, 1), _NEG2.into());
+        assert_eq! ((1, -2), _1_NEG2.into());
     }
 }
