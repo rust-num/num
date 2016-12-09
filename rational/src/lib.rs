@@ -268,6 +268,14 @@ impl<T> From<T> for Ratio<T> where T: Clone + Integer {
     }
 }
 
+
+// From pair (through the `new` constructor)
+impl<T> From<(T, T)> for Ratio<T> where T: Clone + Integer {
+    fn from(pair: (T, T)) -> Ratio<T> {
+        Ratio::new(pair.0, pair.1)
+    }
+}
+
 // Comparisons
 
 // Mathematically, comparing a/b and c/d is the same as comparing a*d and b*c, but it's very easy
@@ -1156,5 +1164,13 @@ mod test {
         assert_eq! ((0, 1), _0.into());
         assert_eq! ((-2, 1), _NEG2.into());
         assert_eq! ((1, -2), _1_NEG2.into());
+    }
+
+    #[test]
+    fn test_from_pair() {
+        assert_eq! (_0, Ratio::from ((0, 1)));
+        assert_eq! (_1, Ratio::from ((1, 1)));
+        assert_eq! (_NEG2, Ratio::from ((-2, 1)));
+        assert_eq! (_1_NEG2, Ratio::from ((1, -2)));
     }
 }
