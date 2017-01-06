@@ -1048,7 +1048,7 @@ mod test {
     }
 
     #[test]
-    #[should_panic = "== 0"]
+    #[should_panic(expected = "== 0")]
     fn test_recip_fail() {
         let _a = Ratio::new(0, 1).recip();
     }
