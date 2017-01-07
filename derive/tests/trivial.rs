@@ -8,8 +8,6 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-#![feature(proc_macro)]
-
 extern crate num;
 #[macro_use]
 extern crate num_derive;
