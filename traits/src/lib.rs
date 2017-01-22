@@ -20,6 +20,7 @@ pub use bounds::Bounded;
 pub use float::{Float, FloatConst};
 pub use identities::{Zero, One, zero, one};
 pub use ops::checked::*;
+pub use ops::wrapping::*;
 pub use ops::saturating::Saturating;
 pub use sign::{Signed, Unsigned, abs, abs_sub, signum};
 pub use cast::*;
