@@ -19,7 +19,7 @@ macro_rules! wrapping_impl {
     }
 }
 
-/// Performs addition that wrapps around on overflow.
+/// Performs addition that wraps around on overflow.
 pub trait WrappingAdd: Sized + Add<Self, Output=Self> {
     /// Wrapping (modular) addition. Computes `self + other`, wrapping around at the boundary of
     /// the type.
@@ -38,7 +38,7 @@ wrapping_impl!(WrappingAdd, wrapping_add, i32);
 wrapping_impl!(WrappingAdd, wrapping_add, i64);
 wrapping_impl!(WrappingAdd, wrapping_add, isize);
 
-/// Performs subtraction that wrapps around on overflow.
+/// Performs subtraction that wraps around on overflow.
 pub trait WrappingSub: Sized + Sub<Self, Output=Self> {
     /// Wrapping (modular) subtraction. Computes `self - other`, wrapping around at the boundary
     /// of the type.
@@ -57,7 +57,7 @@ wrapping_impl!(WrappingSub, wrapping_sub, i32);
 wrapping_impl!(WrappingSub, wrapping_sub, i64);
 wrapping_impl!(WrappingSub, wrapping_sub, isize);
 
-/// Performs multiplication that wrapps around on overflow.
+/// Performs multiplication that wraps around on overflow.
 pub trait WrappingMul: Sized + Mul<Self, Output=Self> {
     /// Wrapping (modular) multiplication. Computes `self * other`, wrapping around at the boundary
     /// of the type.
