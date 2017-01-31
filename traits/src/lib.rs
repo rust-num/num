@@ -43,6 +43,18 @@ pub trait Num: PartialEq + Zero + One
     type FromStrRadixErr;
 
     /// Convert from a string and radix <= 36.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use num_traits::Num;
+    ///
+    /// let result = <i32 as Num>::from_str_radix("27", 10);
+    /// assert_eq!(result, Ok(27));
+    ///
+    /// let result = <i32 as Num>::from_str_radix("foo", 10);
+    /// assert!(result.is_err());
+    /// ```
     fn from_str_radix(str: &str, radix: u32) -> Result<Self, Self::FromStrRadixErr>;
 }
 
