@@ -75,3 +75,14 @@ wrapping_impl!(WrappingMul, wrapping_mul, i16);
 wrapping_impl!(WrappingMul, wrapping_mul, i32);
 wrapping_impl!(WrappingMul, wrapping_mul, i64);
 wrapping_impl!(WrappingMul, wrapping_mul, isize);
+
+
+#[test]
+fn test_wrapping_traits() {
+    fn wrapping_add<T: WrappingAdd>(a: T, b: T) -> T { a.wrapping_add(&b) }
+    fn wrapping_sub<T: WrappingSub>(a: T, b: T) -> T { a.wrapping_sub(&b) }
+    fn wrapping_mul<T: WrappingMul>(a: T, b: T) -> T { a.wrapping_mul(&b) }
+    assert_eq!(wrapping_add(255, 1), 0u8);
+    assert_eq!(wrapping_sub(0, 1), 255u8);
+    assert_eq!(wrapping_mul(255, 2), 254u8);
+}
