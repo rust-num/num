@@ -114,6 +114,7 @@ pub mod rational {
 ///
 /// If input is less than min then min is returned, if input is greater than max then max is
 /// returned.  Otherwise input is returned.
+#[inline]
 pub fn clamp<T: PartialOrd + Copy>(input: T, min: T, max: T) -> T {
     debug_assert!(min < max, "min must be less than max");
     if input <= min {min}
