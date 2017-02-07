@@ -81,7 +81,7 @@ pub use num_traits::{Num, Zero, One, Signed, Unsigned, Bounded,
                      one, zero, abs, abs_sub, signum,
                      Saturating, CheckedAdd, CheckedSub, CheckedMul, CheckedDiv,
                      PrimInt, Float, ToPrimitive, FromPrimitive, NumCast, cast,
-                     pow, checked_pow};
+                     pow, checked_pow, clamp};
 
 #[cfg(feature = "num-bigint")]
 pub mod bigint {
@@ -108,16 +108,4 @@ pub mod traits {
 #[cfg(feature = "num-rational")]
 pub mod rational {
     pub use num_rational::*;
-}
-
-/// A value bounded by a minimum and a maximum
-///
-/// If input is less than min then min is returned, if input is greater than max then max is
-/// returned.  Otherwise input is returned.
-#[inline]
-pub fn clamp<T: PartialOrd + Copy>(input: T, min: T, max: T) -> T {
-    debug_assert!(min < max, "min must be less than max");
-    if input <= min {min}
-    else if input >= max {max}
-    else {input}
 }

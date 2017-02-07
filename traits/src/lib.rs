@@ -241,6 +241,35 @@ macro_rules! float_trait_impl {
 }
 float_trait_impl!(Num for f32 f64);
 
+/// A value bounded by a minimum and a maximum
+///
+/// If input is less than min then min is returned, if input is greater than max then max is
+/// returned.  Otherwise input is returned.
+#[inline]
+pub fn clamp<T: PartialOrd>(input: T, min: T, max: T) -> T {
+    debug_assert!(min <= max, "min must be less than max");
+    if input < min {
+        min
+    } else if input > max {
+        max
+    } else {
+        input
+    }
+}
+
+#[test]
+fn clamp_test() {
+    // Int test
+    assert_eq!(1, clamp(1, -1, 2));
+    assert_eq!(-1, clamp(-2, -1, 2));
+    assert_eq!(2, clamp(3, -1, 2));
+
+    // Float test
+    assert_eq!(1.0, clamp(1.0, -1.0, 2.0));
+    assert_eq!(-1.0, clamp(-2.0, -1.0, 2.0));
+    assert_eq!(2.0, clamp(3.0, -1.0, 2.0));
+}
+
 #[test]
 fn from_str_radix_unwrap() {
     // The Result error must impl Debug to allow unwrap()
