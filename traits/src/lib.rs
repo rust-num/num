@@ -247,7 +247,7 @@ float_trait_impl!(Num for f32 f64);
 /// returned.  Otherwise input is returned.
 #[inline]
 pub fn clamp<T: PartialOrd>(input: T, min: T, max: T) -> T {
-    debug_assert!(min <= max, "min must be less than max");
+    debug_assert!(min <= max, "min must be less than or equal to max");
     if input < min {
         min
     } else if input > max {
