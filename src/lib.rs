@@ -109,6 +109,7 @@ pub mod traits {
 pub mod rational {
     pub use num_rational::*;
 }
+
 /// A value bounded by a minimum and a maximum
 ///
 /// If input is less than min then min is returned, if input is greater than max then max is
