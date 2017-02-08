@@ -243,8 +243,9 @@ float_trait_impl!(Num for f32 f64);
 
 /// A value bounded by a minimum and a maximum
 ///
-/// If input is less than min then min is returned, if input is greater than max then max is
-/// returned.  Otherwise input is returned.
+///  If input is less than min then this returns min. 
+///  If input is greater than max then this returns max.  
+///  Otherwise this returns input. 
 #[inline]
 pub fn clamp<T: PartialOrd>(input: T, min: T, max: T) -> T {
     debug_assert!(min <= max, "min must be less than or equal to max");
