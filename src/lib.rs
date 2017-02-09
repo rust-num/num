@@ -81,7 +81,7 @@ pub use num_traits::{Num, Zero, One, Signed, Unsigned, Bounded,
                      one, zero, abs, abs_sub, signum,
                      Saturating, CheckedAdd, CheckedSub, CheckedMul, CheckedDiv,
                      PrimInt, Float, ToPrimitive, FromPrimitive, NumCast, cast,
-                     pow, checked_pow};
+                     pow, checked_pow, clamp};
 
 #[cfg(feature = "num-bigint")]
 pub mod bigint {
