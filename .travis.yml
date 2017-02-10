@@ -1,21 +1,19 @@
 language: rust
 rust:
-  - 1.0.0
+  - 1.8.0
+  - 1.15.0
   - beta
   - nightly
 sudo: false
 script:
   - cargo build --verbose
-  - make test
-  - .travis/test_features.sh
-  - |
-    [ $TRAVIS_RUST_VERSION != nightly ] || .travis/test_nightly.sh
+  - ./ci/test_full.sh
   - cargo doc
 after_success: |
   [ $TRAVIS_BRANCH = master ] &&
   [ $TRAVIS_PULL_REQUEST = false ] &&
   [ $TRAVIS_RUST_VERSION = nightly ] &&
-  ssh-agent .travis/deploy.sh
+  ssh-agent ./ci/deploy.sh
 notifications:
   email:
     on_success: never

@@ -22,3 +22,9 @@ and this to your crate root:
 ```rust
 extern crate num;
 ```
+
+## Compatibility
+
+Most of the `num` crates are tested for rustc 1.8 and greater.
+The exceptions are `num-derive` which requires at least rustc 1.15,
+and the deprecated `num-macros` which requires nightly rustc.
