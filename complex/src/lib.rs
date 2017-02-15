@@ -1246,11 +1246,18 @@ mod test {
 
     #[test]
     fn test_string_formatting() {
-        let a: Complex64 = Complex::new(1.234567, 123.4567);
-        assert_eq!(format!("{}", a), "1.234567+123.4567i");
+        let a = Complex::new(1.23456, 123.456);
+        assert_eq!(format!("{}", a), "1.23456+123.456i");
         assert_eq!(format!("{:.2}", a), "1.23+123.46i");
         assert_eq!(format!("{:.2E}", a), "1.23E0+1.23E2i");
-        assert_eq!(format!("{:e}", a), "1.234567e0+1.234567e2i");
+        assert_eq!(format!("{:.2e}", a), "1.23e0+1.23e2i");
+
+        let b = Complex::new(128, 255);
+        assert_eq!(format!("{:X}", b), "80+FFi");
+        assert_eq!(format!("{:#x}", b), "0x80+0xffi");
+        assert_eq!(format!("{:+#b}", b), "+0b1000000+0b1111111i");
+        assert_eq!(format!("{:+#16o}", b), "   +0o200+0o377i");
+        assert_eq!(format!("{:+#016x}", b), "+0x00080+0x00ffi");
     }
 
     #[test]
