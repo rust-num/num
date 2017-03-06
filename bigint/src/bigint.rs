@@ -3,8 +3,7 @@ use std::ops::{Add, Div, Mul, Neg, Rem, Shl, Shr, Sub};
 use std::str::{self, FromStr};
 use std::fmt;
 use std::cmp::Ordering::{self, Less, Greater, Equal};
-use std::{f32, f64};
-use std::{u8, i64, u64};
+use std::{i64, u64};
 use std::ascii::AsciiExt;
 
 #[cfg(feature = "serde")]
