@@ -242,7 +242,9 @@ impl Num for BigUint {
                 v.push(d);
             } else {
                 // create ParseIntError::InvalidDigit
-                let e = u64::from_str_radix(&s[v.len()..], radix).unwrap_err();
+                // Include the previous character for context.
+                let i = cmp::max(v.len(), 1) - 1;
+                let e = u64::from_str_radix(&s[i..], radix).unwrap_err();
                 return Err(e.into());
             }
         }
