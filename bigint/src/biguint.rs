@@ -7,7 +7,7 @@ use std::fmt;
 use std::cmp;
 use std::cmp::Ordering::{self, Less, Greater, Equal};
 use std::{f32, f64};
-use std::{u8, i64, u64};
+use std::{u8, u64};
 use std::ascii::AsciiExt;
 
 #[cfg(feature = "serde")]
@@ -242,7 +242,9 @@ impl Num for BigUint {
                 v.push(d);
             } else {
                 // create ParseIntError::InvalidDigit
-                let e = u64::from_str_radix(&s[v.len()..], radix).unwrap_err();
+                // Include the previous character for context.
+                let i = cmp::max(v.len(), 1) - 1;
+                let e = u64::from_str_radix(&s[i..], radix).unwrap_err();
                 return Err(e.into());
             }
         }

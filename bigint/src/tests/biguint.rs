@@ -1041,6 +1041,8 @@ fn test_from_str_radix() {
     assert_eq!(plus_plus_one, None);
     let minus_one = BigUint::from_str_radix("-1", 10).ok();
     assert_eq!(minus_one, None);
+    let zero_plus_two = BigUint::from_str_radix("0+2", 10).ok();
+    assert_eq!(zero_plus_two, None);
 }
 
 #[test]
