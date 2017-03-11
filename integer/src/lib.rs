@@ -665,6 +665,36 @@ impl_integer_for_usize!(u32, test_integer_u32);
 impl_integer_for_usize!(u64, test_integer_u64);
 impl_integer_for_usize!(usize, test_integer_usize);
 
+/// Calculate r * a / b, avoiding overflows and fractions.
+fn multiply_and_divide<T: Integer + Clone>(r: T, a: T, b: T) -> T {
+    // See http://blog.plover.com/math/choose-2.html for the idea.
+    let g = gcd(r.clone(), b.clone());
+    (r/g.clone()) * (a / (b/g))
+}
+
+/// Calculate the binomial coefficient.
+pub fn binomial<T: Integer + Clone>(mut n: T, k: T) -> T {
+    // See http://blog.plover.com/math/choose.html for the idea.
+    if k > n {
+        return T::zero();
+    }
+    let two = T::one() + T::one();
+    if k > n.clone()/two {
+        return binomial(n.clone(), n - k);
+    }
+    let mut r = T::one();
+    let mut d = T::one();
+    loop {
+        if d > k {
+            break;
+        }
+        r = multiply_and_divide(r, n.clone(), d.clone());
+        n = n - T::one();
+        d = d + T::one();
+    }
+    r
+}
+
 #[test]
 fn test_lcm_overflow() {
     macro_rules! check {
@@ -691,4 +721,49 @@ fn test_lcm_overflow() {
     check!(u32, 0x8000_0000, 0x02, 0x8000_0000);
     check!(i64, 0x4000_0000_0000_0000, 0x04, 0x4000_0000_0000_0000);
     check!(u64, 0x8000_0000_0000_0000, 0x02, 0x8000_0000_0000_0000);
+}
+
+#[test]
+fn test_binomial() {
+    macro_rules! check {
+        ($t:ty, $x:expr, $y:expr, $r:expr) => { {
+            let x: $t = $x;
+            let y: $t = $y;
+            let expected: $t = $r;
+            assert_eq!(binomial(x, y), expected);
+        } }
+    }
+    check!(u8, 9, 4, 126);
+    check!(u8, 0, 0, 1);
+
+    check!(i8, 9, 4, 126);
+    check!(i8, 0, 0, 1);
+
+    check!(u16, 100, 2, 4950);
+    check!(u16, 14, 4, 1001);
+    check!(u16, 0, 0, 1);
+
+    check!(i16, 100, 2, 4950);
+    check!(i16, 14, 4, 1001);
+    check!(i16, 0, 0, 1);
+
+    check!(u32, 100, 2, 4950);
+    check!(u32, 35, 11, 417225900);
+    check!(u32, 14, 4, 1001);
+    check!(u32, 0, 0, 1);
+
+    check!(i32, 100, 2, 4950);
+    check!(i32, 35, 11, 417225900);
+    check!(i32, 14, 4, 1001);
+    check!(i32, 0, 0, 1);
+
+    check!(u64, 100, 2, 4950);
+    check!(u64, 35, 11, 417225900);
+    check!(u64, 14, 4, 1001);
+    check!(u64, 0, 0, 1);
+
+    check!(i64, 100, 2, 4950);
+    check!(i64, 35, 11, 417225900);
+    check!(i64, 14, 4, 1001);
+    check!(i64, 0, 0, 1);
 }
