@@ -668,6 +668,9 @@ impl_integer_for_usize!(usize, test_integer_usize);
 /// Calculate r * a / b, avoiding overflows and fractions.
 fn multiply_and_divide<T: Integer + Clone>(r: T, a: T, b: T) -> T {
     // See http://blog.plover.com/math/choose-2.html for the idea.
+    //
+    // This depends on the fact that `b` must evenly divide `r*a`, as that's
+    // what lets you know that `b/gcd(r, b)` divides `a` evenly.
     let g = gcd(r.clone(), b.clone());
     (r/g.clone()) * (a / (b/g))
 }
@@ -678,8 +681,7 @@ pub fn binomial<T: Integer + Clone>(mut n: T, k: T) -> T {
     if k > n {
         return T::zero();
     }
-    let two = T::one() + T::one();
-    if k > n.clone()/two {
+    if k > n.clone() - k.clone() {
         return binomial(n.clone(), n - k);
     }
     let mut r = T::one();
@@ -731,39 +733,50 @@ fn test_binomial() {
             let y: $t = $y;
             let expected: $t = $r;
             assert_eq!(binomial(x, y), expected);
+            if y <= x {
+                assert_eq!(binomial(x, x - y), expected);
+            }
         } }
     }
     check!(u8, 9, 4, 126);
     check!(u8, 0, 0, 1);
+    check!(u8, 2, 3, 0);
 
     check!(i8, 9, 4, 126);
     check!(i8, 0, 0, 1);
+    check!(i8, 2, 3, 0);
 
     check!(u16, 100, 2, 4950);
     check!(u16, 14, 4, 1001);
     check!(u16, 0, 0, 1);
+    check!(u16, 2, 3, 0);
 
     check!(i16, 100, 2, 4950);
     check!(i16, 14, 4, 1001);
     check!(i16, 0, 0, 1);
+    check!(i16, 2, 3, 0);
 
     check!(u32, 100, 2, 4950);
     check!(u32, 35, 11, 417225900);
     check!(u32, 14, 4, 1001);
     check!(u32, 0, 0, 1);
+    check!(u32, 2, 3, 0);
 
     check!(i32, 100, 2, 4950);
     check!(i32, 35, 11, 417225900);
     check!(i32, 14, 4, 1001);
     check!(i32, 0, 0, 1);
+    check!(i32, 2, 3, 0);
 
     check!(u64, 100, 2, 4950);
     check!(u64, 35, 11, 417225900);
     check!(u64, 14, 4, 1001);
     check!(u64, 0, 0, 1);
+    check!(u64, 2, 3, 0);
 
     check!(i64, 100, 2, 4950);
     check!(i64, 35, 11, 417225900);
     check!(i64, 14, 4, 1001);
     check!(i64, 0, 0, 1);
+    check!(i64, 2, 3, 0);
 }
