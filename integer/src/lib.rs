@@ -668,11 +668,8 @@ impl_integer_for_usize!(usize, test_integer_usize);
 /// Calculate r * a / b, avoiding overflows and fractions.
 fn multiply_and_divide<T: Integer + Clone>(r: T, a: T, b: T) -> T {
     // See http://blog.plover.com/math/choose-2.html for the idea.
-    //
-    // This depends on the fact that `b` must evenly divide `r*a`, as that's
-    // what lets you know that `b/gcd(r, b)` divides `a` evenly.
     let g = gcd(r.clone(), b.clone());
-    (r/g.clone()) * (a / (b/g))
+    (r/g.clone() * a) / (b/g)
 }
 
 /// Calculate the binomial coefficient.
