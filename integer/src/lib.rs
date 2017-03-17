@@ -665,6 +665,47 @@ impl_integer_for_usize!(u32, test_integer_u32);
 impl_integer_for_usize!(u64, test_integer_u64);
 impl_integer_for_usize!(usize, test_integer_usize);
 
+/// An iterator over binomial coefficients.
+pub struct BinomialCoeff<T> {
+    a: T,
+    n: T,
+    k: T,
+}
+
+impl<T> BinomialCoeff<T>
+    where T: Integer,
+{
+    /// For a given n, iterate over all binomial coefficients ((k, n - k), binomial(n, k)).
+    pub fn new(n: T) -> BinomialCoeff<T> {
+        BinomialCoeff {
+            k: T::zero(), a: T::one(), n: n
+        }
+    }
+}
+
+impl<T> Iterator for BinomialCoeff<T>
+    where T: Integer + Clone,
+          for<'a> &'a T: std::cmp::PartialEq<&'a T>
+{
+    type Item = ((T, T), T);
+
+    fn next(&mut self) -> Option<((T, T), T)> {
+        if &self.k > &self.n {
+            return None;
+        }
+        self.a = if &self.k != &T::zero() {
+            (self.a.clone() * (self.n.clone() - self.k.clone() + T::one())) / self.k.clone()
+        } else {
+            T::one()
+        };
+        let r = Some(
+            ((self.k.clone(), self.n.clone() - self.k.clone()),
+             self.a.clone()));
+        self.k = self.k.clone() + T::one();
+        r
+    }
+}
+
 /// Calculate r * a / b, avoiding overflows and fractions.
 fn multiply_and_divide<T: Integer + Clone>(r: T, a: T, b: T) -> T {
     // See http://blog.plover.com/math/choose-2.html for the idea.
@@ -720,6 +761,46 @@ fn test_lcm_overflow() {
     check!(u32, 0x8000_0000, 0x02, 0x8000_0000);
     check!(i64, 0x4000_0000_0000_0000, 0x04, 0x4000_0000_0000_0000);
     check!(u64, 0x8000_0000_0000_0000, 0x02, 0x8000_0000_0000_0000);
+}
+
+#[test]
+fn test_binomial_coeff() {
+    macro_rules! check_simple {
+        ($t:ty) => { {
+            let n: $t = 3;
+            let c: Vec<_> = BinomialCoeff::new(n).collect();
+            let expected = vec![((0, 3), 1), ((1, 2), 3), ((2, 1), 3), ((3, 0), 1)];
+            assert_eq!(c, expected);
+        } }
+    }
+
+    check_simple!(u8);
+    check_simple!(i8);
+    check_simple!(u16);
+    check_simple!(i16);
+    check_simple!(u32);
+    check_simple!(i32);
+    check_simple!(u64);
+    check_simple!(i64);
+
+    macro_rules! check_binomial {
+        ($t:ty, $n:expr) => { {
+            let n: $t = $n;
+            let c: Vec<_> = BinomialCoeff::new(n).collect();
+            for &((k, _), b) in &c {
+                assert_eq!(b, binomial(n, k));
+            }
+        } }
+    }
+
+    check_binomial!(u8, 6);
+    check_binomial!(i8, 6);
+    check_binomial!(u16, 10);
+    check_binomial!(i16, 10);
+    check_binomial!(u32, 10);
+    check_binomial!(i32, 10);
+    check_binomial!(u64, 10);
+    check_binomial!(i64, 10);
 }
 
 #[test]
