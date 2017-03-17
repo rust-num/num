@@ -800,7 +800,7 @@ fn test_binomial() {
 fn test_multinomial() {
     macro_rules! check_binomial {
         ($t:ty, $k:expr) => { {
-            let n: $t = $k.iter().sum();
+            let n: $t = $k.iter().fold(0, |acc, &x| acc + x);
             let k: &[$t] = $k;
             assert_eq!(k.len(), 2);
             assert_eq!(multinomial(k), binomial(n, k[0]));
