@@ -618,9 +618,8 @@ impl<T: Clone + Num> One for Complex<T> {
 
 macro_rules! write_complex {
     ($f:ident, $t:expr, $prefix:expr, $re:expr, $im:expr, $T:ident) => {{
-        let zero: $T = Zero::zero();
-        let abs_re = if $re < Zero::zero() { zero.clone() - $re.clone() } else { $re.clone() };
-        let abs_im = if $im < Zero::zero() { zero.clone() - $im.clone() } else { $im.clone() };
+        let abs_re = if $re < Zero::zero() { $T::zero() - $re.clone() } else { $re.clone() };
+        let abs_im = if $im < Zero::zero() { $T::zero() - $im.clone() } else { $im.clone() };
 
         let mut real: String;
         let mut imag: String;
