@@ -1314,15 +1314,19 @@ mod test {
         let a = Complex::new(1.23456, 123.456);
         assert_eq!(format!("{}", a), "1.23456+123.456i");
         assert_eq!(format!("{:.2}", a), "1.23+123.46i");
-        assert_eq!(format!("{:.2E}", a), "1.23E0+1.23E2i");
         assert_eq!(format!("{:.2e}", a), "1.23e0+1.23e2i");
+        assert_eq!(format!("{:+020.2E}", a), "+0001.23E0+001.23E2i");
 
-        let b = Complex::new(128, 255);
+        let b = Complex::new(0x80, 0xff);
         assert_eq!(format!("{:X}", b), "80+FFi");
         assert_eq!(format!("{:#x}", b), "0x80+0xffi");
-        assert_eq!(format!("{:+#b}", b), "+0b1000000+0b1111111i");
+        assert_eq!(format!("{:+#b}", b), "+0b10000000+0b11111111i");
         assert_eq!(format!("{:+#16o}", b), "   +0o200+0o377i");
         assert_eq!(format!("{:+#016x}", b), "+0x00080+0x00ffi");
+
+        let c = Complex::new(-10, -10000);
+        assert_eq!(format!("{}", c), "-10-10000i");
+        assert_eq!(format!("{:016}", c), "-0000010-010000i");
     }
 
     #[test]
