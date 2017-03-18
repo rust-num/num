@@ -617,13 +617,58 @@ impl<T: Clone + Num> One for Complex<T> {
 }
 
 macro_rules! write_complex {
-    ($f:ident, $re_fmt:expr, $im_fmt:expr, $re:expr, $im:expr, $( $arg:expr ),*) => {
-        if $im < Zero::zero() {
-            write!($f, concat!($re_fmt, "-", $im_fmt), $re, T::zero() - $im.clone(), $( $arg, )*)
-        } else {
-            write!($f, concat!($re_fmt, "+", $im_fmt), $re, $im, $( $arg, )*)
+    ($f:ident, $t:expr, $prefix:expr, $re:expr, $im:expr, $T:ident) => {{
+        let zero: $T = Zero::zero();
+        let abs_re = if $re < Zero::zero() { zero.clone() - $re.clone() } else { $re.clone() };
+        let abs_im = if $im < Zero::zero() { zero.clone() - $im.clone() } else { $im.clone() };
+
+        let mut real: String;
+        let mut imag: String;
+
+        if let Some(prec) = $f.precision() {
+            real = format!(concat!("{:.1$", $t, "}"), abs_re, prec);
+            imag = format!(concat!("{:.1$", $t, "}"), abs_im, prec);
         }
-    }
+        else {
+            real = format!(concat!("{:", $t, "}"), abs_re);
+            imag = format!(concat!("{:", $t, "}"), abs_im);
+        }
+
+        let prefix = if $f.alternate() { $prefix } else { "" };
+        let sign = if $re < Zero::zero() {
+            "-"
+        } else if $f.sign_plus() {
+            "+"
+        } else {
+            ""
+        };
+
+        if $f.sign_aware_zero_pad() && $f.width().is_some() {
+            let total_width = $f.width().unwrap();
+            // Subtract leading sign, two prefixes, middle operator and trailing 'i'
+            // to obtain the width scalars need to be padded to
+            let subtract = sign.len() + prefix.len()*2 + 1 + 1;
+            let scalar_width = total_width - subtract;
+            let real_width = scalar_width - (scalar_width/2);
+            let imag_width = scalar_width/2;
+            real = format!("{0:0>1$}", real, real_width);
+            imag = format!("{0:0>1$}", imag, imag_width);
+        }
+
+        let complex = if $im < Zero::zero() {
+            format!("{}{pre}{re}-{pre}{im}i", sign, re=real, im=imag, pre=prefix)
+        }
+        else {
+            format!("{}{pre}{re}+{pre}{im}i", sign, re=real, im=imag, pre=prefix)
+        };
+
+        if let Some(width) = $f.width() {
+            write!($f, "{0: >1$}", complex, width)
+        }
+        else {
+            write!($f, "{}", complex)
+        }
+    }}
 }
 
 /* string conversions */
@@ -631,11 +676,7 @@ impl<T> fmt::Display for Complex<T> where
     T: fmt::Display + Num + PartialOrd + Clone
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if let Some(precision) = f.precision() {
-            write_complex!(f, "{0:.2$}", "{1:.2$}i", self.re, self.im, precision)
-        } else {
-            write_complex!(f, "{0}", "{1}i", self.re, self.im,)
-        }
+        write_complex!(f, "", "", self.re, self.im, T)
     }
 }
 
@@ -643,11 +684,7 @@ impl<T> fmt::LowerExp for Complex<T> where
     T: fmt::LowerExp + Num + PartialOrd + Clone
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if let Some(precision) = f.precision() {
-            write_complex!(f, "{0:.2$e}", "{1:.2$e}i", self.re, self.im, precision)
-        } else {
-            write_complex!(f, "{0:e}", "{1:e}i", self.re, self.im,)
-        }
+        write_complex!(f, "e", "", self.re, self.im, T)
     }
 }
 
@@ -655,11 +692,39 @@ impl<T> fmt::UpperExp for Complex<T> where
     T: fmt::UpperExp + Num + PartialOrd + Clone
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if let Some(precision) = f.precision() {
-            write_complex!(f, "{0:.2$E}", "{1:.2$E}i", self.re, self.im, precision)
-        } else {
-            write_complex!(f, "{0:E}", "{1:E}i", self.re, self.im,)
-        }
+        write_complex!(f, "E", "", self.re, self.im, T)
+    }
+}
+
+impl<T> fmt::LowerHex for Complex<T> where
+    T: fmt::LowerHex + Num + PartialOrd + Clone
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write_complex!(f, "x", "0x", self.re, self.im, T)
+    }
+}
+
+impl<T> fmt::UpperHex for Complex<T> where
+    T: fmt::UpperHex + Num + PartialOrd + Clone
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write_complex!(f, "X", "0x", self.re, self.im, T)
+    }
+}
+
+impl<T> fmt::Octal for Complex<T> where
+    T: fmt::Octal + Num + PartialOrd + Clone
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write_complex!(f, "o", "0o", self.re, self.im, T)
+    }
+}
+
+impl<T> fmt::Binary for Complex<T> where
+    T: fmt::Binary + Num + PartialOrd + Clone
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write_complex!(f, "b", "0b", self.re, self.im, T)
     }
 }
 
