@@ -697,12 +697,9 @@ pub fn binomial<T: Integer + Clone>(mut n: T, k: T) -> T {
 }
 
 /// Calculate the multinomial coefficient.
-///
-/// Panics if no integers are specified.
 pub fn multinomial<T: Integer + Clone>(k: &[T]) -> T
     where for<'a> T: Add<&'a T, Output = T>
 {
-    assert!(k.len() > 0, "need at least one integer");
     let mut r = T::one();
     let mut p = T::zero();
     for i in k {
@@ -865,6 +862,7 @@ fn test_multinomial() {
     check_multinomial!(i64, &[2, 1, 2], 30);
     check_multinomial!(i64, &[2, 3, 0], 10);
 
+    check_multinomial!(u64, &[], 1);
     check_multinomial!(u64, &[0], 1);
     check_multinomial!(u64, &[12345], 1);
 }
