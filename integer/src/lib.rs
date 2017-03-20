@@ -675,7 +675,7 @@ pub struct IterBinomial<T> {
 impl<T> IterBinomial<T>
     where T: Integer,
 {
-    /// For a given n, iterate over all binomial coefficients ((k, n - k), binomial(n, k)).
+    /// For a given n, iterate over all binomial coefficients binomial(n, k), for k=0...n.
     pub fn new(n: T) -> IterBinomial<T> {
         IterBinomial {
             k: T::zero(), a: T::one(), n: n
@@ -686,9 +686,9 @@ impl<T> IterBinomial<T>
 impl<T> Iterator for IterBinomial<T>
     where T: Integer + Clone
 {
-    type Item = ((T, T), T);
+    type Item = T;
 
-    fn next(&mut self) -> Option<((T, T), T)> {
+    fn next(&mut self) -> Option<T> {
         if self.k > self.n {
             return None;
         }
@@ -697,11 +697,8 @@ impl<T> Iterator for IterBinomial<T>
         } else {
             T::one()
         };
-        let r = Some(
-            ((self.k.clone(), self.n.clone() - self.k.clone()),
-             self.a.clone()));
         self.k = self.k.clone() + T::one();
-        r
+        Some(self.a.clone())
     }
 }
 
@@ -768,7 +765,7 @@ fn test_binomial_coeff() {
         ($t:ty) => { {
             let n: $t = 3;
             let c: Vec<_> = IterBinomial::new(n).collect();
-            let expected = vec![((0, 3), 1), ((1, 2), 3), ((2, 1), 3), ((3, 0), 1)];
+            let expected = vec![1, 3, 3, 1];
             assert_eq!(c, expected);
         } }
     }
@@ -786,8 +783,10 @@ fn test_binomial_coeff() {
         ($t:ty, $n:expr) => { {
             let n: $t = $n;
             let c: Vec<_> = IterBinomial::new(n).collect();
-            for &((k, _), b) in &c {
+            let mut k: $t = 0;
+            for b in c {
                 assert_eq!(b, binomial(n, k));
+                k += 1;
             }
         } }
     }
