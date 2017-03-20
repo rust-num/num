@@ -760,7 +760,7 @@ fn test_lcm_overflow() {
 }
 
 #[test]
-fn test_binomial_coeff() {
+fn test_iter_binomial() {
     macro_rules! check_simple {
         ($t:ty) => { {
             let n: $t = 3;
@@ -793,12 +793,12 @@ fn test_binomial_coeff() {
 
     check_binomial!(u8, 6);
     check_binomial!(i8, 6);
-    check_binomial!(u16, 10);
-    check_binomial!(i16, 10);
-    check_binomial!(u32, 10);
-    check_binomial!(i32, 10);
-    check_binomial!(u64, 10);
-    check_binomial!(i64, 10);
+    check_binomial!(u16, 14);
+    check_binomial!(i16, 14);
+    check_binomial!(u32, 14);
+    check_binomial!(i32, 14);
+    check_binomial!(u64, 35);
+    check_binomial!(i64, 35);
 }
 
 #[test]
