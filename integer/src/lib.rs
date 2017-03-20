@@ -666,34 +666,33 @@ impl_integer_for_usize!(u64, test_integer_u64);
 impl_integer_for_usize!(usize, test_integer_usize);
 
 /// An iterator over binomial coefficients.
-pub struct BinomialCoeff<T> {
+pub struct IterBinomial<T> {
     a: T,
     n: T,
     k: T,
 }
 
-impl<T> BinomialCoeff<T>
+impl<T> IterBinomial<T>
     where T: Integer,
 {
     /// For a given n, iterate over all binomial coefficients ((k, n - k), binomial(n, k)).
-    pub fn new(n: T) -> BinomialCoeff<T> {
-        BinomialCoeff {
+    pub fn new(n: T) -> IterBinomial<T> {
+        IterBinomial {
             k: T::zero(), a: T::one(), n: n
         }
     }
 }
 
-impl<T> Iterator for BinomialCoeff<T>
-    where T: Integer + Clone,
-          for<'a> &'a T: std::cmp::PartialEq<&'a T>
+impl<T> Iterator for IterBinomial<T>
+    where T: Integer + Clone
 {
     type Item = ((T, T), T);
 
     fn next(&mut self) -> Option<((T, T), T)> {
-        if &self.k > &self.n {
+        if self.k > self.n {
             return None;
         }
-        self.a = if &self.k != &T::zero() {
+        self.a = if !self.k.is_zero() {
             (self.a.clone() * (self.n.clone() - self.k.clone() + T::one())) / self.k.clone()
         } else {
             T::one()
@@ -768,7 +767,7 @@ fn test_binomial_coeff() {
     macro_rules! check_simple {
         ($t:ty) => { {
             let n: $t = 3;
-            let c: Vec<_> = BinomialCoeff::new(n).collect();
+            let c: Vec<_> = IterBinomial::new(n).collect();
             let expected = vec![((0, 3), 1), ((1, 2), 3), ((2, 1), 3), ((3, 0), 1)];
             assert_eq!(c, expected);
         } }
@@ -786,7 +785,7 @@ fn test_binomial_coeff() {
     macro_rules! check_binomial {
         ($t:ty, $n:expr) => { {
             let n: $t = $n;
-            let c: Vec<_> = BinomialCoeff::new(n).collect();
+            let c: Vec<_> = IterBinomial::new(n).collect();
             for &((k, _), b) in &c {
                 assert_eq!(b, binomial(n, k));
             }
