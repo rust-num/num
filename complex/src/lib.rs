@@ -621,8 +621,8 @@ macro_rules! write_complex {
         let abs_re = if $re < Zero::zero() { $T::zero() - $re.clone() } else { $re.clone() };
         let abs_im = if $im < Zero::zero() { $T::zero() - $im.clone() } else { $im.clone() };
 
-        let mut real: String;
-        let mut imag: String;
+        let real: String;
+        let imag: String;
 
         if let Some(prec) = $f.precision() {
             real = format!(concat!("{:.1$", $t, "}"), abs_re, prec);
@@ -641,18 +641,6 @@ macro_rules! write_complex {
         } else {
             ""
         };
-
-        if $f.sign_aware_zero_pad() && $f.width().is_some() {
-            let total_width = $f.width().unwrap();
-            // Subtract leading sign, two prefixes, middle operator and trailing 'i'
-            // to obtain the width scalars need to be padded to
-            let subtract = sign.len() + prefix.len()*2 + 1 + 1;
-            let scalar_width = total_width - subtract;
-            let real_width = scalar_width - (scalar_width/2);
-            let imag_width = scalar_width/2;
-            real = format!("{0:0>1$}", real, real_width);
-            imag = format!("{0:0>1$}", imag, imag_width);
-        }
 
         let complex = if $im < Zero::zero() {
             format!("{}{pre}{re}-{pre}{im}i", sign, re=real, im=imag, pre=prefix)
@@ -1314,18 +1302,17 @@ mod test {
         assert_eq!(format!("{}", a), "1.23456+123.456i");
         assert_eq!(format!("{:.2}", a), "1.23+123.46i");
         assert_eq!(format!("{:.2e}", a), "1.23e0+1.23e2i");
-        assert_eq!(format!("{:+020.2E}", a), "+0001.23E0+001.23E2i");
+        assert_eq!(format!("{:+20.2E}", a), "     +1.23E0+1.23E2i");
 
         let b = Complex::new(0x80, 0xff);
         assert_eq!(format!("{:X}", b), "80+FFi");
         assert_eq!(format!("{:#x}", b), "0x80+0xffi");
         assert_eq!(format!("{:+#b}", b), "+0b10000000+0b11111111i");
         assert_eq!(format!("{:+#16o}", b), "   +0o200+0o377i");
-        assert_eq!(format!("{:+#016x}", b), "+0x00080+0x00ffi");
 
         let c = Complex::new(-10, -10000);
         assert_eq!(format!("{}", c), "-10-10000i");
-        assert_eq!(format!("{:016}", c), "-0000010-010000i");
+        assert_eq!(format!("{:16}", c), "      -10-10000i");
     }
 
     #[test]
