@@ -693,7 +693,11 @@ impl<T> Iterator for IterBinomial<T>
             return None;
         }
         self.a = if !self.k.is_zero() {
-            (self.a.clone() * (self.n.clone() - self.k.clone() + T::one())) / self.k.clone()
+            multiply_and_divide(
+                self.a.clone(),
+                self.n.clone() - self.k.clone() + T::one(),
+                self.k.clone()
+            )
         } else {
             T::one()
         };
@@ -703,10 +707,12 @@ impl<T> Iterator for IterBinomial<T>
 }
 
 /// Calculate r * a / b, avoiding overflows and fractions.
+///
+/// Assumes that b divides r * a evenly.
 fn multiply_and_divide<T: Integer + Clone>(r: T, a: T, b: T) -> T {
     // See http://blog.plover.com/math/choose-2.html for the idea.
     let g = gcd(r.clone(), b.clone());
-    (r/g.clone() * a) / (b/g)
+    r/g.clone() * (a / (b/g))
 }
 
 /// Calculate the binomial coefficient.
@@ -791,14 +797,15 @@ fn test_iter_binomial() {
         } }
     }
 
-    check_binomial!(u8, 6);
-    check_binomial!(i8, 6);
-    check_binomial!(u16, 14);
-    check_binomial!(i16, 14);
-    check_binomial!(u32, 14);
-    check_binomial!(i32, 14);
-    check_binomial!(u64, 35);
-    check_binomial!(i64, 35);
+    // Check the largest n for which there is no overflow.
+    check_binomial!(u8, 10);
+    check_binomial!(i8, 9);
+    check_binomial!(u16, 18);
+    check_binomial!(i16, 17);
+    check_binomial!(u32, 34);
+    check_binomial!(i32, 33);
+    check_binomial!(u64, 67);
+    check_binomial!(i64, 66);
 }
 
 #[test]
