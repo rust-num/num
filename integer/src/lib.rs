@@ -676,6 +676,23 @@ impl<T> IterBinomial<T>
     where T: Integer,
 {
     /// For a given n, iterate over all binomial coefficients binomial(n, k), for k=0...n.
+    ///
+    /// Note that this might overflow, depending on `T`. For the primitive
+    /// integer types, the following n are the largest ones for which there will
+    /// be no overflow:
+    ///
+    /// type | n
+    /// -----|---
+    /// u8   | 10
+    /// i8   |  9
+    /// u16  | 18
+    /// i16  | 17
+    /// u32  | 34
+    /// i32  | 33
+    /// u64  | 67
+    /// i64  | 66
+    ///
+    /// For larger n, `T` should be a bigint type.
     pub fn new(n: T) -> IterBinomial<T> {
         IterBinomial {
             k: T::zero(), a: T::one(), n: n
@@ -716,6 +733,23 @@ fn multiply_and_divide<T: Integer + Clone>(r: T, a: T, b: T) -> T {
 }
 
 /// Calculate the binomial coefficient.
+///
+/// Note that this might overflow, depending on `T`. For the primitive integer
+/// types, the following n are the largest ones possible such that there will
+/// be no overflow for any k:
+///
+/// type | n
+/// -----|---
+/// u8   | 10
+/// i8   |  9
+/// u16  | 18
+/// i16  | 17
+/// u32  | 34
+/// i32  | 33
+/// u64  | 67
+/// i64  | 66
+///
+/// For larger n, consider using a bigint type for `T`.
 pub fn binomial<T: Integer + Clone>(mut n: T, k: T) -> T {
     // See http://blog.plover.com/math/choose.html for the idea.
     if k > n {
