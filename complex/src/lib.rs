@@ -33,8 +33,33 @@ use traits::{Zero, One, Num, Float};
 // probably doesn't map to C's _Complex correctly.
 
 /// A complex number in Cartesian form.
+///
+/// ## Representation and Foreign Function Interface Compatibility
+///
+/// `Complex<T>` is memory layout compatible with an array `[T; 2]`.
+///
+/// Note that `Complex<F>` where F is a floating point type is **only** memory
+/// layout compatible with C's complex types, **not** necessarily calling
+/// convention compatible.  This means that for FFI you can only pass
+/// `Complex<F>` behind a pointer, not as a value.
+///
+/// ## Examples
+///
+/// Example of extern function declaration.
+///
+/// ```
+/// use num_complex::Complex;
+/// use std::os::raw::c_int;
+///
+/// extern "C" {
+///     fn zaxpy_(n: *const c_int, alpha: *const Complex<f64>,
+///               x: *const Complex<f64>, incx: *const c_int,
+///               y: *mut Complex<f64>, incy: *const c_int);
+/// }
+/// ```
 #[derive(PartialEq, Eq, Copy, Clone, Hash, Debug, Default)]
 #[cfg_attr(feature = "rustc-serialize", derive(RustcEncodable, RustcDecodable))]
+#[repr(C)]
 pub struct Complex<T> {
     /// Real portion of the complex number
     pub re: T,
