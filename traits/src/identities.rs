@@ -105,7 +105,7 @@ one_impl!(i64,   1i64);
 one_impl!(f32, 1.0f32);
 one_impl!(f64, 1.0f64);
 
-impl<T: One> One for Wrapping<T> where Wrapping<T>: Add<Output=Wrapping<T>> + Mul<Output=Wrapping<T>> {
+impl<T: One> One for Wrapping<T> where Wrapping<T>: Mul<Output=Wrapping<T>> {
     fn one() -> Self {
         Wrapping(T::one())
     }
