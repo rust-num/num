@@ -53,7 +53,7 @@ zero_impl!(f64, 0.0f64);
 
 impl<T: Zero + PartialEq> Zero for Wrapping<T> where Wrapping<T>: Add<Output=Wrapping<T>> {
     fn is_zero(&self) -> bool {
-        self.0 == T::zero()
+        self.0.is_zero()
     }
     fn zero() -> Self {
         Wrapping(T::zero())
