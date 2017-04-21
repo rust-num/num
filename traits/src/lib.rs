@@ -76,9 +76,9 @@ macro_rules! int_trait_impl {
 int_trait_impl!(Num for usize u8 u16 u32 u64 isize i8 i16 i32 i64);
 
 impl<T: Num> Num for Wrapping<T>
-    where Self: Zero + One
-        + Add<Output = Self> + Sub<Output = Self>
-        + Mul<Output = Self> + Div<Output = Self> + Rem<Output = Self>
+    where Wrapping<T>: Zero + One
+        + Add<Output = Wrapping<T>> + Sub<Output = Wrapping<T>>
+        + Mul<Output = Wrapping<T>> + Div<Output = Wrapping<T>> + Rem<Output = Wrapping<T>>
 {
     type FromStrRadixErr = T::FromStrRadixErr;
     fn from_str_radix(str: &str, radix: u32) -> Result<Self, Self::FromStrRadixErr> {

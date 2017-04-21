@@ -51,7 +51,7 @@ zero_impl!(i64,   0i64);
 zero_impl!(f32, 0.0f32);
 zero_impl!(f64, 0.0f64);
 
-impl<T: Zero + PartialEq> Zero for Wrapping<T> where Self: Add<Output=Self> {
+impl<T: Zero + PartialEq> Zero for Wrapping<T> where Wrapping<T>: Add<Output=Wrapping<T>> {
     fn is_zero(&self) -> bool {
         self.0 == T::zero()
     }
@@ -105,7 +105,7 @@ one_impl!(i64,   1i64);
 one_impl!(f32, 1.0f32);
 one_impl!(f64, 1.0f64);
 
-impl<T: One> One for Wrapping<T> where Self: Add<Output=Self> + Mul<Output=Self> {
+impl<T: One> One for Wrapping<T> where Wrapping<T>: Add<Output=Wrapping<T>> + Mul<Output=Wrapping<T>> {
     fn one() -> Self {
         Wrapping(T::one())
     }
