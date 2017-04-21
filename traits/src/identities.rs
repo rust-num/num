@@ -1,4 +1,5 @@
 use std::ops::{Add, Mul};
+use std::num::Wrapping;
 
 /// Defines an additive identity element for `Self`.
 pub trait Zero: Sized + Add<Self, Output = Self> {
@@ -50,6 +51,16 @@ zero_impl!(i64,   0i64);
 zero_impl!(f32, 0.0f32);
 zero_impl!(f64, 0.0f64);
 
+impl<T: Zero + PartialEq> Zero for Wrapping<T> where Self: Add<Output=Self> {
+    fn is_zero(&self) -> bool {
+        self.0 == T::zero()
+    }
+    fn zero() -> Self {
+        Wrapping(T::zero())
+    }
+}
+
+
 /// Defines a multiplicative identity element for `Self`.
 pub trait One: Sized + Mul<Self, Output = Self> {
     /// Returns the multiplicative identity element of `Self`, `1`.
@@ -94,6 +105,11 @@ one_impl!(i64,   1i64);
 one_impl!(f32, 1.0f32);
 one_impl!(f64, 1.0f64);
 
+impl<T: One> One for Wrapping<T> where Self: Add<Output=Self> + Mul<Output=Self> {
+    fn one() -> Self {
+        Wrapping(T::one())
+    }
+}
 
 // Some helper functions provided for backwards compatibility.
 

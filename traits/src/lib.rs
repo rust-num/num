@@ -15,6 +15,7 @@
        html_playground_url = "http://play.integer32.com/")]
 
 use std::ops::{Add, Sub, Mul, Div, Rem};
+use std::num::Wrapping;
 
 pub use bounds::Bounded;
 pub use float::{Float, FloatConst};
@@ -73,6 +74,18 @@ macro_rules! int_trait_impl {
     )*)
 }
 int_trait_impl!(Num for usize u8 u16 u32 u64 isize i8 i16 i32 i64);
+
+impl<T: Num> Num for Wrapping<T>
+    where Self: Zero + One
+        + Add<Output = Self> + Sub<Output = Self>
+        + Mul<Output = Self> + Div<Output = Self> + Rem<Output = Self>
+{
+    type FromStrRadixErr = T::FromStrRadixErr;
+    fn from_str_radix(str: &str, radix: u32) -> Result<Self, Self::FromStrRadixErr> {
+        T::from_str_radix(str, radix).map(|x| Wrapping(x))
+    }
+}
+
 
 #[derive(Debug)]
 pub enum FloatErrorKind {
@@ -243,9 +256,9 @@ float_trait_impl!(Num for f32 f64);
 
 /// A value bounded by a minimum and a maximum
 ///
-///  If input is less than min then this returns min. 
-///  If input is greater than max then this returns max.  
-///  Otherwise this returns input. 
+///  If input is less than min then this returns min.
+///  If input is greater than max then this returns max.
+///  Otherwise this returns input.
 #[inline]
 pub fn clamp<T: PartialOrd>(input: T, min: T, max: T) -> T {
     debug_assert!(min <= max, "min must be less than or equal to max");
