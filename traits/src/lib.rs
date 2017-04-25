@@ -89,9 +89,9 @@ impl<T> NumRef for T where T: Num + for<'r> NumOps<&'r T> {}
 /// The trait for references which implement numeric operations, taking the
 /// second operand either by value or by reference.
 ///
-/// This is automatically implemented for all `&T` implementing the operators.
+/// This is automatically implemented for types which implement the operators.
 pub trait RefNum<Base>: NumOps<Base, Base> + for<'r> NumOps<&'r Base, Base> {}
-impl<'a, T> RefNum<T> for &'a T where &'a T: NumOps<T, T> + for<'r> NumOps<&'r T, T> {}
+impl<T, Base> RefNum<Base> for T where T: NumOps<Base, Base> + for<'r> NumOps<&'r Base, Base> {}
 
 /// The trait for types implementing numeric assignment operators (like `+=`).
 ///
