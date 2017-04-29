@@ -1,4 +1,5 @@
 use std::ops::{Add, Sub, Mul, Div};
+use std::num::Wrapping;
 
 /// Performs addition that returns `None` instead of wrapping around on
 /// overflow.
@@ -89,3 +90,30 @@ checked_impl!(CheckedDiv, checked_div, i16);
 checked_impl!(CheckedDiv, checked_div, i32);
 checked_impl!(CheckedDiv, checked_div, i64);
 checked_impl!(CheckedDiv, checked_div, isize);
+
+// Was skeptical at first, since checked ops somewhat defeat the point of
+// Wrapping<T>, but there are more pros than cons IMO :
+// - These are methods, so users still have to be explicit about their intent;
+// - Wrapping<T> could be used for to enforce wrapping semantics _most of the time_, 
+//   and only have a handful of places where they want to perform checked ops;
+// - This allows Wrapping<T> to implement PrimInt.
+impl<T: CheckedAdd> CheckedAdd for Wrapping<T> where Wrapping<T>: Add<Output = Wrapping<T>>{
+    fn checked_add(&self, v: &Self) -> Option<Self> {
+        self.0.checked_add(&v.0).map(Wrapping)
+    }
+}
+impl<T: CheckedSub> CheckedSub for Wrapping<T> where Wrapping<T>: Sub<Output = Wrapping<T>> {
+    fn checked_sub(&self, v: &Self) -> Option<Self> {
+        self.0.checked_sub(&v.0).map(Wrapping)
+    }
+}
+impl<T: CheckedMul> CheckedMul for Wrapping<T> where Wrapping<T>: Mul<Output = Wrapping<T>>{
+    fn checked_mul(&self, v: &Self) -> Option<Self> {
+        self.0.checked_mul(&v.0).map(Wrapping)
+    }
+}
+impl<T: CheckedDiv> CheckedDiv for Wrapping<T> where Wrapping<T>: Div<Output = Wrapping<T>> {
+    fn checked_div(&self, v: &Self) -> Option<Self> {
+        self.0.checked_div(&v.0).map(Wrapping)
+    }
+}
