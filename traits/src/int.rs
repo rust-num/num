@@ -1,4 +1,5 @@
 use std::ops::{Not, BitAnd, BitOr, BitXor, Shl, Shr};
+use std::num::Wrapping;
 
 use {Num, NumCast};
 use bounds::Bounded;
@@ -374,3 +375,106 @@ prim_int_impl!(i16,   i16,   u16);
 prim_int_impl!(i32,   i32,   u32);
 prim_int_impl!(i64,   i64,   u64);
 prim_int_impl!(isize, isize, usize);
+
+// While this might violate the possible assumption that
+// PrimInt represents genuine primitive integer types,
+// Wrapping<T> is _practically_ one too, so this
+// shouldn't be a concern.
+impl<T: PrimInt> PrimInt for Wrapping<T> 
+    where Wrapping<T>:
+          Num + NumCast
+        + Bounded
+        + Not<Output=Wrapping<T>>
+        + BitAnd<Output=Wrapping<T>>
+        + BitOr<Output=Wrapping<T>>
+        + BitXor<Output=Wrapping<T>>
+        + Shl<usize, Output=Wrapping<T>>
+        + Shr<usize, Output=Wrapping<T>>
+        + CheckedAdd<Output=Wrapping<T>>
+        + CheckedSub<Output=Wrapping<T>>
+        + CheckedMul<Output=Wrapping<T>>
+        + CheckedDiv<Output=Wrapping<T>>
+        + Saturating
+{
+    #[inline]
+    fn count_ones(self) -> u32 {
+        self.0.count_ones()
+    }
+
+    #[inline]
+    fn count_zeros(self) -> u32 {
+        self.0.count_zeros()
+    }
+
+    #[inline]
+    fn leading_zeros(self) -> u32 {
+        self.0.leading_zeros()
+    }
+
+    #[inline]
+    fn trailing_zeros(self) -> u32 {
+        self.0.trailing_zeros()
+    }
+
+    #[inline]
+    fn rotate_left(self, n: u32) -> Self {
+        Wrapping(self.0.rotate_left(n))
+    }
+
+    #[inline]
+    fn rotate_right(self, n: u32) -> Self {
+        Wrapping(self.0.rotate_right(n))
+    }
+
+    #[inline]
+    fn signed_shl(self, n: u32) -> Self {
+        Wrapping(self.0.signed_shl(n))
+    }
+
+    #[inline]
+    fn signed_shr(self, n: u32) -> Self {
+        Wrapping(self.0.signed_shr(n))
+    }
+
+    #[inline]
+    fn unsigned_shl(self, n: u32) -> Self {
+        Wrapping(self.0.unsigned_shl(n))
+    }
+
+    #[inline]
+    fn unsigned_shr(self, n: u32) -> Self {
+        Wrapping(self.0.unsigned_shr(n))
+    }
+
+    #[inline]
+    fn swap_bytes(self) -> Self {
+        Wrapping(self.0.swap_bytes())
+    }
+
+    #[inline]
+    fn from_be(x: Self) -> Self {
+        Wrapping(T::from_be(x.0))
+    }
+
+    #[inline]
+    fn from_le(x: Self) -> Self {
+        Wrapping(T::from_le(x.0))
+    }
+
+    #[inline]
+    fn to_be(self) -> Self {
+        Wrapping(self.0.to_be())
+    }
+
+    #[inline]
+    fn to_le(self) -> Self {
+        Wrapping(self.0.to_le())
+    }
+
+    // This is (or should be ?) fine because Wrapping<T> only guarantees that
+    // _standard_ operations (Add, Mul, etc) have wrapping semantics.
+    #[inline]
+    fn pow(self, exp: u32) -> Self {
+        Wrapping(self.0.pow(exp))
+    }
+}
