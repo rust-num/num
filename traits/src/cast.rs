@@ -388,12 +388,12 @@ impl_from_primitive!(f64,   to_f64);
 
 
 impl<T: ToPrimitive> ToPrimitive for Wrapping<T> {
-    fn to_i64(&self) -> Option<i64> { self.0.to_i64() }
-    fn to_u64(&self) -> Option<u64> { self.0.to_u64() }
+    #[inline] fn to_i64(&self) -> Option<i64> { self.0.to_i64() }
+    #[inline] fn to_u64(&self) -> Option<u64> { self.0.to_u64() }
 }
 impl<T: FromPrimitive> FromPrimitive for Wrapping<T> {
-    fn from_u64(n: u64) -> Option<Self> { T::from_u64(n).map(Wrapping) }
-    fn from_i64(n: i64) -> Option<Self> { T::from_i64(n).map(Wrapping) }
+    #[inline] fn from_u64(n: u64) -> Option<Self> { T::from_u64(n).map(Wrapping) }
+    #[inline] fn from_i64(n: i64) -> Option<Self> { T::from_i64(n).map(Wrapping) }
 }
 
 
@@ -447,6 +447,7 @@ impl_num_cast!(f32,   to_f32);
 impl_num_cast!(f64,   to_f64);
 
 impl<T: NumCast> NumCast for Wrapping<T> {
+    #[inline]
     fn from<U: ToPrimitive>(n: U) -> Option<Self> {
         T::from(n).map(Wrapping)
     }

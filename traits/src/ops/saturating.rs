@@ -30,6 +30,8 @@ macro_rules! saturating_impl {
 saturating_impl!(Saturating for isize usize i8 u8 i16 u16 i32 u32 i64 u64);
 
 impl<T: Saturating> Saturating for Wrapping<T> {
+    #[inline]
     fn saturating_add(self, v: Self) -> Self { Wrapping(self.0.saturating_add(v.0)) }
+    #[inline]
     fn saturating_sub(self, v: Self) -> Self { Wrapping(self.0.saturating_sub(v.0)) }
 }
