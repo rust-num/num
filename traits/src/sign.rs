@@ -74,7 +74,7 @@ macro_rules! signed_impl {
 
 signed_impl!(isize i8 i16 i32 i64);
 
-impl<T: Signed> Signed for Wrapping<T> where Wrapping<T>: Num + Neg<Output=Self>
+impl<T: Signed> Signed for Wrapping<T> where Wrapping<T>: Num + Neg<Output=Wrapping<T>>
 {
     #[inline]
     fn abs(&self) -> Self {
