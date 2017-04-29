@@ -1,6 +1,7 @@
 use std::{usize, u8, u16, u32, u64};
 use std::{isize, i8, i16, i32, i64};
 use std::{f32, f64};
+use std::num::Wrapping;
 
 /// Numbers which have upper and lower bounds
 pub trait Bounded {
@@ -34,6 +35,11 @@ bounded_impl!(i8,    i8::MIN,    i8::MAX);
 bounded_impl!(i16,   i16::MIN,   i16::MAX);
 bounded_impl!(i32,   i32::MIN,   i32::MAX);
 bounded_impl!(i64,   i64::MIN,   i64::MAX);
+
+impl<T: Bounded> Bounded for Wrapping<T> {
+    #[inline] fn min_value() -> Self { Wrapping(T::min_value()) }
+    #[inline] fn max_value() -> Self { Wrapping(T::max_value()) }
+}
 
 bounded_impl!(f32, f32::MIN, f32::MAX);
 
