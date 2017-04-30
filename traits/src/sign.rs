@@ -186,3 +186,28 @@ macro_rules! empty_trait_impl {
 empty_trait_impl!(Unsigned for usize u8 u16 u32 u64);
 
 impl<T: Unsigned> Unsigned for Wrapping<T> where Wrapping<T>: Num {}
+
+
+macro_rules! test_signed_wrapping {
+    ($($t:ty)+) => {
+        $(
+            let range = -1 as $t .. 2 as $t;
+            for i in range.clone() {
+                let w = Wrapping(i);
+                assert_eq!(signum(i), signum(w).0);
+                assert_eq!(abs(i), abs(w).0);
+                for j in range.clone() {
+                    assert_eq!(abs_sub(i, j), abs_sub(w, Wrapping(j)).0);
+                }
+                assert_eq!(i.is_positive(), w.is_positive());
+                assert_eq!(i.is_negative(), w.is_negative());
+            }
+        )+   
+    };
+}
+
+#[test]
+fn signed_wrapping() {
+    test_signed_wrapping!(isize i8 i16 i32 i64);
+}
+

@@ -103,4 +103,7 @@ fn test_wrapping_traits() {
     assert_eq!(wrapping_add(255, 1), 0u8);
     assert_eq!(wrapping_sub(0, 1), 255u8);
     assert_eq!(wrapping_mul(255, 2), 254u8);
+    assert_eq!(wrapping_add(255, 1), (Wrapping(255u8) + Wrapping(1u8)).0);
+    assert_eq!(wrapping_sub(0, 1), (Wrapping(0u8) - Wrapping(1u8)).0);
+    assert_eq!(wrapping_mul(255, 2), (Wrapping(255u8) * Wrapping(2u8)).0);
 }
