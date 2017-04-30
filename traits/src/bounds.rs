@@ -37,8 +37,8 @@ bounded_impl!(i32,   i32::MIN,   i32::MAX);
 bounded_impl!(i64,   i64::MIN,   i64::MAX);
 
 impl<T: Bounded> Bounded for Wrapping<T> {
-    #[inline] fn min_value() -> Self { Wrapping(T::min_value()) }
-    #[inline] fn max_value() -> Self { Wrapping(T::max_value()) }
+    fn min_value() -> Self { Wrapping(T::min_value()) }
+    fn max_value() -> Self { Wrapping(T::max_value()) }
 }
 
 bounded_impl!(f32, f32::MIN, f32::MAX);
