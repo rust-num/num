@@ -468,7 +468,7 @@ fn to_primitive_float() {
 
 macro_rules! test_wrapping_to_primitive {
     ($($t:ty)+) => {
-        $(
+        $({
             let i: $t = 0;
             let w = Wrapping(i);
             assert_eq!(i.to_u8(),    w.to_u8());
@@ -483,7 +483,7 @@ macro_rules! test_wrapping_to_primitive {
             assert_eq!(i.to_isize(), w.to_isize());
             assert_eq!(i.to_f32(),   w.to_f32());
             assert_eq!(i.to_f64(),   w.to_f64());
-        )+   
+        })+   
     };
 }
 

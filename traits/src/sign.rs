@@ -190,7 +190,7 @@ impl<T: Unsigned> Unsigned for Wrapping<T> where Wrapping<T>: Num {}
 
 macro_rules! test_signed_wrapping {
     ($($t:ty)+) => {
-        $(
+        $({
             let range = -1 as $t .. 2 as $t;
             for i in range.clone() {
                 let w = Wrapping(i);
@@ -202,7 +202,7 @@ macro_rules! test_signed_wrapping {
                 assert_eq!(i.is_positive(), w.is_positive());
                 assert_eq!(i.is_negative(), w.is_negative());
             }
-        )+   
+        })+   
     };
 }
 
