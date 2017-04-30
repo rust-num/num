@@ -81,7 +81,6 @@ impl<T: Num> Num for Wrapping<T>
         + Mul<Output = Wrapping<T>> + Div<Output = Wrapping<T>> + Rem<Output = Wrapping<T>>
 {
     type FromStrRadixErr = T::FromStrRadixErr;
-    #[inline]
     fn from_str_radix(str: &str, radix: u32) -> Result<Self, Self::FromStrRadixErr> {
         T::from_str_radix(str, radix).map(Wrapping)
     }

@@ -52,11 +52,9 @@ zero_impl!(f32, 0.0f32);
 zero_impl!(f64, 0.0f64);
 
 impl<T: Zero> Zero for Wrapping<T> where Wrapping<T>: Add<Output=Wrapping<T>> {
-    #[inline]
     fn is_zero(&self) -> bool {
         self.0.is_zero()
     }
-    #[inline]
     fn zero() -> Self {
         Wrapping(T::zero())
     }
@@ -108,7 +106,6 @@ one_impl!(f32, 1.0f32);
 one_impl!(f64, 1.0f64);
 
 impl<T: One> One for Wrapping<T> where Wrapping<T>: Mul<Output=Wrapping<T>> {
-    #[inline]
     fn one() -> Self {
         Wrapping(T::one())
     }

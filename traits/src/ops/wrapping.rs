@@ -79,19 +79,16 @@ wrapping_impl!(WrappingMul, wrapping_mul, isize);
 
 // Well this is a bit funny, but all the more appropriate.
 impl<T: WrappingAdd> WrappingAdd for Wrapping<T> where Wrapping<T>: Add<Output = Wrapping<T>> {
-    #[inline]
     fn wrapping_add(&self, v: &Self) -> Self {
         Wrapping(self.0.wrapping_add(&v.0))
     }
 }
 impl<T: WrappingSub> WrappingSub for Wrapping<T> where Wrapping<T>: Sub<Output = Wrapping<T>> {
-    #[inline]
     fn wrapping_sub(&self, v: &Self) -> Self {
         Wrapping(self.0.wrapping_sub(&v.0))
     }
 }
 impl<T: WrappingMul> WrappingMul for Wrapping<T> where Wrapping<T>: Mul<Output = Wrapping<T>> {
-    #[inline]
     fn wrapping_mul(&self, v: &Self) -> Self {
         Wrapping(self.0.wrapping_mul(&v.0))
     }
