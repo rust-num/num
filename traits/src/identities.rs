@@ -136,3 +136,13 @@ fn wrapping_identities() {
     test_wrapping_identities!(isize i8 i16 i32 i64 usize u8 u16 u32 u64);
 }
 
+#[test]
+fn wrapping_is_zero() {
+    fn require_zero<T: Zero>(_: &T) {}
+    require_zero(&Wrapping(42));
+}
+#[test]
+fn wrapping_is_one() {
+    fn require_one<T: One>(_: &T) {}
+    require_one(&Wrapping(42));
+}

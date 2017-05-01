@@ -107,3 +107,21 @@ fn test_wrapping_traits() {
     assert_eq!(wrapping_sub(0, 1), (Wrapping(0u8) - Wrapping(1u8)).0);
     assert_eq!(wrapping_mul(255, 2), (Wrapping(255u8) * Wrapping(2u8)).0);
 }
+
+#[test]
+fn wrapping_is_wrappingadd() {
+    fn require_wrappingadd<T: WrappingAdd>(_: &T) {}
+    require_wrappingadd(&Wrapping(42));
+}
+
+#[test]
+fn wrapping_is_wrappingsub() {
+    fn require_wrappingsub<T: WrappingSub>(_: &T) {}
+    require_wrappingsub(&Wrapping(42));
+}
+
+#[test]
+fn wrapping_is_wrappingmul() {
+    fn require_wrappingmul<T: WrappingMul>(_: &T) {}
+    require_wrappingmul(&Wrapping(42));
+}

@@ -491,3 +491,21 @@ macro_rules! test_wrapping_to_primitive {
 fn wrapping_to_primitive() {
     test_wrapping_to_primitive!(usize u8 u16 u32 u64 isize i8 i16 i32 i64);
 }
+
+#[test]
+fn wrapping_is_toprimitive() {
+    fn require_toprimitive<T: ToPrimitive>(_: &T) {}
+    require_toprimitive(&Wrapping(42));
+}
+
+#[test]
+fn wrapping_is_fromprimitive() {
+    fn require_fromprimitive<T: FromPrimitive>(_: &T) {}
+    require_fromprimitive(&Wrapping(42));
+}
+
+#[test]
+fn wrapping_is_numcast() {
+    fn require_numcast<T: NumCast>(_: &T) {}
+    require_numcast(&Wrapping(42));
+}

@@ -305,7 +305,12 @@ macro_rules! test_wrapping_from_str_radix {
         )+   
     };
 }
-
+#[test]
+fn wrapping_is_num() {
+    fn require_num<T: Num>(_: &T) {}
+    require_num(&Wrapping(42_u32));
+    require_num(&Wrapping(-42));
+}
 #[test]
 fn wrapping_from_str_radix() {
     test_wrapping_from_str_radix!(usize u8 u16 u32 u64 isize i8 i16 i32 i64);
