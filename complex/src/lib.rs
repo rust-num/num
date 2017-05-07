@@ -516,6 +516,89 @@ impl<T: Clone + Num> Div<Complex<T>> for Complex<T> {
     }
 }
 
+// Op Assign
+
+#[cfg(feature = "opassign")]
+mod opassign {
+    use std::ops::{AddAssign, SubAssign, MulAssign, DivAssign};
+
+    use traits::Num;
+
+    use Complex;
+
+    impl<T: Clone + Num> AddAssign for Complex<T> {
+        fn add_assign(&mut self, other: Complex<T>) {
+            *self = self.clone() + other;
+        }
+    }
+
+    impl<T: Clone + Num> SubAssign for Complex<T> {
+        fn sub_assign(&mut self, other: Complex<T>) {
+            *self = self.clone() - other;
+        }
+    }
+
+    impl<T: Clone + Num> MulAssign for Complex<T> {
+        fn mul_assign(&mut self, other: Complex<T>) {
+            *self = self.clone() * other;
+        }
+    }
+
+    impl<T: Clone + Num> DivAssign for Complex<T> {
+        fn div_assign(&mut self, other: Complex<T>) {
+            *self = self.clone() / other;
+        }
+    }
+
+    impl<T: Num + AddAssign> AddAssign<T> for Complex<T> {
+        fn add_assign(&mut self, other: T) {
+            self.re += other;
+        }
+    }
+
+    impl<T: Num + SubAssign> SubAssign<T> for Complex<T> {
+        fn sub_assign(&mut self, other: T) {
+            self.re -= other;
+        }
+    }
+
+    impl<T: Clone + Num + MulAssign> MulAssign<T> for Complex<T> {
+        fn mul_assign(&mut self, other: T) {
+            self.re *= other.clone();
+            self.im *= other;
+        }
+    }
+
+    impl<T: Clone + Num + DivAssign> DivAssign<T> for Complex<T> {
+        fn div_assign(&mut self, other: T) {
+            self.re /= other.clone();
+            self.im /= other;
+        }
+    }
+
+    macro_rules! forward_op_assign {
+        (impl $imp:ident, $method:ident) => {
+            impl<'a, T: Clone + Num> $imp<&'a Complex<T>> for Complex<T> {
+                #[inline]
+                fn $method(&mut self, other: &Complex<T>) {
+                    self.$method(other.clone())
+                }
+            }
+            impl<'a, T: Clone + Num + $imp> $imp<&'a T> for Complex<T> {
+                #[inline]
+                fn $method(&mut self, other: &T) {
+                    self.$method(other.clone())
+                }
+            }
+        }
+    }
+
+    forward_op_assign!(impl AddAssign, add_assign);
+    forward_op_assign!(impl SubAssign, sub_assign);
+    forward_op_assign!(impl MulAssign, mul_assign);
+    forward_op_assign!(impl DivAssign, div_assign);
+}
+
 impl<T: Clone + Num + Neg<Output = T>> Neg for Complex<T> {
     type Output = Complex<T>;
 
@@ -788,6 +871,7 @@ mod test {
     pub const _neg1_1i : Complex64 = Complex { re: -1.0, im: 1.0 };
     pub const _05_05i : Complex64 = Complex { re: 0.5, im: 0.5 };
     pub const all_consts : [Complex64; 5] = [_0_0i, _1_0i, _1_1i, _neg1_1i, _05_05i];
+    pub const _4_2i : Complex64 = Complex { re: 4.0, im: 2.0 };
 
     #[test]
     fn test_consts() {
@@ -1217,55 +1301,95 @@ mod test {
         }
     }
 
+    // macro that includes the test if opassign is enabled
+    #[cfg(feature = "opassign")]
+    macro_rules! only_opassign {
+        ($e:expr) => ($e)
+    }
+
+    #[cfg(not(feature = "opassign"))]
+    macro_rules! only_opassign {
+        ($e:expr) => ()
+    }
+
+
+    // Test both a + b and a += b
+    macro_rules! test_a_op_b {
+        ($a:ident + $b:expr, $answer:expr) => {
+            assert_eq!($a + $b, $answer);
+            only_opassign!(assert_eq!({ let mut x = $a; x += $b; x}, $answer));
+        };
+        ($a:ident - $b:expr, $answer:expr) => {
+            assert_eq!($a - $b, $answer);
+            only_opassign!(assert_eq!({ let mut x = $a; x -= $b; x}, $answer));
+        };
+        ($a:ident * $b:expr, $answer:expr) => {
+            assert_eq!($a * $b, $answer);
+            only_opassign!(assert_eq!({ let mut x = $a; x *= $b; x}, $answer));
+        };
+        ($a:ident / $b:expr, $answer:expr) => {
+            assert_eq!($a / $b, $answer);
+            only_opassign!(assert_eq!({ let mut x = $a; x /= $b; x}, $answer));
+        };
+    }
+
+    // Test both a + b and a + &b
+    macro_rules! test_op {
+        ($a:ident $op:tt $b:expr, $answer:expr) => {
+            test_a_op_b!($a $op $b, $answer);
+            test_a_op_b!($a $op &$b, $answer);
+        }
+    }
+
     mod complex_arithmetic {
         use super::{_0_0i, _1_0i, _1_1i, _0_1i, _neg1_1i, _05_05i, all_consts};
         use traits::Zero;
 
         #[test]
         fn test_add() {
-            assert_eq!(_05_05i + _05_05i, _1_1i);
-            assert_eq!(_0_1i + _1_0i, _1_1i);
-            assert_eq!(_1_0i + _neg1_1i, _0_1i);
+            test_op!(_05_05i + _05_05i, _1_1i);
+            test_op!(_0_1i + _1_0i, _1_1i);
+            test_op!(_1_0i + _neg1_1i, _0_1i);
 
             for &c in all_consts.iter() {
-                assert_eq!(_0_0i + c, c);
-                assert_eq!(c + _0_0i, c);
+                test_op!(_0_0i + c, c);
+                test_op!(c + _0_0i, c);
             }
         }
 
         #[test]
         fn test_sub() {
-            assert_eq!(_05_05i - _05_05i, _0_0i);
-            assert_eq!(_0_1i - _1_0i, _neg1_1i);
-            assert_eq!(_0_1i - _neg1_1i, _1_0i);
+            test_op!(_05_05i - _05_05i, _0_0i);
+            test_op!(_0_1i - _1_0i, _neg1_1i);
+            test_op!(_0_1i - _neg1_1i, _1_0i);
 
             for &c in all_consts.iter() {
-                assert_eq!(c - _0_0i, c);
-                assert_eq!(c - c, _0_0i);
+                test_op!(c - _0_0i, c);
+                test_op!(c - c, _0_0i);
             }
         }
 
         #[test]
         fn test_mul() {
-            assert_eq!(_05_05i * _05_05i, _0_1i.unscale(2.0));
-            assert_eq!(_1_1i * _0_1i, _neg1_1i);
+            test_op!(_05_05i * _05_05i, _0_1i.unscale(2.0));
+            test_op!(_1_1i * _0_1i, _neg1_1i);
 
             // i^2 & i^4
-            assert_eq!(_0_1i * _0_1i, -_1_0i);
+            test_op!(_0_1i * _0_1i, -_1_0i);
             assert_eq!(_0_1i * _0_1i * _0_1i * _0_1i, _1_0i);
 
             for &c in all_consts.iter() {
-                assert_eq!(c * _1_0i, c);
-                assert_eq!(_1_0i * c, c);
+                test_op!(c * _1_0i, c);
+                test_op!(_1_0i * c, c);
             }
         }
 
         #[test]
         fn test_div() {
-            assert_eq!(_neg1_1i / _0_1i, _1_1i);
+            test_op!(_neg1_1i / _0_1i, _1_1i);
             for &c in all_consts.iter() {
                 if c != Zero::zero() {
-                    assert_eq!(c / c, _1_0i);
+                    test_op!(c / c, _1_0i);
                 }
             }
         }
@@ -1282,29 +1406,30 @@ mod test {
 
     mod real_arithmetic {
         use super::super::Complex;
+        use super::_4_2i;
 
         #[test]
         fn test_add() {
-            assert_eq!(Complex::new(4.0, 2.0) + 0.5, Complex::new(4.5, 2.0));
-            assert_eq!(0.5 + Complex::new(4.0, 2.0), Complex::new(4.5, 2.0));
+            test_op!(_4_2i + 0.5, Complex::new(4.5, 2.0));
+            assert_eq!(0.5 + _4_2i, Complex::new(4.5, 2.0));
         }
 
         #[test]
         fn test_sub() {
-            assert_eq!(Complex::new(4.0, 2.0) - 0.5, Complex::new(3.5, 2.0));
-            assert_eq!(0.5 - Complex::new(4.0, 2.0), Complex::new(-3.5, -2.0));
+            test_op!(_4_2i - 0.5, Complex::new(3.5, 2.0));
+            assert_eq!(0.5 - _4_2i, Complex::new(-3.5, -2.0));
         }
 
         #[test]
         fn test_mul() {
-            assert_eq!(Complex::new(4.0, 2.0) * 0.5, Complex::new(2.0, 1.0));
-            assert_eq!(0.5 * Complex::new(4.0, 2.0), Complex::new(2.0, 1.0));
+            assert_eq!(_4_2i * 0.5, Complex::new(2.0, 1.0));
+            assert_eq!(0.5 * _4_2i, Complex::new(2.0, 1.0));
         }
 
         #[test]
         fn test_div() {
-            assert_eq!(Complex::new(4.0, 2.0) / 0.5, Complex::new(8.0, 4.0));
-            assert_eq!(0.5 / Complex::new(4.0, 2.0), Complex::new(0.1, -0.05));
+            assert_eq!(_4_2i / 0.5, Complex::new(8.0, 4.0));
+            assert_eq!(0.5 / _4_2i, Complex::new(0.1, -0.05));
         }
     }
 
