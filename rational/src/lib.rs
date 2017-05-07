@@ -36,7 +36,7 @@ use std::str::FromStr;
 use bigint::{BigInt, BigUint, Sign};
 
 use integer::Integer;
-use traits::{FromPrimitive, Float, PrimInt, Num, Signed, Zero, One};
+use traits::{FromPrimitive, Float, PrimInt, Num, Signed, Zero, One, Bounded, NumCast};
 
 /// Represents the ratio between 2 numbers.
 #[derive(Copy, Clone, Hash, Debug)]
@@ -668,6 +668,179 @@ impl RatioErrorKind {
     }
 }
 
+impl FromPrimitive for Ratio<BigInt> {
+    fn from_i64(n: i64) -> Option<Self> {
+        Some(Ratio::from_integer(n.into()))
+    }
+
+    fn from_u64(n: u64) -> Option<Self> {
+        Some(Ratio::from_integer(n.into()))
+    }
+
+    fn from_f32(n: f32) -> Option<Self> {
+        Ratio::from_float(n)
+    }
+
+    fn from_f64(n: f64) -> Option<Self> {
+        Ratio::from_float(n)
+    }
+}
+
+macro_rules! from_primitive_integer {
+    ($typ:ty, $approx:ident) => {
+        impl FromPrimitive for Ratio<$typ> {
+            fn from_i64(n: i64) -> Option<Self> {
+                <$typ as FromPrimitive>::from_i64(n).map(Ratio::from_integer)
+            }
+
+            fn from_u64(n: u64) -> Option<Self> {
+                <$typ as FromPrimitive>::from_u64(n).map(Ratio::from_integer)
+            }
+
+            fn from_f32(n: f32) -> Option<Self> {
+                $approx(n, 10e-20, 30)
+            }
+
+            fn from_f64(n: f64) -> Option<Self> {
+                $approx(n, 10e-20, 30)
+            }
+        }
+    }
+}
+
+from_primitive_integer!(i8, approximate_float);
+from_primitive_integer!(i16, approximate_float);
+from_primitive_integer!(i32, approximate_float);
+from_primitive_integer!(i64, approximate_float);
+from_primitive_integer!(isize, approximate_float);
+
+from_primitive_integer!(u8, approximate_float_unsigned);
+from_primitive_integer!(u16, approximate_float_unsigned);
+from_primitive_integer!(u32, approximate_float_unsigned);
+from_primitive_integer!(u64, approximate_float_unsigned);
+from_primitive_integer!(usize, approximate_float_unsigned);
+
+impl<T: Integer + Signed + Bounded + NumCast + Clone> Ratio<T> {
+    pub fn approximate_float<F: Float + NumCast>(f: F) -> Option<Ratio<T>> {
+        // 1/10e-20 < 1/2**32 which seems like a good default, and 30 seems
+        // to work well. Might want to choose something based on the types in the future, e.g.
+        // T::max().recip() and T::bits() or something similar.
+        let epsilon = <F as NumCast>::from(10e-20).expect("Can't convert 10e-20");
+        approximate_float(f, epsilon, 30)
+    }
+}
+
+fn approximate_float<T, F>(val: F, max_error: F, max_iterations: usize) -> Option<Ratio<T>>
+    where T: Integer + Signed + Bounded + NumCast + Clone,
+          F: Float + NumCast
+{
+    let negative = val.is_sign_negative();
+    let abs_val = val.abs();
+
+    let r = approximate_float_unsigned(abs_val, max_error, max_iterations);
+
+    // Make negative again if needed
+    if negative {
+        r.map(|r| r.neg())
+    } else {
+        r
+    }
+}
+
+// No Unsigned constraint because this also works on positive integers and is called
+// like that, see above
+fn approximate_float_unsigned<T, F>(val: F, max_error: F, max_iterations: usize) -> Option<Ratio<T>>
+    where T: Integer + Bounded + NumCast + Clone,
+          F: Float + NumCast
+{
+    // Continued fractions algorithm
+    // http://mathforum.org/dr.math/faq/faq.fractions.html#decfrac
+
+    if val < F::zero() {
+        return None;
+    }
+
+    let mut q = val;
+    let mut n0 = T::zero();
+    let mut d0 = T::one();
+    let mut n1 = T::one();
+    let mut d1 = T::zero();
+
+    let t_max = T::max_value();
+    let t_max_f = match <F as NumCast>::from(t_max.clone()) {
+        None => return None,
+        Some(t_max_f) => t_max_f,
+    };
+
+    // 1/epsilon > T::MAX
+    let epsilon = t_max_f.recip();
+
+    // Overflow
+    if q > t_max_f {
+        return None;
+    }
+
+    for _ in 0..max_iterations {
+        let a = match <T as NumCast>::from(q) {
+            None => break,
+            Some(a) => a,
+        };
+
+        let a_f = match <F as NumCast>::from(a.clone()) {
+            None => break,
+            Some(a_f) => a_f,
+        };
+        let f = q - a_f;
+
+        // Prevent overflow
+        if !a.is_zero() &&
+           (n1 > t_max.clone() / a.clone() ||
+            d1 > t_max.clone() / a.clone() ||
+            a.clone() * n1.clone() > t_max.clone() - n0.clone() ||
+            a.clone() * d1.clone() > t_max.clone() - d0.clone()) {
+            break;
+        }
+
+        let n = a.clone() * n1.clone() + n0.clone();
+        let d = a.clone() * d1.clone() + d0.clone();
+
+        n0 = n1;
+        d0 = d1;
+        n1 = n.clone();
+        d1 = d.clone();
+
+        // Simplify fraction. Doing so here instead of at the end
+        // allows us to get closer to the target value without overflows
+        let g = Integer::gcd(&n1, &d1);
+        if !g.is_zero() {
+            n1 = n1 / g.clone();
+            d1 = d1 / g.clone();
+        }
+
+        // Close enough?
+        let (n_f, d_f) = match (<F as NumCast>::from(n), <F as NumCast>::from(d)) {
+            (Some(n_f), Some(d_f)) => (n_f, d_f),
+            _ => break,
+        };
+        if (n_f / d_f - val).abs() < max_error {
+            break;
+        }
+
+        // Prevent division by ~0
+        if f < epsilon {
+            break;
+        }
+        q = f.recip();
+    }
+
+    // Overflow
+    if d1.is_zero() {
+        return None;
+    }
+
+    Some(Ratio::new(n1, d1))
+}
+
 #[cfg(test)]
 fn hash<T: hash::Hash>(x: &T) -> u64 {
     use std::hash::Hasher;
@@ -684,6 +857,7 @@ mod test {
 
     use std::str::FromStr;
     use std::i32;
+    use std::f64;
     use traits::{Zero, One, Signed, FromPrimitive, Float};
 
     pub const _0: Rational = Ratio {
@@ -774,6 +948,38 @@ mod test {
         let _a = Ratio::new(1, 0);
     }
 
+    #[test]
+    fn test_approximate_float() {
+        assert_eq!(Ratio::from_f32(0.5f32), Some(Ratio::new(1i64, 2)));
+        assert_eq!(Ratio::from_f64(0.5f64), Some(Ratio::new(1i32, 2)));
+        assert_eq!(Ratio::from_f32(5f32), Some(Ratio::new(5i64, 1)));
+        assert_eq!(Ratio::from_f64(5f64), Some(Ratio::new(5i32, 1)));
+        assert_eq!(Ratio::from_f32(29.97f32), Some(Ratio::new(2997i64, 100)));
+        assert_eq!(Ratio::from_f32(-29.97f32), Some(Ratio::new(-2997i64, 100)));
+
+        assert_eq!(Ratio::<i8>::from_f32(63.5f32), Some(Ratio::new(127i8, 2)));
+        assert_eq!(Ratio::<i8>::from_f32(126.5f32), Some(Ratio::new(126i8, 1)));
+        assert_eq!(Ratio::<i8>::from_f32(127.0f32), Some(Ratio::new(127i8, 1)));
+        assert_eq!(Ratio::<i8>::from_f32(127.5f32), None);
+        assert_eq!(Ratio::<i8>::from_f32(-63.5f32), Some(Ratio::new(-127i8, 2)));
+        assert_eq!(Ratio::<i8>::from_f32(-126.5f32), Some(Ratio::new(-126i8, 1)));
+        assert_eq!(Ratio::<i8>::from_f32(-127.0f32), Some(Ratio::new(-127i8, 1)));
+        assert_eq!(Ratio::<i8>::from_f32(-127.5f32), None);
+
+        assert_eq!(Ratio::<u8>::from_f32(-127f32), None);
+        assert_eq!(Ratio::<u8>::from_f32(127f32), Some(Ratio::new(127u8, 1)));
+        assert_eq!(Ratio::<u8>::from_f32(127.5f32), Some(Ratio::new(255u8, 2)));
+        assert_eq!(Ratio::<u8>::from_f32(256f32), None);
+
+        assert_eq!(Ratio::<i64>::from_f64(-10e200), None);
+        assert_eq!(Ratio::<i64>::from_f64(10e200), None);
+        assert_eq!(Ratio::<i64>::from_f64(f64::INFINITY), None);
+        assert_eq!(Ratio::<i64>::from_f64(f64::NEG_INFINITY), None);
+        assert_eq!(Ratio::<i64>::from_f64(f64::NAN), None);
+        assert_eq!(Ratio::<i64>::from_f64(f64::EPSILON), Some(Ratio::new(1, 4503599627370496)));
+        assert_eq!(Ratio::<i64>::from_f64(0.0), Some(Ratio::new(0, 1)));
+        assert_eq!(Ratio::<i64>::from_f64(-0.0), Some(Ratio::new(0, 1)));
+    }
 
     #[test]
     fn test_cmp() {
