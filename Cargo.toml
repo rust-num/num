@@ -23,6 +23,11 @@ optional = true
 path = "bigint"
 version = "0.1.36"
 
+[dependencies.num-bigdecimal]
+optional = true
+path = "bigdecimal"
+version = "0.1.32"
+
 [dependencies.num-complex]
 optional = true
 path = "complex"
@@ -53,6 +58,7 @@ version = "0.3.8"
 
 [features]
 bigint = ["num-bigint"]
+bigdecimal = ["num-bigdecimal"]
 complex = ["num-complex"]
 rational = ["num-rational"]
 default = ["bigint", "complex", "rational", "rustc-serialize"]
