@@ -14,6 +14,8 @@
        html_root_url = "https://rust-num.github.io/num/",
        html_playground_url = "http://play.integer32.com/")]
 
+#![cfg_attr(feature="experimental_trait_consts", feature(associated_consts))]
+
 use std::ops::{Add, Sub, Mul, Div, Rem};
 use std::ops::{AddAssign, SubAssign, MulAssign, DivAssign, RemAssign};
 use std::num::Wrapping;

@@ -10,3 +10,6 @@ name = "num-traits"
 version = "0.1.37"
 
 [dependencies]
+
+[features]
+"experimental_trait_consts" = []
