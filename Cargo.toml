@@ -57,6 +57,8 @@ complex = ["num-complex"]
 rational = ["num-rational"]
 default = ["bigint", "complex", "rational", "rustc-serialize"]
 
+experimental_trait_consts = []
+
 serde = [
   "num-bigint/serde",
   "num-complex/serde",
