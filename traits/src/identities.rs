@@ -38,6 +38,10 @@ macro_rules! zero_impl {
             #[inline]
             fn is_zero(&self) -> bool { *self == $v }
         }
+        #[cfg(feature="experimental_trait_consts")]
+        impl ZeroConst for $t {
+            const ZERO: Self = $v;
+        }
     }
 }
 
@@ -96,6 +100,10 @@ macro_rules! one_impl {
         impl One for $t {
             #[inline]
             fn one() -> $t { $v }
+        }
+        #[cfg(feature="experimental_trait_consts")]
+        impl OneConst for $t {
+            const ONE: Self = $v;
         }
     }
 }
