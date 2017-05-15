@@ -25,6 +25,11 @@ pub trait Zero: Sized + Add<Self, Output = Self> {
     fn is_zero(&self) -> bool;
 }
 
+#[cfg(feature="experimental_trait_consts")]
+pub trait ZeroConst: Zero {
+    const ZERO: Self;
+}
+
 macro_rules! zero_impl {
     ($t:ty, $v:expr) => {
         impl Zero for $t {
@@ -79,6 +84,11 @@ pub trait One: Sized + Mul<Self, Output = Self> {
     /// `static mut`s.
     // FIXME (#5527): This should be an associated constant
     fn one() -> Self;
+}
+
+#[cfg(feature="experimental_trait_consts")]
+pub trait OneConst: One {
+    const ONE: Self;
 }
 
 macro_rules! one_impl {
