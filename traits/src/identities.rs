@@ -25,6 +25,11 @@ pub trait Zero: Sized + Add<Self, Output = Self> {
     fn is_zero(&self) -> bool;
 }
 
+#[cfg(feature="experimental_trait_consts")]
+pub trait ZeroConst: Zero {
+    const ZERO: Self;
+}
+
 macro_rules! zero_impl {
     ($t:ty, $v:expr) => {
         impl Zero for $t {
@@ -32,6 +37,10 @@ macro_rules! zero_impl {
             fn zero() -> $t { $v }
             #[inline]
             fn is_zero(&self) -> bool { *self == $v }
+        }
+        #[cfg(feature="experimental_trait_consts")]
+        impl ZeroConst for $t {
+            const ZERO: Self = $v;
         }
     }
 }
@@ -81,11 +90,20 @@ pub trait One: Sized + Mul<Self, Output = Self> {
     fn one() -> Self;
 }
 
+#[cfg(feature="experimental_trait_consts")]
+pub trait OneConst: One {
+    const ONE: Self;
+}
+
 macro_rules! one_impl {
     ($t:ty, $v:expr) => {
         impl One for $t {
             #[inline]
             fn one() -> $t { $v }
+        }
+        #[cfg(feature="experimental_trait_consts")]
+        impl OneConst for $t {
+            const ONE: Self = $v;
         }
     }
 }

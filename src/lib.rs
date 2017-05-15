@@ -77,6 +77,8 @@ pub use num_rational::BigRational;
 pub use num_complex::Complex;
 pub use num_integer::Integer;
 pub use num_iter::{range, range_inclusive, range_step, range_step_inclusive};
+#[cfg(feature="experimental_trait_consts")]
+pub use num_traits::{ZeroConst, OneConst};
 pub use num_traits::{Num, Zero, One, Signed, Unsigned, Bounded,
                      one, zero, abs, abs_sub, signum,
                      Saturating, CheckedAdd, CheckedSub, CheckedMul, CheckedDiv,
