@@ -23,6 +23,8 @@ use std::num::Wrapping;
 pub use bounds::Bounded;
 pub use float::{Float, FloatConst};
 pub use identities::{Zero, One, zero, one};
+#[cfg(feature="experimental_trait_consts")]
+pub use identities::{ZeroConst, OneConst};
 pub use ops::checked::*;
 pub use ops::wrapping::*;
 pub use ops::saturating::Saturating;
