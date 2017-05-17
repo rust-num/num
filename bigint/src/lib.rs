@@ -76,6 +76,8 @@
 
 #[cfg(any(feature = "rand", test))]
 extern crate rand;
+#[cfg(feature = "quickcheck")]
+extern crate quickcheck;
 #[cfg(feature = "rustc-serialize")]
 extern crate rustc_serialize;
 #[cfg(feature = "serde")]
@@ -132,6 +134,9 @@ mod macros;
 
 mod biguint;
 mod bigint;
+
+#[cfg(feature = "quickcheck")]
+mod quickcheck_impls;
 
 pub use biguint::BigUint;
 pub use biguint::ToBigUint;

@@ -57,6 +57,11 @@ complex = ["num-complex"]
 rational = ["num-rational"]
 default = ["bigint", "complex", "rational", "rustc-serialize"]
 
+quickcheck = [
+  "num-bigint/quickcheck",
+  "num-complex/quickcheck",
+  "num-rational/quickcheck"
+]
 serde = [
   "num-bigint/serde",
   "num-complex/serde",
