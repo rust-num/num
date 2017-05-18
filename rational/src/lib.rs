@@ -14,6 +14,8 @@
        html_root_url = "https://rust-num.github.io/num/",
        html_playground_url = "http://play.integer32.com/")]
 
+#[cfg(feature = "quickcheck")]
+extern crate quickcheck;
 #[cfg(feature = "rustc-serialize")]
 extern crate rustc_serialize;
 #[cfg(feature = "serde")]
@@ -23,6 +25,9 @@ extern crate num_bigint as bigint;
 
 extern crate num_traits as traits;
 extern crate num_integer as integer;
+
+#[cfg(feature = "quickcheck")]
+mod quickcheck_impls;
 
 use std::cmp;
 use std::error::Error;
