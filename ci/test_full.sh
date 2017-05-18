@@ -11,7 +11,7 @@ for package in bigint complex integer iter rational traits; do
 done
 
 # Each isolated feature should also work everywhere.
-for feature in '' bigint rational complex; do
+for feature in '' bigint rational complex quickcheck; do
   cargo build --verbose --no-default-features --features="$feature"
   cargo test --verbose --no-default-features --features="$feature"
 done
