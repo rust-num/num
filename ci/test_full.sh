@@ -11,7 +11,7 @@ for package in bigint complex integer iter rational traits; do
 done
 
 # Each isolated feature should also work everywhere.
-for feature in '' bigint rational complex quickcheck; do
+for feature in '' bigint rational complex; do
   cargo build --verbose --no-default-features --features="$feature"
   cargo test --verbose --no-default-features --features="$feature"
 done
@@ -25,6 +25,10 @@ cargo build --verbose --features "serde"
 
 
 if [ "$TRAVIS_RUST_VERSION" = 1.8.0 ]; then exit; fi
+
+# Build test for the quickcheck feature.
+cargo build --verbose --features=quickcheck
+cargo test --verbose --features=quickcheck
 
 # num-derive should build on 1.15.0+
 cargo build --verbose --manifest-path=derive/Cargo.toml
