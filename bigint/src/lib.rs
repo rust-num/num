@@ -136,7 +136,7 @@ mod biguint;
 mod bigint;
 
 #[cfg(feature = "quickcheck")]
-mod quickcheck_impls;
+pub mod quickcheck_impls;
 
 pub use biguint::BigUint;
 pub use biguint::ToBigUint;

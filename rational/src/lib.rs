@@ -27,7 +27,7 @@ extern crate num_traits as traits;
 extern crate num_integer as integer;
 
 #[cfg(feature = "quickcheck")]
-mod quickcheck_impls;
+pub mod quickcheck_impls;
 
 use std::cmp;
 use std::error::Error;

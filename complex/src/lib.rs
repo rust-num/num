@@ -26,7 +26,7 @@ extern crate rustc_serialize;
 extern crate serde;
 
 #[cfg(feature = "quickcheck")]
-mod quickcheck_impls;
+pub mod quickcheck_impls;
 
 use std::fmt;
 #[cfg(test)]
