@@ -16,11 +16,17 @@
 
 extern crate num_traits as traits;
 
+#[cfg(feature = "quickcheck")]
+extern crate quickcheck;
+
 #[cfg(feature = "rustc-serialize")]
 extern crate rustc_serialize;
 
 #[cfg(feature = "serde")]
 extern crate serde;
+
+#[cfg(feature = "quickcheck")]
+mod quickcheck_impls;
 
 use std::fmt;
 #[cfg(test)]
