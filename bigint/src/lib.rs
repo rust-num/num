@@ -135,9 +135,6 @@ mod macros;
 mod biguint;
 mod bigint;
 
-#[cfg(feature = "quickcheck")]
-pub mod quickcheck_impls;
-
 pub use biguint::BigUint;
 pub use biguint::ToBigUint;
 pub use biguint::big_digit;
