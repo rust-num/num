@@ -14,12 +14,16 @@
        html_root_url = "https://rust-num.github.io/num/",
        html_playground_url = "http://play.integer32.com/")]
 
-use std::ops::{Add, Sub, Mul, Div, Rem};
-use std::ops::{AddAssign, SubAssign, MulAssign, DivAssign, RemAssign};
-use std::num::Wrapping;
+#![cfg_attr(not(feature = "std"), no_std)]
+#[cfg(feature = "std")]
+extern crate core;
+
+use core::ops::{Add, Sub, Mul, Div, Rem};
+use core::ops::{AddAssign, SubAssign, MulAssign, DivAssign, RemAssign};
+use core::num::Wrapping;
 
 pub use bounds::Bounded;
-pub use float::{Float, FloatConst};
+pub use float::{BasicFloat, Float, FloatConst};
 pub use identities::{Zero, One, zero, one};
 pub use ops::checked::*;
 pub use ops::wrapping::*;
@@ -129,10 +133,10 @@ impl<T> NumAssignRef for T where T: NumAssign + for<'r> NumAssignOps<&'r T> {}
 macro_rules! int_trait_impl {
     ($name:ident for $($t:ty)*) => ($(
         impl $name for $t {
-            type FromStrRadixErr = ::std::num::ParseIntError;
+            type FromStrRadixErr = ::core::num::ParseIntError;
             #[inline]
             fn from_str_radix(s: &str, radix: u32)
-                              -> Result<Self, ::std::num::ParseIntError>
+                              -> Result<Self, ::core::num::ParseIntError>
             {
                 <$t>::from_str_radix(s, radix)
             }
@@ -158,7 +162,7 @@ pub enum FloatErrorKind {
     Empty,
     Invalid,
 }
-// FIXME: std::num::ParseFloatError is stable in 1.0, but opaque to us,
+// FIXME: core::num::ParseFloatError is stable in 1.0, but opaque to us,
 // so there's not really any way for us to reuse it.
 #[derive(Debug)]
 pub struct ParseFloatError {
@@ -181,9 +185,9 @@ macro_rules! float_trait_impl {
 
                 // Special values
                 match src {
-                    "inf"   => return Ok(Float::infinity()),
-                    "-inf"  => return Ok(Float::neg_infinity()),
-                    "NaN"   => return Ok(Float::nan()),
+                    "inf"   => return Ok(BasicFloat::infinity()),
+                    "-inf"  => return Ok(BasicFloat::neg_infinity()),
+                    "NaN"   => return Ok(BasicFloat::nan()),
                     _       => {},
                 }
 
@@ -224,15 +228,15 @@ macro_rules! float_trait_impl {
                             // if we've not seen any non-zero digits.
                             if prev_sig != 0.0 {
                                 if is_positive && sig <= prev_sig
-                                    { return Ok(Float::infinity()); }
+                                    { return Ok(BasicFloat::infinity()); }
                                 if !is_positive && sig >= prev_sig
-                                    { return Ok(Float::neg_infinity()); }
+                                    { return Ok(BasicFloat::neg_infinity()); }
 
                                 // Detect overflow by reversing the shift-and-add process
                                 if is_positive && (prev_sig != (sig - digit as $t) / radix as $t)
-                                    { return Ok(Float::infinity()); }
+                                    { return Ok(BasicFloat::infinity()); }
                                 if !is_positive && (prev_sig != (sig + digit as $t) / radix as $t)
-                                    { return Ok(Float::neg_infinity()); }
+                                    { return Ok(BasicFloat::neg_infinity()); }
                             }
                             prev_sig = sig;
                         },
@@ -268,9 +272,9 @@ macro_rules! float_trait_impl {
                                 };
                                 // Detect overflow by comparing to last value
                                 if is_positive && sig < prev_sig
-                                    { return Ok(Float::infinity()); }
+                                    { return Ok(BasicFloat::infinity()); }
                                 if !is_positive && sig > prev_sig
-                                    { return Ok(Float::neg_infinity()); }
+                                    { return Ok(BasicFloat::neg_infinity()); }
                                 prev_sig = sig;
                             },
                             None => match c {
@@ -305,8 +309,8 @@ macro_rules! float_trait_impl {
                         };
 
                         match (is_positive, exp) {
-                            (true,  Ok(exp)) => base.powi(exp as i32),
-                            (false, Ok(exp)) => 1.0 / base.powi(exp as i32),
+                            (true,  Ok(exp)) => BasicFloat::powi(base, exp as i32),
+                            (false, Ok(exp)) => 1.0 / BasicFloat::powi(base, exp as i32),
                             (_, Err(_))      => return Err(PFE { kind: Invalid }),
                         }
                     },

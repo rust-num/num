@@ -1,15 +1,209 @@
-use std::mem;
-use std::ops::Neg;
-use std::num::FpCategory;
+use core::mem;
+use core::ops::Neg;
+use core::num::FpCategory;
 
 // Used for default implementation of `epsilon`
-use std::f32;
+use core::f32;
 
 use {Num, NumCast};
+
+/// Basic floating point operations that work with `core`.
+pub trait BasicFloat: Num + Neg<Output = Self> + PartialOrd + Copy {
+    /// Returns positive infinity.
+    #[inline]
+    fn infinity() -> Self;
+
+    /// Returns negative infinity.
+    #[inline]
+    fn neg_infinity() -> Self;
+
+    /// Returns NaN.
+    #[inline]
+    fn nan() -> Self;
+
+    /// Returns `true` if the number is NaN.
+    #[inline]
+    fn is_nan(self) -> bool {
+        self != self
+    }
+
+    /// Returns `true` if the number is infinite.
+    #[inline]
+    fn is_infinite(self) -> bool {
+        self == Self::infinity() || self == Self::neg_infinity()
+    }
+
+    /// Returns `true` if the number is neither infinite or NaN.
+    #[inline]
+    fn is_finite(self) -> bool {
+        !(self.is_nan() || self.is_infinite())
+    }
+
+    /// Returns `true` if the number is neither zero, infinite, subnormal or NaN.
+    #[inline]
+    fn is_normal(self) -> bool {
+        self.classify() == FpCategory::Normal
+    }
+
+    /// Returns the floating point category of the number. If only one property
+    /// is going to be tested, it is generally faster to use the specific
+    /// predicate instead.
+    #[inline]
+    fn classify(self) -> FpCategory;
+
+    /// Computes the absolute value of `self`. Returns `BasicFloat::nan()` if the
+    /// number is `BasicFloat::nan()`.
+    #[inline]
+    fn abs(self) -> Self {
+        if self.is_sign_positive() {
+            return self;
+        }
+        if self.is_sign_negative() {
+            return -self;
+        }
+        Self::nan()
+    }
+
+    /// Returns a number that represents the sign of `self`.
+    ///
+    /// - `1.0` if the number is positive, `+0.0` or `BasicFloat::infinity()`
+    /// - `-1.0` if the number is negative, `-0.0` or `BasicFloat::neg_infinity()`
+    /// - `BasicFloat::nan()` if the number is `BasicFloat::nan()`
+    #[inline]
+    fn signum(self) -> Self {
+        if self.is_sign_positive() {
+            return Self::one();
+        }
+        if self.is_sign_negative() {
+            return -Self::one();
+        }
+        Self::nan()
+    }
+
+    /// Returns `true` if `self` is positive, including `+0.0` and
+    /// `BasicFloat::infinity()`.
+    #[inline]
+    fn is_sign_positive(self) -> bool {
+        self > Self::zero() || (Self::one() / self) == Self::infinity()
+    }
+
+    /// Returns `true` if `self` is negative, including `-0.0` and
+    /// `BasicFloat::neg_infinity()`.
+    #[inline]
+    fn is_sign_negative(self) -> bool {
+        self < Self::zero() || (Self::one() / self) == Self::neg_infinity()
+    }
+
+    /// Returns the reciprocal (multiplicative inverse) of the number.
+    #[inline]
+    fn recip(self) -> Self {
+        Self::one() / self
+    }
+
+    #[inline]
+    fn powi(self, mut exp: i32) -> Self {
+        if exp == 0 { return Self::one() }
+
+        let mut base;
+        if exp < 0 {
+            exp = -exp;
+            base = self.recip();
+        } else {
+            base = self;
+        }
+
+        while exp & 1 == 0 {
+            base = base * base;
+            exp >>= 1;
+        }
+        if exp == 1 { return base }
+
+        let mut acc = base;
+        while exp > 1 {
+            exp >>= 1;
+            base = base * base;
+            if exp & 1 == 1 {
+                acc = acc * base;
+            }
+        }
+        acc
+    }
+
+    /// Converts to degrees, assuming the number is in radians.
+    #[inline]
+    fn to_degrees(self) -> Self;
+
+    /// Converts to radians, assuming the number is in degrees.
+    #[inline]
+    fn to_radians(self) -> Self;
+}
+
+impl BasicFloat for f32 {
+    fn infinity() -> Self {
+        ::core::f32::INFINITY
+    }
+    fn neg_infinity() -> Self {
+        ::core::f32::INFINITY
+    }
+    fn nan() -> Self {
+        ::core::f32::NAN
+    }
+    fn classify(self) -> FpCategory {
+        const EXP_MASK: u32 = 0x7f800000;
+        const MAN_MASK: u32 = 0x007fffff;
+
+        let bits: u32 = unsafe { mem::transmute(self) };
+        match (bits & MAN_MASK, bits & EXP_MASK) {
+            (0, 0) => FpCategory::Zero,
+            (_, 0) => FpCategory::Subnormal,
+            (0, EXP_MASK) => FpCategory::Infinite,
+            (_, EXP_MASK) => FpCategory::Nan,
+            _ => FpCategory::Normal,
+        }
+    }
+    fn to_degrees(self) -> Self {
+        self * (180.0 / ::core::f32::consts::PI)
+    }
+    fn to_radians(self) -> Self {
+        self * (::core::f32::consts::PI / 180.0)
+    }
+}
+
+impl BasicFloat for f64 {
+    fn infinity() -> Self {
+        ::core::f64::INFINITY
+    }
+    fn neg_infinity() -> Self {
+        ::core::f64::INFINITY
+    }
+    fn nan() -> Self {
+        ::core::f64::NAN
+    }
+    fn classify(self) -> FpCategory {
+        const EXP_MASK: u64 = 0x7ff0000000000000;
+        const MAN_MASK: u64 = 0x000fffffffffffff;
+
+        let bits: u64 = unsafe { mem::transmute(self) };
+        match (bits & MAN_MASK, bits & EXP_MASK) {
+            (0, 0) => FpCategory::Zero,
+            (_, 0) => FpCategory::Subnormal,
+            (0, EXP_MASK) => FpCategory::Infinite,
+            (_, EXP_MASK) => FpCategory::Nan,
+            _ => FpCategory::Normal,
+        }
+    }
+    fn to_degrees(self) -> Self {
+        self * (180.0 / ::core::f64::consts::PI)
+    }
+    fn to_radians(self) -> Self {
+        self * (::core::f64::consts::PI / 180.0)
+    }
+}
 
 // FIXME: these doctests aren't actually helpful, because they're using and
 // testing the inherent methods directly, not going through `Float`.
 
+/// Floating point operations that work with `std`.
 pub trait Float
     : Num
     + Copy
@@ -930,17 +1124,17 @@ macro_rules! float_impl {
         impl Float for $T {
             #[inline]
             fn nan() -> Self {
-                ::std::$T::NAN
+                ::core::$T::NAN
             }
 
             #[inline]
             fn infinity() -> Self {
-                ::std::$T::INFINITY
+                ::core::$T::INFINITY
             }
 
             #[inline]
             fn neg_infinity() -> Self {
-                ::std::$T::NEG_INFINITY
+                ::core::$T::NEG_INFINITY
             }
 
             #[inline]
@@ -950,22 +1144,22 @@ macro_rules! float_impl {
 
             #[inline]
             fn min_value() -> Self {
-                ::std::$T::MIN
+                ::core::$T::MIN
             }
 
             #[inline]
             fn min_positive_value() -> Self {
-                ::std::$T::MIN_POSITIVE
+                ::core::$T::MIN_POSITIVE
             }
 
             #[inline]
             fn epsilon() -> Self {
-                ::std::$T::EPSILON
+                ::core::$T::EPSILON
             }
 
             #[inline]
             fn max_value() -> Self {
-                ::std::$T::MAX
+                ::core::$T::MAX
             }
 
             #[inline]
@@ -1097,14 +1291,14 @@ macro_rules! float_impl {
             fn to_degrees(self) -> Self {
                 // NB: `f32` didn't stabilize this until 1.7
                 // <$T>::to_degrees(self)
-                self * (180. / ::std::$T::consts::PI)
+                self * (180. / ::core::$T::consts::PI)
             }
 
             #[inline]
             fn to_radians(self) -> Self {
                 // NB: `f32` didn't stabilize this until 1.7
                 // <$T>::to_radians(self)
-                self * (::std::$T::consts::PI / 180.)
+                self * (::core::$T::consts::PI / 180.)
             }
 
             #[inline]
@@ -1257,7 +1451,9 @@ fn integer_decode_f64(f: f64) -> (u64, i16, i8) {
     (mantissa, exponent, sign)
 }
 
+#[cfg(feature = "std")]
 float_impl!(f32 integer_decode_f32);
+#[cfg(feature = "std")]
 float_impl!(f64 integer_decode_f64);
 
 macro_rules! float_const_impl {
@@ -1274,7 +1470,7 @@ macro_rules! float_const_impl {
             $(
                 #[inline]
                 fn $constant() -> Self {
-                    ::std::$T::consts::$constant
+                    ::core::$T::consts::$constant
                 }
             )+
         }
@@ -1318,21 +1514,35 @@ float_const_impl! {
 
 #[cfg(test)]
 mod tests {
-    use Float;
+    use BasicFloat;
+    use core::f64::consts;
+
+    const DEG_RAD_PAIRS: [(f64, f64); 7] = [
+        (0.0, 0.),
+        (22.5, consts::FRAC_PI_8),
+        (30.0, consts::FRAC_PI_6),
+        (45.0, consts::FRAC_PI_4),
+        (60.0, consts::FRAC_PI_3),
+        (90.0, consts::FRAC_PI_2),
+        (180.0, consts::PI),
+    ];
 
     #[test]
-    fn convert_deg_rad() {
-        use std::f64::consts;
+    fn convert_deg_rad_core() {
+        for &(deg, rad) in &DEG_RAD_PAIRS {
+            assert!((BasicFloat::to_degrees(rad) - deg).abs() < 1e-6);
+            assert!((BasicFloat::to_radians(deg) - rad).abs() < 1e-6);
 
-        const DEG_RAD_PAIRS: [(f64, f64); 7] = [
-            (0.0, 0.),
-            (22.5, consts::FRAC_PI_8),
-            (30.0, consts::FRAC_PI_6),
-            (45.0, consts::FRAC_PI_4),
-            (60.0, consts::FRAC_PI_3),
-            (90.0, consts::FRAC_PI_2),
-            (180.0, consts::PI),
-        ];
+            let (deg, rad) = (deg as f32, rad as f32);
+            assert!((BasicFloat::to_degrees(rad) - deg).abs() < 1e-6);
+            assert!((BasicFloat::to_radians(deg) - rad).abs() < 1e-6);
+        }
+    }
+
+    #[cfg(std)]
+    #[test]
+    fn convert_deg_rad_std() {
+        use Float;
 
         for &(deg, rad) in &DEG_RAD_PAIRS {
             assert!((Float::to_degrees(rad) - deg).abs() < 1e-6);
