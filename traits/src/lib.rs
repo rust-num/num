@@ -23,7 +23,7 @@ use core::ops::{AddAssign, SubAssign, MulAssign, DivAssign, RemAssign};
 use core::num::Wrapping;
 
 pub use bounds::Bounded;
-pub use float::{BasicFloat, Float, FloatConst};
+pub use float::{Float, FloatConst};
 pub use identities::{Zero, One, zero, one};
 pub use ops::checked::*;
 pub use ops::wrapping::*;
@@ -185,9 +185,9 @@ macro_rules! float_trait_impl {
 
                 // Special values
                 match src {
-                    "inf"   => return Ok(BasicFloat::infinity()),
-                    "-inf"  => return Ok(BasicFloat::neg_infinity()),
-                    "NaN"   => return Ok(BasicFloat::nan()),
+                    "inf"   => return Ok(Float::infinity()),
+                    "-inf"  => return Ok(Float::neg_infinity()),
+                    "NaN"   => return Ok(Float::nan()),
                     _       => {},
                 }
 
@@ -228,15 +228,15 @@ macro_rules! float_trait_impl {
                             // if we've not seen any non-zero digits.
                             if prev_sig != 0.0 {
                                 if is_positive && sig <= prev_sig
-                                    { return Ok(BasicFloat::infinity()); }
+                                    { return Ok(Float::infinity()); }
                                 if !is_positive && sig >= prev_sig
-                                    { return Ok(BasicFloat::neg_infinity()); }
+                                    { return Ok(Float::neg_infinity()); }
 
                                 // Detect overflow by reversing the shift-and-add process
                                 if is_positive && (prev_sig != (sig - digit as $t) / radix as $t)
-                                    { return Ok(BasicFloat::infinity()); }
+                                    { return Ok(Float::infinity()); }
                                 if !is_positive && (prev_sig != (sig + digit as $t) / radix as $t)
-                                    { return Ok(BasicFloat::neg_infinity()); }
+                                    { return Ok(Float::neg_infinity()); }
                             }
                             prev_sig = sig;
                         },
@@ -272,9 +272,9 @@ macro_rules! float_trait_impl {
                                 };
                                 // Detect overflow by comparing to last value
                                 if is_positive && sig < prev_sig
-                                    { return Ok(BasicFloat::infinity()); }
+                                    { return Ok(Float::infinity()); }
                                 if !is_positive && sig > prev_sig
-                                    { return Ok(BasicFloat::neg_infinity()); }
+                                    { return Ok(Float::neg_infinity()); }
                                 prev_sig = sig;
                             },
                             None => match c {
@@ -309,8 +309,8 @@ macro_rules! float_trait_impl {
                         };
 
                         match (is_positive, exp) {
-                            (true,  Ok(exp)) => BasicFloat::powi(base, exp as i32),
-                            (false, Ok(exp)) => 1.0 / BasicFloat::powi(base, exp as i32),
+                            (true,  Ok(exp)) => Float::powi(base, exp as i32),
+                            (false, Ok(exp)) => 1.0 / Float::powi(base, exp as i32),
                             (_, Err(_))      => return Err(PFE { kind: Invalid }),
                         }
                     },

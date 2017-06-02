@@ -3,7 +3,7 @@ use core::num::Wrapping;
 
 use identities::Zero;
 use bounds::Bounded;
-use float::BasicFloat;
+use float::Float;
 
 /// A generic trait for converting a value to a number.
 pub trait ToPrimitive {
@@ -228,7 +228,7 @@ macro_rules! impl_to_primitive_float_to_float {
             // NaN and +-inf are cast as they are.
             let n = $slf as f64;
             let max_value: $DstT = ::core::$DstT::MAX;
-            if !BasicFloat::is_finite(n) || (-max_value as f64 <= n && n <= max_value as f64) {
+            if !Float::is_finite(n) || (-max_value as f64 <= n && n <= max_value as f64) {
                 Some($slf as $DstT)
             } else {
                 None
