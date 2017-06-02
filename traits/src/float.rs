@@ -682,6 +682,8 @@ pub trait Float
 
     /// Returns the maximum of the two numbers.
     ///
+    /// If one of the arguments is NaN, then the other argument is returned.
+    ///
     /// ```
     /// use num_traits::Float;
     ///
@@ -690,10 +692,20 @@ pub trait Float
     ///
     /// assert_eq!(x.max(y), y);
     /// ```
-    #[cfg(feature = "std")]
-    fn max(self, other: Self) -> Self;
+    #[inline]
+    fn max(self, other: Self) -> Self {
+        if self.is_nan() {
+            return other;
+        }
+        if other.is_nan() {
+            return self;
+        }
+        if self > other { self } else { other }
+    }
 
     /// Returns the minimum of the two numbers.
+    ///
+    /// If one of the arguments is NaN, then the other argument is returned.
     ///
     /// ```
     /// use num_traits::Float;
@@ -703,8 +715,16 @@ pub trait Float
     ///
     /// assert_eq!(x.min(y), x);
     /// ```
-    #[cfg(feature = "std")]
-    fn min(self, other: Self) -> Self;
+    #[inline]
+    fn min(self, other: Self) -> Self {
+        if self.is_nan() {
+            return other;
+        }
+        if other.is_nan() {
+            return self;
+        }
+        if self < other { self } else { other }
+    }
 
     /// The positive difference of two numbers.
     ///
