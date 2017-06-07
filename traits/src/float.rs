@@ -5,7 +5,7 @@ use core::num::FpCategory;
 // Used for default implementation of `epsilon`
 use core::f32;
 
-use {Num, NumCast};
+use {ToPrimitive, Num, NumCast};
 
 // FIXME: these doctests aren't actually helpful, because they're using and
 // testing the inherent methods directly, not going through `Float`.
@@ -456,32 +456,13 @@ pub trait Float
     /// assert!(abs_difference < 1e-10);
     /// ```
     #[inline]
-    fn powi(self, mut exp: i32) -> Self {
-        if exp == 0 { return Self::one() }
-
-        let mut base;
+    fn powi(mut self, mut exp: i32) -> Self {
         if exp < 0 {
+            self = self.recip();
             exp = -exp;
-            base = self.recip();
-        } else {
-            base = self;
         }
-
-        while exp & 1 == 0 {
-            base = base * base;
-            exp >>= 1;
-        }
-        if exp == 1 { return base }
-
-        let mut acc = base;
-        while exp > 1 {
-            exp >>= 1;
-            base = base * base;
-            if exp & 1 == 1 {
-                acc = acc * base;
-            }
-        }
-        acc
+        // It should always be possible to convert a positive `i32` to a `usize`.
+        super::pow(self, exp.to_usize().unwrap())
     }
 
     /// Raise a number to a floating point power.
