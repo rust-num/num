@@ -10,7 +10,11 @@ use {ToPrimitive, Num, NumCast};
 // FIXME: these doctests aren't actually helpful, because they're using and
 // testing the inherent methods directly, not going through `Float`.
 
-/// Floating point operations that work with `std`.
+/// Floating point operations.
+///
+/// Please note that some methods are disabled for `no_std`. If you implement it
+/// only for `no_std`, the build will fail if anyone else in the dependency
+/// graph enables `num-traits/std`.
 pub trait Float
     : Num
     + Copy
