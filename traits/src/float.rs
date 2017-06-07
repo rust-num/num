@@ -1285,16 +1285,12 @@ macro_rules! float_impl {
 
             #[inline]
             fn to_degrees(self) -> Self {
-                // NB: `f32` didn't stabilize this until 1.7
-                // <$T>::to_degrees(self)
-                self * (180. / ::core::$T::consts::PI)
+                <$T>::to_degrees(self)
             }
 
             #[inline]
             fn to_radians(self) -> Self {
-                // NB: `f32` didn't stabilize this until 1.7
-                // <$T>::to_radians(self)
-                self * (::core::$T::consts::PI / 180.)
+                <$T>::to_radians(self)
             }
 
             #[cfg(feature = "std")]
