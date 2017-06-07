@@ -10,7 +10,7 @@ for package in bigint complex integer iter rational traits; do
   cargo test --manifest-path $package/Cargo.toml
 done
 
-# Only num-tratis supports no_std at the moment.
+# Only num-traits supports no_std at the moment.
 cargo build --manifest-path traits/Cargo.toml --no-default-features
 cargo test --manifest-path traits/Cargo.toml --no-default-features
 
