@@ -1268,14 +1268,28 @@ macro_rules! float_impl {
                 <$T>::log10(self)
             }
 
+            #[cfg(feature = "std")]
             #[inline]
             fn to_degrees(self) -> Self {
                 <$T>::to_degrees(self)
             }
 
+            #[cfg(feature = "std")]
             #[inline]
             fn to_radians(self) -> Self {
                 <$T>::to_radians(self)
+            }
+
+            #[cfg(not(feature = "std"))]
+            #[inline]
+            fn to_degrees(self) -> Self {
+               self * (180. / ::core::$T::consts::PI)
+            }
+
+            #[cfg(not(feature = "std"))]
+            #[inline]
+            fn to_radians(self) -> Self {
+               self * (::core::$T::consts::PI / 180.)
             }
 
             #[cfg(feature = "std")]
