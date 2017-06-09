@@ -1,8 +1,8 @@
-use std::ops::Neg;
-use std::{f32, f64};
-use std::num::Wrapping;
+use core::ops::Neg;
+use core::{f32, f64};
+use core::num::Wrapping;
 
-use Num;
+use {Num, Float};
 
 /// Useful functions for signed numbers (i.e. numbers that can be negative).
 pub trait Signed: Sized + Num + Neg<Output = Self> {
@@ -104,16 +104,15 @@ macro_rules! signed_float_impl {
             /// Computes the absolute value. Returns `NAN` if the number is `NAN`.
             #[inline]
             fn abs(&self) -> $t {
-                <$t>::abs(*self)
+                (*self).abs()
             }
 
             /// The positive difference of two numbers. Returns `0.0` if the number is
             /// less than or equal to `other`, otherwise the difference between`self`
             /// and `other` is returned.
             #[inline]
-            #[allow(deprecated)]
             fn abs_sub(&self, other: &$t) -> $t {
-                <$t>::abs_sub(*self, *other)
+                if *self <= *other { 0. } else { *self - *other }
             }
 
             /// # Returns
@@ -123,7 +122,7 @@ macro_rules! signed_float_impl {
             /// - `NAN` if the number is NaN
             #[inline]
             fn signum(&self) -> $t {
-                <$t>::signum(*self)
+                Float::signum(*self)
             }
 
             /// Returns `true` if the number is positive, including `+0.0` and `INFINITY`

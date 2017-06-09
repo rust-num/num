@@ -1,4 +1,4 @@
-use std::ops::{Add, Sub, Mul, Div};
+use core::ops::{Add, Sub, Mul, Div};
 
 /// Performs addition that returns `None` instead of wrapping around on
 /// overflow.
