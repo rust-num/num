@@ -10,9 +10,11 @@ for package in bigint complex integer iter rational traits; do
   cargo test --manifest-path $package/Cargo.toml
 done
 
-# Only num-traits supports no_std at the moment.
-cargo build --manifest-path traits/Cargo.toml --no-default-features
-cargo test --manifest-path traits/Cargo.toml --no-default-features
+# They all should build with minimal features too
+for package in bigint complex integer iter rational traits; do
+  cargo build --manifest-path $package/Cargo.toml --no-default-features
+  cargo test --manifest-path $package/Cargo.toml --no-default-features
+done
 
 # Each isolated feature should also work everywhere.
 for feature in '' bigint rational complex; do
