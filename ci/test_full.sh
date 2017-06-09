@@ -38,7 +38,9 @@ cargo build --verbose --manifest-path=derive/Cargo.toml
 
 if [ "$TRAVIS_RUST_VERSION" != nightly ]; then exit; fi
 
-# num-derive testing requires compiletest_rs, which requires nightly
+# num-derive testing requires compiletest_rs, which requires nightly.  It also
+# gets confused seeing multiple num with different features, so clean it first.
+cargo clean
 cargo test --verbose --manifest-path=derive/Cargo.toml
 
 # benchmarks only work on nightly
