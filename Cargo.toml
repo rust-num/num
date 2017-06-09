@@ -7,7 +7,7 @@ keywords = ["mathematics", "numerics"]
 license = "MIT/Apache-2.0"
 repository = "https://github.com/rust-num/num"
 name = "num"
-version = "0.1.37"
+version = "0.1.38"
 
 [[bench]]
 name = "bigint"
@@ -21,16 +21,16 @@ name = "shootout-pidigits"
 [dependencies.num-bigint]
 optional = true
 path = "bigint"
-version = "0.1.36"
+version = "0.1.38"
 
 [dependencies.num-complex]
 optional = true
 path = "complex"
-version = "0.1.36"
+version = "0.1.38"
 
 [dependencies.num-integer]
 path = "./integer"
-version = "0.1.33"
+version = "0.1.34"
 
 [dependencies.num-iter]
 optional = false
@@ -40,11 +40,11 @@ version = "0.1.33"
 [dependencies.num-rational]
 optional = true
 path = "rational"
-version = "0.1.36"
+version = "0.1.37"
 
 [dependencies.num-traits]
 path = "./traits"
-version = "0.1.37"
+version = "0.1.38"
 
 [dev-dependencies]
 
