@@ -7,22 +7,23 @@ keywords = ["mathematics", "numerics"]
 license = "MIT/Apache-2.0"
 name = "num-rational"
 repository = "https://github.com/rust-num/num"
-version = "0.1.37"
+version = "0.2.0-git"
+publish = false
 
 [dependencies]
 
 [dependencies.num-bigint]
 optional = true
 path = "../bigint"
-version = "0.1.32"
+version = "0.2.0-git"
 
 [dependencies.num-integer]
 path = "../integer"
-version = "0.1.32"
+version = "0.2.0-git"
 
 [dependencies.num-traits]
 path = "../traits"
-version = "0.1.32"
+version = "0.2.0-git"
 
 [dependencies.rustc-serialize]
 optional = true

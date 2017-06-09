@@ -7,17 +7,18 @@ keywords = ["mathematics", "numerics"]
 license = "MIT/Apache-2.0"
 name = "num-bigint"
 repository = "https://github.com/rust-num/num"
-version = "0.1.38"
+version = "0.2.0-git"
+publish = false
 
 [dependencies]
 
 [dependencies.num-integer]
 path = "../integer"
-version = "0.1.32"
+version = "0.2.0-git"
 
 [dependencies.num-traits]
 path = "../traits"
-version = "0.1.32"
+version = "0.2.0-git"
 
 [dependencies.rand]
 optional = true

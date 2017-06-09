@@ -7,14 +7,15 @@ keywords = ["mathematics", "numerics"]
 license = "MIT/Apache-2.0"
 name = "num-complex"
 repository = "https://github.com/rust-num/num"
-version = "0.1.38"
+version = "0.2.0-git"
+publish = false
 
 [dependencies]
 
 [dependencies.num-traits]
 optional = false
 path = "../traits"
-version = "0.1.32"
+version = "0.2.0-git"
 
 [dependencies.rustc-serialize]
 optional = true

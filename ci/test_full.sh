@@ -41,9 +41,5 @@ if [ "$TRAVIS_RUST_VERSION" != nightly ]; then exit; fi
 # num-derive testing requires compiletest_rs, which requires nightly
 cargo test --verbose --manifest-path=derive/Cargo.toml
 
-# num-macros only works on nightly, soon to be deprecated
-cargo build --verbose --manifest-path=macros/Cargo.toml
-cargo test --verbose --manifest-path=macros/Cargo.toml
-
 # benchmarks only work on nightly
 cargo bench --verbose
