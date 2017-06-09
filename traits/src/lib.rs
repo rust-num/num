@@ -14,15 +14,9 @@
        html_root_url = "https://rust-num.github.io/num/",
        html_playground_url = "http://play.integer32.com/")]
 
-#![deny(unconditional_recursion)]
-
-#![cfg_attr(not(feature = "std"), no_std)]
-#[cfg(feature = "std")]
-extern crate core;
-
-use core::ops::{Add, Sub, Mul, Div, Rem};
-use core::ops::{AddAssign, SubAssign, MulAssign, DivAssign, RemAssign};
-use core::num::Wrapping;
+use std::ops::{Add, Sub, Mul, Div, Rem};
+use std::ops::{AddAssign, SubAssign, MulAssign, DivAssign, RemAssign};
+use std::num::Wrapping;
 
 pub use bounds::Bounded;
 pub use float::{Float, FloatConst};
@@ -135,10 +129,10 @@ impl<T> NumAssignRef for T where T: NumAssign + for<'r> NumAssignOps<&'r T> {}
 macro_rules! int_trait_impl {
     ($name:ident for $($t:ty)*) => ($(
         impl $name for $t {
-            type FromStrRadixErr = ::core::num::ParseIntError;
+            type FromStrRadixErr = ::std::num::ParseIntError;
             #[inline]
             fn from_str_radix(s: &str, radix: u32)
-                              -> Result<Self, ::core::num::ParseIntError>
+                              -> Result<Self, ::std::num::ParseIntError>
             {
                 <$t>::from_str_radix(s, radix)
             }
@@ -164,7 +158,7 @@ pub enum FloatErrorKind {
     Empty,
     Invalid,
 }
-// FIXME: core::num::ParseFloatError is stable in 1.0, but opaque to us,
+// FIXME: std::num::ParseFloatError is stable in 1.0, but opaque to us,
 // so there's not really any way for us to reuse it.
 #[derive(Debug)]
 pub struct ParseFloatError {
@@ -311,8 +305,8 @@ macro_rules! float_trait_impl {
                         };
 
                         match (is_positive, exp) {
-                            (true,  Ok(exp)) => Float::powi(base, exp as i32),
-                            (false, Ok(exp)) => 1.0 / Float::powi(base, exp as i32),
+                            (true,  Ok(exp)) => base.powi(exp as i32),
+                            (false, Ok(exp)) => 1.0 / base.powi(exp as i32),
                             (_, Err(_))      => return Err(PFE { kind: Invalid }),
                         }
                     },

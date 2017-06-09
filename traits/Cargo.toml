@@ -10,7 +10,3 @@ name = "num-traits"
 version = "0.1.38"
 
 [dependencies]
-
-[features]
-default = ["std"]
-std = []

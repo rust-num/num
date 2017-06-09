@@ -1,20 +1,15 @@
-use core::mem;
-use core::ops::Neg;
-use core::num::FpCategory;
+use std::mem;
+use std::ops::Neg;
+use std::num::FpCategory;
 
 // Used for default implementation of `epsilon`
-use core::f32;
+use std::f32;
 
-use {ToPrimitive, Num, NumCast};
+use {Num, NumCast};
 
 // FIXME: these doctests aren't actually helpful, because they're using and
 // testing the inherent methods directly, not going through `Float`.
 
-/// Floating point operations.
-///
-/// Please note that some methods are disabled for `no_std`. If you implement it
-/// only for `no_std`, the build will fail if anyone else in the dependency
-/// graph enables `num-traits/std`.
 pub trait Float
     : Num
     + Copy
@@ -32,7 +27,6 @@ pub trait Float
     /// assert!(nan.is_nan());
     /// ```
     fn nan() -> Self;
-
     /// Returns the infinite value.
     ///
     /// ```
@@ -46,7 +40,6 @@ pub trait Float
     /// assert!(infinity > f32::MAX);
     /// ```
     fn infinity() -> Self;
-
     /// Returns the negative infinite value.
     ///
     /// ```
@@ -60,7 +53,6 @@ pub trait Float
     /// assert!(neg_infinity < f32::MIN);
     /// ```
     fn neg_infinity() -> Self;
-
     /// Returns `-0.0`.
     ///
     /// ```
@@ -74,10 +66,7 @@ pub trait Float
     /// assert_eq!(7.0f32/inf, zero);
     /// assert_eq!(zero * 10.0, zero);
     /// ```
-    #[inline]
-    fn neg_zero() -> Self {
-        -Self::zero()
-    }
+    fn neg_zero() -> Self;
 
     /// Returns the smallest finite value that this type can represent.
     ///
@@ -145,10 +134,7 @@ pub trait Float
     /// assert!(nan.is_nan());
     /// assert!(!f.is_nan());
     /// ```
-    #[inline]
-    fn is_nan(self) -> bool {
-        self != self
-    }
+    fn is_nan(self) -> bool;
 
     /// Returns `true` if this value is positive infinity or negative infinity and
     /// false otherwise.
@@ -168,10 +154,7 @@ pub trait Float
     /// assert!(inf.is_infinite());
     /// assert!(neg_inf.is_infinite());
     /// ```
-    #[inline]
-    fn is_infinite(self) -> bool {
-        self == Self::infinity() || self == Self::neg_infinity()
-    }
+    fn is_infinite(self) -> bool;
 
     /// Returns `true` if this number is neither infinite nor `NaN`.
     ///
@@ -190,10 +173,7 @@ pub trait Float
     /// assert!(!inf.is_finite());
     /// assert!(!neg_inf.is_finite());
     /// ```
-    #[inline]
-    fn is_finite(self) -> bool {
-        !(self.is_nan() || self.is_infinite())
-    }
+    fn is_finite(self) -> bool;
 
     /// Returns `true` if the number is neither zero, infinite,
     /// [subnormal][subnormal], or `NaN`.
@@ -217,10 +197,7 @@ pub trait Float
     /// assert!(!lower_than_min.is_normal());
     /// ```
     /// [subnormal]: http://en.wikipedia.org/wiki/Denormal_number
-    #[inline]
-    fn is_normal(self) -> bool {
-        self.classify() == FpCategory::Normal
-    }
+    fn is_normal(self) -> bool;
 
     /// Returns the floating point category of the number. If only one property
     /// is going to be tested, it is generally faster to use the specific
@@ -250,7 +227,6 @@ pub trait Float
     /// assert_eq!(f.floor(), 3.0);
     /// assert_eq!(g.floor(), 3.0);
     /// ```
-    #[cfg(feature = "std")]
     fn floor(self) -> Self;
 
     /// Returns the smallest integer greater than or equal to a number.
@@ -264,7 +240,6 @@ pub trait Float
     /// assert_eq!(f.ceil(), 4.0);
     /// assert_eq!(g.ceil(), 4.0);
     /// ```
-    #[cfg(feature = "std")]
     fn ceil(self) -> Self;
 
     /// Returns the nearest integer to a number. Round half-way cases away from
@@ -279,7 +254,6 @@ pub trait Float
     /// assert_eq!(f.round(), 3.0);
     /// assert_eq!(g.round(), -3.0);
     /// ```
-    #[cfg(feature = "std")]
     fn round(self) -> Self;
 
     /// Return the integer part of a number.
@@ -293,7 +267,6 @@ pub trait Float
     /// assert_eq!(f.trunc(), 3.0);
     /// assert_eq!(g.trunc(), -3.0);
     /// ```
-    #[cfg(feature = "std")]
     fn trunc(self) -> Self;
 
     /// Returns the fractional part of a number.
@@ -309,7 +282,6 @@ pub trait Float
     /// assert!(abs_difference_x < 1e-10);
     /// assert!(abs_difference_y < 1e-10);
     /// ```
-    #[cfg(feature = "std")]
     fn fract(self) -> Self;
 
     /// Computes the absolute value of `self`. Returns `Float::nan()` if the
@@ -330,16 +302,7 @@ pub trait Float
     ///
     /// assert!(f64::NAN.abs().is_nan());
     /// ```
-    #[inline]
-    fn abs(self) -> Self {
-        if self.is_sign_positive() {
-            return self;
-        }
-        if self.is_sign_negative() {
-            return -self;
-        }
-        Self::nan()
-    }
+    fn abs(self) -> Self;
 
     /// Returns a number that represents the sign of `self`.
     ///
@@ -358,16 +321,7 @@ pub trait Float
     ///
     /// assert!(f64::NAN.signum().is_nan());
     /// ```
-    #[inline]
-    fn signum(self) -> Self {
-        if self.is_sign_positive() {
-            return Self::one();
-        }
-        if self.is_sign_negative() {
-            return -Self::one();
-        }
-        Self::nan()
-    }
+    fn signum(self) -> Self;
 
     /// Returns `true` if `self` is positive, including `+0.0` and
     /// `Float::infinity()`.
@@ -386,10 +340,7 @@ pub trait Float
     /// // Requires both tests to determine if is `NaN`
     /// assert!(!nan.is_sign_positive() && !nan.is_sign_negative());
     /// ```
-    #[inline]
-    fn is_sign_positive(self) -> bool {
-        self > Self::zero() || (Self::one() / self) == Self::infinity()
-    }
+    fn is_sign_positive(self) -> bool;
 
     /// Returns `true` if `self` is negative, including `-0.0` and
     /// `Float::neg_infinity()`.
@@ -408,10 +359,7 @@ pub trait Float
     /// // Requires both tests to determine if is `NaN`.
     /// assert!(!nan.is_sign_positive() && !nan.is_sign_negative());
     /// ```
-    #[inline]
-    fn is_sign_negative(self) -> bool {
-        self < Self::zero() || (Self::one() / self) == Self::neg_infinity()
-    }
+    fn is_sign_negative(self) -> bool;
 
     /// Fused multiply-add. Computes `(self * a) + b` with only one rounding
     /// error. This produces a more accurate result with better performance than
@@ -429,9 +377,7 @@ pub trait Float
     ///
     /// assert!(abs_difference < 1e-10);
     /// ```
-    #[cfg(feature = "std")]
     fn mul_add(self, a: Self, b: Self) -> Self;
-
     /// Take the reciprocal (inverse) of a number, `1/x`.
     ///
     /// ```
@@ -442,10 +388,7 @@ pub trait Float
     ///
     /// assert!(abs_difference < 1e-10);
     /// ```
-    #[inline]
-    fn recip(self) -> Self {
-        Self::one() / self
-    }
+    fn recip(self) -> Self;
 
     /// Raise a number to an integer power.
     ///
@@ -459,15 +402,7 @@ pub trait Float
     ///
     /// assert!(abs_difference < 1e-10);
     /// ```
-    #[inline]
-    fn powi(mut self, mut exp: i32) -> Self {
-        if exp < 0 {
-            self = self.recip();
-            exp = -exp;
-        }
-        // It should always be possible to convert a positive `i32` to a `usize`.
-        super::pow(self, exp.to_usize().unwrap())
-    }
+    fn powi(self, n: i32) -> Self;
 
     /// Raise a number to a floating point power.
     ///
@@ -479,7 +414,6 @@ pub trait Float
     ///
     /// assert!(abs_difference < 1e-10);
     /// ```
-    #[cfg(feature = "std")]
     fn powf(self, n: Self) -> Self;
 
     /// Take the square root of a number.
@@ -497,7 +431,6 @@ pub trait Float
     /// assert!(abs_difference < 1e-10);
     /// assert!(negative.sqrt().is_nan());
     /// ```
-    #[cfg(feature = "std")]
     fn sqrt(self) -> Self;
 
     /// Returns `e^(self)`, (the exponential function).
@@ -514,7 +447,6 @@ pub trait Float
     ///
     /// assert!(abs_difference < 1e-10);
     /// ```
-    #[cfg(feature = "std")]
     fn exp(self) -> Self;
 
     /// Returns `2^(self)`.
@@ -529,7 +461,6 @@ pub trait Float
     ///
     /// assert!(abs_difference < 1e-10);
     /// ```
-    #[cfg(feature = "std")]
     fn exp2(self) -> Self;
 
     /// Returns the natural logarithm of the number.
@@ -546,7 +477,6 @@ pub trait Float
     ///
     /// assert!(abs_difference < 1e-10);
     /// ```
-    #[cfg(feature = "std")]
     fn ln(self) -> Self;
 
     /// Returns the logarithm of the number with respect to an arbitrary base.
@@ -566,7 +496,6 @@ pub trait Float
     /// assert!(abs_difference_10 < 1e-10);
     /// assert!(abs_difference_2 < 1e-10);
     /// ```
-    #[cfg(feature = "std")]
     fn log(self, base: Self) -> Self;
 
     /// Returns the base 2 logarithm of the number.
@@ -581,7 +510,6 @@ pub trait Float
     ///
     /// assert!(abs_difference < 1e-10);
     /// ```
-    #[cfg(feature = "std")]
     fn log2(self) -> Self;
 
     /// Returns the base 10 logarithm of the number.
@@ -596,7 +524,6 @@ pub trait Float
     ///
     /// assert!(abs_difference < 1e-10);
     /// ```
-    #[cfg(feature = "std")]
     fn log10(self) -> Self;
 
     /// Converts radians to degrees.
@@ -610,7 +537,6 @@ pub trait Float
     ///
     /// assert!(abs_difference < 1e-10);
     /// ```
-    #[cfg(feature = "std")]
     #[inline]
     fn to_degrees(self) -> Self {
         let halfpi = Self::zero().acos();
@@ -618,20 +544,6 @@ pub trait Float
         self * ninety / halfpi
     }
 
-    /// Converts radians to degrees.
-    ///
-    /// ```
-    /// use std::f64::consts;
-    ///
-    /// let angle = consts::PI;
-    ///
-    /// let abs_difference = (angle.to_degrees() - 180.0).abs();
-    ///
-    /// assert!(abs_difference < 1e-10);
-    /// ```
-    #[cfg(not(feature = "std"))]
-    fn to_degrees(self) -> Self;
-
     /// Converts degrees to radians.
     ///
     /// ```
@@ -643,7 +555,6 @@ pub trait Float
     ///
     /// assert!(abs_difference < 1e-10);
     /// ```
-    #[cfg(feature = "std")]
     #[inline]
     fn to_radians(self) -> Self {
         let halfpi = Self::zero().acos();
@@ -651,23 +562,7 @@ pub trait Float
         self * halfpi / ninety
     }
 
-    /// Converts degrees to radians.
-    ///
-    /// ```
-    /// use std::f64::consts;
-    ///
-    /// let angle = 180.0_f64;
-    ///
-    /// let abs_difference = (angle.to_radians() - consts::PI).abs();
-    ///
-    /// assert!(abs_difference < 1e-10);
-    /// ```
-    #[cfg(not(feature = "std"))]
-    fn to_radians(self) -> Self;
-
     /// Returns the maximum of the two numbers.
-    ///
-    /// If one of the arguments is NaN, then the other argument is returned.
     ///
     /// ```
     /// use num_traits::Float;
@@ -677,20 +572,9 @@ pub trait Float
     ///
     /// assert_eq!(x.max(y), y);
     /// ```
-    #[inline]
-    fn max(self, other: Self) -> Self {
-        if self.is_nan() {
-            return other;
-        }
-        if other.is_nan() {
-            return self;
-        }
-        if self > other { self } else { other }
-    }
+    fn max(self, other: Self) -> Self;
 
     /// Returns the minimum of the two numbers.
-    ///
-    /// If one of the arguments is NaN, then the other argument is returned.
     ///
     /// ```
     /// use num_traits::Float;
@@ -700,16 +584,7 @@ pub trait Float
     ///
     /// assert_eq!(x.min(y), x);
     /// ```
-    #[inline]
-    fn min(self, other: Self) -> Self {
-        if self.is_nan() {
-            return other;
-        }
-        if other.is_nan() {
-            return self;
-        }
-        if self < other { self } else { other }
-    }
+    fn min(self, other: Self) -> Self;
 
     /// The positive difference of two numbers.
     ///
@@ -728,7 +603,6 @@ pub trait Float
     /// assert!(abs_difference_x < 1e-10);
     /// assert!(abs_difference_y < 1e-10);
     /// ```
-    #[cfg(feature = "std")]
     fn abs_sub(self, other: Self) -> Self;
 
     /// Take the cubic root of a number.
@@ -743,7 +617,6 @@ pub trait Float
     ///
     /// assert!(abs_difference < 1e-10);
     /// ```
-    #[cfg(feature = "std")]
     fn cbrt(self) -> Self;
 
     /// Calculate the length of the hypotenuse of a right-angle triangle given
@@ -760,7 +633,6 @@ pub trait Float
     ///
     /// assert!(abs_difference < 1e-10);
     /// ```
-    #[cfg(feature = "std")]
     fn hypot(self, other: Self) -> Self;
 
     /// Computes the sine of a number (in radians).
@@ -775,7 +647,6 @@ pub trait Float
     ///
     /// assert!(abs_difference < 1e-10);
     /// ```
-    #[cfg(feature = "std")]
     fn sin(self) -> Self;
 
     /// Computes the cosine of a number (in radians).
@@ -790,7 +661,6 @@ pub trait Float
     ///
     /// assert!(abs_difference < 1e-10);
     /// ```
-    #[cfg(feature = "std")]
     fn cos(self) -> Self;
 
     /// Computes the tangent of a number (in radians).
@@ -804,7 +674,6 @@ pub trait Float
     ///
     /// assert!(abs_difference < 1e-14);
     /// ```
-    #[cfg(feature = "std")]
     fn tan(self) -> Self;
 
     /// Computes the arcsine of a number. Return value is in radians in
@@ -822,7 +691,6 @@ pub trait Float
     ///
     /// assert!(abs_difference < 1e-10);
     /// ```
-    #[cfg(feature = "std")]
     fn asin(self) -> Self;
 
     /// Computes the arccosine of a number. Return value is in radians in
@@ -840,7 +708,6 @@ pub trait Float
     ///
     /// assert!(abs_difference < 1e-10);
     /// ```
-    #[cfg(feature = "std")]
     fn acos(self) -> Self;
 
     /// Computes the arctangent of a number. Return value is in radians in the
@@ -856,7 +723,6 @@ pub trait Float
     ///
     /// assert!(abs_difference < 1e-10);
     /// ```
-    #[cfg(feature = "std")]
     fn atan(self) -> Self;
 
     /// Computes the four quadrant arctangent of `self` (`y`) and `other` (`x`).
@@ -886,7 +752,6 @@ pub trait Float
     /// assert!(abs_difference_1 < 1e-10);
     /// assert!(abs_difference_2 < 1e-10);
     /// ```
-    #[cfg(feature = "std")]
     fn atan2(self, other: Self) -> Self;
 
     /// Simultaneously computes the sine and cosine of the number, `x`. Returns
@@ -905,7 +770,6 @@ pub trait Float
     /// assert!(abs_difference_0 < 1e-10);
     /// assert!(abs_difference_0 < 1e-10);
     /// ```
-    #[cfg(feature = "std")]
     fn sin_cos(self) -> (Self, Self);
 
     /// Returns `e^(self) - 1` in a way that is accurate even if the
@@ -921,7 +785,6 @@ pub trait Float
     ///
     /// assert!(abs_difference < 1e-10);
     /// ```
-    #[cfg(feature = "std")]
     fn exp_m1(self) -> Self;
 
     /// Returns `ln(1+n)` (natural logarithm) more accurately than if
@@ -938,7 +801,6 @@ pub trait Float
     ///
     /// assert!(abs_difference < 1e-10);
     /// ```
-    #[cfg(feature = "std")]
     fn ln_1p(self) -> Self;
 
     /// Hyperbolic sine function.
@@ -957,7 +819,6 @@ pub trait Float
     ///
     /// assert!(abs_difference < 1e-10);
     /// ```
-    #[cfg(feature = "std")]
     fn sinh(self) -> Self;
 
     /// Hyperbolic cosine function.
@@ -976,7 +837,6 @@ pub trait Float
     /// // Same result
     /// assert!(abs_difference < 1.0e-10);
     /// ```
-    #[cfg(feature = "std")]
     fn cosh(self) -> Self;
 
     /// Hyperbolic tangent function.
@@ -995,7 +855,6 @@ pub trait Float
     ///
     /// assert!(abs_difference < 1.0e-10);
     /// ```
-    #[cfg(feature = "std")]
     fn tanh(self) -> Self;
 
     /// Inverse hyperbolic sine function.
@@ -1010,7 +869,6 @@ pub trait Float
     ///
     /// assert!(abs_difference < 1.0e-10);
     /// ```
-    #[cfg(feature = "std")]
     fn asinh(self) -> Self;
 
     /// Inverse hyperbolic cosine function.
@@ -1025,7 +883,6 @@ pub trait Float
     ///
     /// assert!(abs_difference < 1.0e-10);
     /// ```
-    #[cfg(feature = "std")]
     fn acosh(self) -> Self;
 
     /// Inverse hyperbolic tangent function.
@@ -1041,7 +898,6 @@ pub trait Float
     ///
     /// assert!(abs_difference < 1.0e-10);
     /// ```
-    #[cfg(feature = "std")]
     fn atanh(self) -> Self;
 
 
@@ -1070,21 +926,21 @@ pub trait Float
 }
 
 macro_rules! float_impl {
-    ($T:ident $decode:ident $classify:ident) => (
+    ($T:ident $decode:ident) => (
         impl Float for $T {
             #[inline]
             fn nan() -> Self {
-                ::core::$T::NAN
+                ::std::$T::NAN
             }
 
             #[inline]
             fn infinity() -> Self {
-                ::core::$T::INFINITY
+                ::std::$T::INFINITY
             }
 
             #[inline]
             fn neg_infinity() -> Self {
-                ::core::$T::NEG_INFINITY
+                ::std::$T::NEG_INFINITY
             }
 
             #[inline]
@@ -1094,326 +950,264 @@ macro_rules! float_impl {
 
             #[inline]
             fn min_value() -> Self {
-                ::core::$T::MIN
+                ::std::$T::MIN
             }
 
             #[inline]
             fn min_positive_value() -> Self {
-                ::core::$T::MIN_POSITIVE
+                ::std::$T::MIN_POSITIVE
             }
 
             #[inline]
             fn epsilon() -> Self {
-                ::core::$T::EPSILON
+                ::std::$T::EPSILON
             }
 
             #[inline]
             fn max_value() -> Self {
-                ::core::$T::MAX
+                ::std::$T::MAX
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn is_nan(self) -> bool {
                 <$T>::is_nan(self)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn is_infinite(self) -> bool {
                 <$T>::is_infinite(self)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn is_finite(self) -> bool {
                 <$T>::is_finite(self)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn is_normal(self) -> bool {
                 <$T>::is_normal(self)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn classify(self) -> FpCategory {
                 <$T>::classify(self)
             }
 
-            #[cfg(not(feature = "std"))]
-            #[inline]
-            fn classify(self) -> FpCategory {
-                $classify(self)
-            }
-
-            #[cfg(feature = "std")]
             #[inline]
             fn floor(self) -> Self {
                 <$T>::floor(self)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn ceil(self) -> Self {
                 <$T>::ceil(self)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn round(self) -> Self {
                 <$T>::round(self)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn trunc(self) -> Self {
                 <$T>::trunc(self)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn fract(self) -> Self {
                 <$T>::fract(self)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn abs(self) -> Self {
                 <$T>::abs(self)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn signum(self) -> Self {
                 <$T>::signum(self)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn is_sign_positive(self) -> bool {
                 <$T>::is_sign_positive(self)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn is_sign_negative(self) -> bool {
                 <$T>::is_sign_negative(self)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn mul_add(self, a: Self, b: Self) -> Self {
                 <$T>::mul_add(self, a, b)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn recip(self) -> Self {
                 <$T>::recip(self)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn powi(self, n: i32) -> Self {
                 <$T>::powi(self, n)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn powf(self, n: Self) -> Self {
                 <$T>::powf(self, n)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn sqrt(self) -> Self {
                 <$T>::sqrt(self)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn exp(self) -> Self {
                 <$T>::exp(self)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn exp2(self) -> Self {
                 <$T>::exp2(self)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn ln(self) -> Self {
                 <$T>::ln(self)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn log(self, base: Self) -> Self {
                 <$T>::log(self, base)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn log2(self) -> Self {
                 <$T>::log2(self)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn log10(self) -> Self {
                 <$T>::log10(self)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn to_degrees(self) -> Self {
-                <$T>::to_degrees(self)
+                // NB: `f32` didn't stabilize this until 1.7
+                // <$T>::to_degrees(self)
+                self * (180. / ::std::$T::consts::PI)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn to_radians(self) -> Self {
-                <$T>::to_radians(self)
+                // NB: `f32` didn't stabilize this until 1.7
+                // <$T>::to_radians(self)
+                self * (::std::$T::consts::PI / 180.)
             }
 
-            #[cfg(not(feature = "std"))]
-            #[inline]
-            fn to_degrees(self) -> Self {
-               self * (180. / ::core::$T::consts::PI)
-            }
-
-            #[cfg(not(feature = "std"))]
-            #[inline]
-            fn to_radians(self) -> Self {
-               self * (::core::$T::consts::PI / 180.)
-            }
-
-            #[cfg(feature = "std")]
             #[inline]
             fn max(self, other: Self) -> Self {
                 <$T>::max(self, other)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn min(self, other: Self) -> Self {
                 <$T>::min(self, other)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             #[allow(deprecated)]
             fn abs_sub(self, other: Self) -> Self {
                 <$T>::abs_sub(self, other)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn cbrt(self) -> Self {
                 <$T>::cbrt(self)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn hypot(self, other: Self) -> Self {
                 <$T>::hypot(self, other)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn sin(self) -> Self {
                 <$T>::sin(self)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn cos(self) -> Self {
                 <$T>::cos(self)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn tan(self) -> Self {
                 <$T>::tan(self)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn asin(self) -> Self {
                 <$T>::asin(self)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn acos(self) -> Self {
                 <$T>::acos(self)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn atan(self) -> Self {
                 <$T>::atan(self)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn atan2(self, other: Self) -> Self {
                 <$T>::atan2(self, other)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn sin_cos(self) -> (Self, Self) {
                 <$T>::sin_cos(self)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn exp_m1(self) -> Self {
                 <$T>::exp_m1(self)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn ln_1p(self) -> Self {
                 <$T>::ln_1p(self)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn sinh(self) -> Self {
                 <$T>::sinh(self)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn cosh(self) -> Self {
                 <$T>::cosh(self)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn tanh(self) -> Self {
                 <$T>::tanh(self)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn asinh(self) -> Self {
                 <$T>::asinh(self)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn acosh(self) -> Self {
                 <$T>::acosh(self)
             }
 
-            #[cfg(feature = "std")]
             #[inline]
             fn atanh(self) -> Self {
                 <$T>::atanh(self)
@@ -1445,21 +1239,6 @@ fn integer_decode_f32(f: f32) -> (u64, i16, i8) {
     (mantissa as u64, exponent, sign)
 }
 
-#[cfg(not(feature = "std"))]
-fn classify_f32(f: f32) -> FpCategory {
-    const EXP_MASK: u32 = 0x7f800000;
-    const MAN_MASK: u32 = 0x007fffff;
-
-    let bits: u32 = unsafe { mem::transmute(f) };
-    match (bits & MAN_MASK, bits & EXP_MASK) {
-        (0, 0) => FpCategory::Zero,
-        (_, 0) => FpCategory::Subnormal,
-        (0, EXP_MASK) => FpCategory::Infinite,
-        (_, EXP_MASK) => FpCategory::Nan,
-        _ => FpCategory::Normal,
-    }
-}
-
 fn integer_decode_f64(f: f64) -> (u64, i16, i8) {
     let bits: u64 = unsafe { mem::transmute(f) };
     let sign: i8 = if bits >> 63 == 0 {
@@ -1478,23 +1257,8 @@ fn integer_decode_f64(f: f64) -> (u64, i16, i8) {
     (mantissa, exponent, sign)
 }
 
-#[cfg(not(feature = "std"))]
-fn classify_f64(f: f64) -> FpCategory {
-    const EXP_MASK: u64 = 0x7ff0000000000000;
-    const MAN_MASK: u64 = 0x000fffffffffffff;
-
-    let bits: u64 = unsafe { mem::transmute(f) };
-    match (bits & MAN_MASK, bits & EXP_MASK) {
-        (0, 0) => FpCategory::Zero,
-        (_, 0) => FpCategory::Subnormal,
-        (0, EXP_MASK) => FpCategory::Infinite,
-        (_, EXP_MASK) => FpCategory::Nan,
-        _ => FpCategory::Normal,
-    }
-}
-
-float_impl!(f32 integer_decode_f32 classify_f32);
-float_impl!(f64 integer_decode_f64 classify_f64);
+float_impl!(f32 integer_decode_f32);
+float_impl!(f64 integer_decode_f64);
 
 macro_rules! float_const_impl {
     ($(#[$doc:meta] $constant:ident,)+) => (
@@ -1510,7 +1274,7 @@ macro_rules! float_const_impl {
             $(
                 #[inline]
                 fn $constant() -> Self {
-                    ::core::$T::consts::$constant
+                    ::std::$T::consts::$constant
                 }
             )+
         }
@@ -1555,34 +1319,20 @@ float_const_impl! {
 #[cfg(test)]
 mod tests {
     use Float;
-    use core::f64::consts;
-
-    const DEG_RAD_PAIRS: [(f64, f64); 7] = [
-        (0.0, 0.),
-        (22.5, consts::FRAC_PI_8),
-        (30.0, consts::FRAC_PI_6),
-        (45.0, consts::FRAC_PI_4),
-        (60.0, consts::FRAC_PI_3),
-        (90.0, consts::FRAC_PI_2),
-        (180.0, consts::PI),
-    ];
 
     #[test]
-    fn convert_deg_rad_core() {
-        for &(deg, rad) in &DEG_RAD_PAIRS {
-            assert!((Float::to_degrees(rad) - deg).abs() < 1e-6);
-            assert!((Float::to_radians(deg) - rad).abs() < 1e-6);
+    fn convert_deg_rad() {
+        use std::f64::consts;
 
-            let (deg, rad) = (deg as f32, rad as f32);
-            assert!((Float::to_degrees(rad) - deg).abs() < 1e-6);
-            assert!((Float::to_radians(deg) - rad).abs() < 1e-6);
-        }
-    }
-
-    #[cfg(feature = "std")]
-    #[test]
-    fn convert_deg_rad_std() {
-        use Float;
+        const DEG_RAD_PAIRS: [(f64, f64); 7] = [
+            (0.0, 0.),
+            (22.5, consts::FRAC_PI_8),
+            (30.0, consts::FRAC_PI_6),
+            (45.0, consts::FRAC_PI_4),
+            (60.0, consts::FRAC_PI_3),
+            (90.0, consts::FRAC_PI_2),
+            (180.0, consts::PI),
+        ];
 
         for &(deg, rad) in &DEG_RAD_PAIRS {
             assert!((Float::to_degrees(rad) - deg).abs() < 1e-6);
