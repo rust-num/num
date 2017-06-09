@@ -7,7 +7,7 @@ keywords = ["mathematics", "numerics"]
 license = "MIT/Apache-2.0"
 name = "num-rational"
 repository = "https://github.com/rust-num/num"
-version = "0.1.36"
+version = "0.1.37"
 
 [dependencies]
 
