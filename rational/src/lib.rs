@@ -668,6 +668,7 @@ impl RatioErrorKind {
     }
 }
 
+#[cfg(feature = "num-bigint")]
 impl FromPrimitive for Ratio<BigInt> {
     fn from_i64(n: i64) -> Option<Self> {
         Some(Ratio::from_integer(n.into()))
@@ -859,7 +860,7 @@ mod test {
     use std::str::FromStr;
     use std::i32;
     use std::f64;
-    use traits::{Zero, One, Signed, FromPrimitive, Float};
+    use traits::{Zero, One, Signed, FromPrimitive};
 
     pub const _0: Rational = Ratio {
         numer: 0,
@@ -1301,6 +1302,7 @@ mod test {
     #[cfg(feature = "num-bigint")]
     #[test]
     fn test_from_float() {
+        use traits::Float;
         fn test<T: Float>(given: T, (numer, denom): (&str, &str)) {
             let ratio: BigRational = Ratio::from_float(given).unwrap();
             assert_eq!(ratio,
