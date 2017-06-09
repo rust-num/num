@@ -668,6 +668,7 @@ impl RatioErrorKind {
     }
 }
 
+#[cfg(feature = "num-bigint")]
 impl FromPrimitive for Ratio<BigInt> {
     fn from_i64(n: i64) -> Option<Self> {
         Some(Ratio::from_integer(n.into()))
