@@ -1023,7 +1023,7 @@ impl BigUint {
     }
 
     /// Returns the integer formatted as a string in the given radix.
-    /// `radix` must be in the range `[2, 36]`.
+    /// `radix` must be in the range `2...36`.
     ///
     /// # Examples
     ///
@@ -1041,10 +1041,10 @@ impl BigUint {
     }
 
     /// Returns the integer in a given base. Each digit is given as an u8
-    /// number. Conversion to an alphabet has to be performed afterwards.
-    /// In contrast to the usual arabic style of written numbers as returned by
+    /// number. (The output is not given in a human readable alphabet.)
+    /// In contrast to the usual arabic ordering of written digits as returned by
     /// `to_str_radix`, the most significant digit comes last.
-    /// `radix` must be in the range `[2, 256]`.
+    /// `radix` must be in the range `2...256`.
     ///
     /// # Examples
     ///
@@ -1060,7 +1060,9 @@ impl BigUint {
         to_radix_reversed(self, radix)
     }
 
-    /// Creates and initializes a `BigUint`.
+    /// Creates and initializes a `BigUint`. The input slice must contrain
+    /// ascii/utf8 characters in [0-9a-zA-Z].
+    /// `radix` must be in the range `2...36`.
     ///
     /// # Examples
     ///
@@ -1074,6 +1076,45 @@ impl BigUint {
     #[inline]
     pub fn parse_bytes(buf: &[u8], radix: u32) -> Option<BigUint> {
         str::from_utf8(buf).ok().and_then(|s| BigUint::from_str_radix(s, radix).ok())
+    }
+
+    /// Creates and initializes a `BigUint`. Each u8 of the input slice is
+    /// interpreted as one digit of the number and must therefore be less than `radix`.
+    /// In contrast to the usual arabic ordering of written digits as required by
+    /// `from_str_radix`, the most significant digit comes last.
+    /// `radix` must be in the range `2...256`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use num_bigint::{BigUint};
+    ///
+    /// let inbase190 = &[15, 33, 125, 12, 14];
+    /// let a = BigUint::from_radix(inbase190, 190).unwrap();
+    /// assert_eq!(a.to_radix(190), inbase190);
+    /// ```
+    pub fn from_radix(buf: &[u8], radix: u32) -> Option<BigUint> {
+        assert!(2 <= radix && radix <= 256, "The radix must be within 2...256");
+
+        if radix != 256 && buf.iter().any(|&b| b >= radix as u8) {
+            return None;
+        }
+
+        let res = if radix.is_power_of_two() {
+            // Powers of two can use bitwise masks and shifting instead of multiplication
+            let bits = ilog2(radix);
+            if big_digit::BITS % bits == 0 {
+                from_bitwise_digits_le(buf, bits)
+            } else {
+                from_inexact_bitwise_digits_le(buf, bits)
+            }
+        } else {
+            let mut v = Vec::from(buf);
+            v.reverse();
+            from_radix_digits_be(&v, radix)
+        };
+
+        Some(res)
     }
 
     /// Determines the fewest bits necessary to express the `BigUint`.

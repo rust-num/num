@@ -1021,8 +1021,8 @@ fn test_to_str_radix() {
 }
 
 #[test]
-fn test_to_radix() {
-    const GROUND_TRUTH : &[(&[u8], u32, &[u8])] = &[
+fn test_from_and_to_radix() {
+    const GROUND_TRUTH : &'static[(&'static[u8], u32, &'static[u8])] = &[
         (b"0",          42, &[0]),
         (b"ffffeeffbb", 2, &[1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1,
                              1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -1286,10 +1286,15 @@ fn test_to_radix() {
         (b"ffffeeffbb", 256, &[187, 255, 238, 255, 255]),
     ];
 
-    for &(bigint, radix, solution) in GROUND_TRUTH.iter() {
+    for &(bigint, radix, inbaseradix) in GROUND_TRUTH.iter() {
         let bigint = BigUint::parse_bytes(bigint, 16).unwrap();
-        assert_eq!(bigint.to_radix(radix), solution);
+        // to_radix
+        assert_eq!(bigint.to_radix(radix), inbaseradix);
+        // from_radix
+        assert_eq!(BigUint::from_radix(inbaseradix, radix).unwrap(), bigint);
     }
+
+    assert!(BigUint::from_radix(&[10,100,10], 50).is_none());
 }
 
 #[test]

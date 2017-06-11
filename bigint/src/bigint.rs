@@ -1011,7 +1011,7 @@ impl BigInt {
     }
 
     /// Returns the integer formatted as a string in the given radix.
-    /// `radix` must be in the range `[2, 36]`.
+    /// `radix` must be in the range `2...36`.
     ///
     /// # Examples
     ///
@@ -1037,7 +1037,7 @@ impl BigInt {
     /// number. Conversion to an alphabet has to be performed afterwards.
     /// In contrast to the usual arabic style of written numbers as returned by
     /// `to_str_radix`, the most significant digit comes last.
-    /// `radix` must be in the range `[2, 256]`.
+    /// `radix` must be in the range `2...256`.
     ///
     /// # Examples
     ///
