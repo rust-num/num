@@ -1286,15 +1286,23 @@ fn test_from_and_to_radix() {
         (b"ffffeeffbb", 256, &[187, 255, 238, 255, 255]),
     ];
 
-    for &(bigint, radix, inbaseradix) in GROUND_TRUTH.iter() {
+    for &(bigint, radix, inbaseradix_le) in GROUND_TRUTH.iter() {
         let bigint = BigUint::parse_bytes(bigint, 16).unwrap();
-        // to_radix
-        assert_eq!(bigint.to_radix(radix), inbaseradix);
-        // from_radix
-        assert_eq!(BigUint::from_radix(inbaseradix, radix).unwrap(), bigint);
+        // to_radix_le
+        assert_eq!(bigint.to_radix_le(radix), inbaseradix_le);
+        // to_radix_be
+        let mut inbase_be = bigint.to_radix_be(radix);
+        inbase_be.reverse(); // now le
+        assert_eq!(inbase_be, inbaseradix_le);
+        // from_radix_le
+        assert_eq!(BigUint::from_radix_le(inbaseradix_le, radix).unwrap(), bigint);
+        // from_radix_be
+        let mut inbaseradix_be = Vec::from(inbaseradix_le);
+        inbaseradix_be.reverse();
+        assert_eq!(BigUint::from_radix_be(&inbaseradix_be, radix).unwrap(), bigint);
     }
 
-    assert!(BigUint::from_radix(&[10,100,10], 50).is_none());
+    assert!(BigUint::from_radix_le(&[10,100,10], 50).is_none());
 }
 
 #[test]

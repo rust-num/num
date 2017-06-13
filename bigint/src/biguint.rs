@@ -887,7 +887,7 @@ fn to_radix_digits_le(u: &BigUint, radix: u32) -> Vec<u8> {
     res
 }
 
-pub fn to_radix_reversed(u: &BigUint, radix: u32) -> Vec<u8> {
+pub fn to_radix_le(u: &BigUint, radix: u32) -> Vec<u8> {
     if u.is_zero() {
         vec![0]
     } else if radix.is_power_of_two() {
@@ -914,7 +914,7 @@ pub fn to_str_radix_reversed(u: &BigUint, radix: u32) -> Vec<u8> {
         return vec![b'0'];
     }
 
-    let mut res = to_radix_reversed(u, radix);
+    let mut res = to_radix_le(u, radix);
 
     // Now convert everything to ASCII digits.
     for r in &mut res {
@@ -986,6 +986,108 @@ impl BigUint {
         }
     }
 
+    /// Creates and initializes a `BigUint`. The input slice must contain
+    /// ascii/utf8 characters in [0-9a-zA-Z].
+    /// `radix` must be in the range `2...36`.
+    ///
+    /// The function `from_str_radix` from the `Num` trait provides the same logic
+    /// for `&str` buffers.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use num_bigint::{BigUint, ToBigUint};
+    ///
+    /// assert_eq!(BigUint::parse_bytes(b"1234", 10), ToBigUint::to_biguint(&1234));
+    /// assert_eq!(BigUint::parse_bytes(b"ABCD", 16), ToBigUint::to_biguint(&0xABCD));
+    /// assert_eq!(BigUint::parse_bytes(b"G", 16), None);
+    /// ```
+    #[inline]
+    pub fn parse_bytes(buf: &[u8], radix: u32) -> Option<BigUint> {
+        str::from_utf8(buf).ok().and_then(|s| BigUint::from_str_radix(s, radix).ok())
+    }
+
+    /// Creates and initializes a `BigUint`. Each u8 of the input slice is
+    /// interpreted as one digit of the number
+    /// and must therefore be less than `radix`.
+    ///
+    /// The bytes are in big-endian byte order.
+    /// `radix` must be in the range `2...256`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use num_bigint::{BigUint};
+    ///
+    /// let inbase190 = &[15, 33, 125, 12, 14];
+    /// let a = BigUint::from_radix_be(inbase190, 190).unwrap();
+    /// assert_eq!(a.to_radix_be(190), inbase190);
+    /// ```
+    pub fn from_radix_be(buf: &[u8], radix: u32) -> Option<BigUint> {
+        assert!(2 <= radix && radix <= 256, "The radix must be within 2...256");
+
+        if radix != 256 && buf.iter().any(|&b| b >= radix as u8) {
+            return None;
+        }
+
+        let res = if radix.is_power_of_two() {
+            // Powers of two can use bitwise masks and shifting instead of multiplication
+            let bits = ilog2(radix);
+            let mut v = Vec::from(buf);
+            v.reverse();
+            if big_digit::BITS % bits == 0 {
+                from_bitwise_digits_le(&v, bits)
+            } else {
+                from_inexact_bitwise_digits_le(&v, bits)
+            }
+        } else {
+            from_radix_digits_be(buf, radix)
+        };
+
+        Some(res)
+    }
+
+    /// Creates and initializes a `BigUint`. Each u8 of the input slice is
+    /// interpreted as one digit of the number
+    /// and must therefore be less than `radix`.
+    ///
+    /// The bytes are in little-endian byte order.
+    /// `radix` must be in the range `2...256`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use num_bigint::{BigUint};
+    ///
+    /// let inbase190 = &[14, 12, 125, 33, 15];
+    /// let a = BigUint::from_radix_be(inbase190, 190).unwrap();
+    /// assert_eq!(a.to_radix_be(190), inbase190);
+    /// ```
+    pub fn from_radix_le(buf: &[u8], radix: u32) -> Option<BigUint> {
+        assert!(2 <= radix && radix <= 256, "The radix must be within 2...256");
+
+        if radix != 256 && buf.iter().any(|&b| b >= radix as u8) {
+            return None;
+        }
+
+        let res = if radix.is_power_of_two() {
+            // Powers of two can use bitwise masks and shifting instead of multiplication
+            let bits = ilog2(radix);
+            if big_digit::BITS % bits == 0 {
+                from_bitwise_digits_le(buf, bits)
+            } else {
+                from_inexact_bitwise_digits_le(buf, bits)
+            }
+        } else {
+            let mut v = Vec::from(buf);
+            v.reverse();
+            from_radix_digits_be(&v, radix)
+        };
+
+        Some(res)
+    }
+
+
     /// Returns the byte representation of the `BigUint` in little-endian byte order.
     ///
     /// # Examples
@@ -1040,10 +1142,9 @@ impl BigUint {
         unsafe { String::from_utf8_unchecked(v) }
     }
 
-    /// Returns the integer in a given base. Each digit is given as an u8
-    /// number. (The output is not given in a human readable alphabet.)
-    /// In contrast to the usual arabic ordering of written digits as returned by
-    /// `to_str_radix`, the most significant digit comes last.
+    /// Returns the integer in the requested base in little-endian digit order.
+    /// The output is not given in a human readable alphabet but as a zero
+    /// based u8 number.
     /// `radix` must be in the range `2...256`.
     ///
     /// # Examples
@@ -1051,70 +1152,34 @@ impl BigUint {
     /// ```
     /// use num_bigint::BigUint;
     ///
-    /// assert_eq!(BigUint::from(0xFFFFu64).to_radix(159),
+    /// assert_eq!(BigUint::from(0xFFFFu64).to_radix_le(159),
     ///            vec![27, 94, 2]);
     /// // 0xFFFF = 65535 = 27 + 94*159 + 2*(159^2)
     /// ```
     #[inline]
-    pub fn to_radix(&self, radix: u32) -> Vec<u8> {
-        to_radix_reversed(self, radix)
+    pub fn to_radix_le(&self, radix: u32) -> Vec<u8> {
+        to_radix_le(self, radix)
     }
 
-    /// Creates and initializes a `BigUint`. The input slice must contrain
-    /// ascii/utf8 characters in [0-9a-zA-Z].
-    /// `radix` must be in the range `2...36`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use num_bigint::{BigUint, ToBigUint};
-    ///
-    /// assert_eq!(BigUint::parse_bytes(b"1234", 10), ToBigUint::to_biguint(&1234));
-    /// assert_eq!(BigUint::parse_bytes(b"ABCD", 16), ToBigUint::to_biguint(&0xABCD));
-    /// assert_eq!(BigUint::parse_bytes(b"G", 16), None);
-    /// ```
-    #[inline]
-    pub fn parse_bytes(buf: &[u8], radix: u32) -> Option<BigUint> {
-        str::from_utf8(buf).ok().and_then(|s| BigUint::from_str_radix(s, radix).ok())
-    }
-
-    /// Creates and initializes a `BigUint`. Each u8 of the input slice is
-    /// interpreted as one digit of the number and must therefore be less than `radix`.
-    /// In contrast to the usual arabic ordering of written digits as required by
-    /// `from_str_radix`, the most significant digit comes last.
+    /// Returns the integer in the requested base in big-endian digit order.
+    /// The output is not given in a human readable alphabet but as a zero
+    /// based u8 number.
     /// `radix` must be in the range `2...256`.
     ///
     /// # Examples
     ///
     /// ```
-    /// use num_bigint::{BigUint};
+    /// use num_bigint::BigUint;
     ///
-    /// let inbase190 = &[15, 33, 125, 12, 14];
-    /// let a = BigUint::from_radix(inbase190, 190).unwrap();
-    /// assert_eq!(a.to_radix(190), inbase190);
+    /// assert_eq!(BigUint::from(0xFFFFu64).to_radix_be(159),
+    ///            vec![2, 94, 27]);
+    /// // 0xFFFF = 65535 = 2*(159^2) + 94*159 + 27
     /// ```
-    pub fn from_radix(buf: &[u8], radix: u32) -> Option<BigUint> {
-        assert!(2 <= radix && radix <= 256, "The radix must be within 2...256");
-
-        if radix != 256 && buf.iter().any(|&b| b >= radix as u8) {
-            return None;
-        }
-
-        let res = if radix.is_power_of_two() {
-            // Powers of two can use bitwise masks and shifting instead of multiplication
-            let bits = ilog2(radix);
-            if big_digit::BITS % bits == 0 {
-                from_bitwise_digits_le(buf, bits)
-            } else {
-                from_inexact_bitwise_digits_le(buf, bits)
-            }
-        } else {
-            let mut v = Vec::from(buf);
-            v.reverse();
-            from_radix_digits_be(&v, radix)
-        };
-
-        Some(res)
+    #[inline]
+    pub fn to_radix_be(&self, radix: u32) -> Vec<u8> {
+        let mut v = to_radix_le(self, radix);
+        v.reverse();
+        v
     }
 
     /// Determines the fewest bits necessary to express the `BigUint`.

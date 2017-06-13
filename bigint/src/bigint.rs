@@ -1033,10 +1033,9 @@ impl BigInt {
         unsafe { String::from_utf8_unchecked(v) }
     }
 
-    /// Returns the integer in a given base. Each digit is given as an u8
-    /// number. Conversion to an alphabet has to be performed afterwards.
-    /// In contrast to the usual arabic style of written numbers as returned by
-    /// `to_str_radix`, the most significant digit comes last.
+    /// Returns the integer in the requested base in big-endian digit order.
+    /// The output is not given in a human readable alphabet but as a zero
+    /// based u8 number.
     /// `radix` must be in the range `2...256`.
     ///
     /// # Examples
@@ -1044,13 +1043,32 @@ impl BigInt {
     /// ```
     /// use num_bigint::{BigInt, Sign};
     ///
-    /// assert_eq!(BigInt::from(-0xFFFFi64).to_radix(159),
+    /// assert_eq!(BigInt::from(-0xFFFFi64).to_radix_be(159),
+    ///            (Sign::Minus, vec![2, 94, 27]));
+    /// // 0xFFFF = 65535 = 2*(159^2) + 94*159 + 27
+    /// ```
+    #[inline]
+    pub fn to_radix_be(&self, radix: u32) -> (Sign, Vec<u8>) {
+        (self.sign, self.data.to_radix_be(radix))
+    }
+
+    /// Returns the integer in the requested base in little-endian digit order.
+    /// The output is not given in a human readable alphabet but as a zero
+    /// based u8 number.
+    /// `radix` must be in the range `2...256`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use num_bigint::{BigInt, Sign};
+    ///
+    /// assert_eq!(BigInt::from(-0xFFFFi64).to_radix_le(159),
     ///            (Sign::Minus, vec![27, 94, 2]));
     /// // 0xFFFF = 65535 = 27 + 94*159 + 2*(159^2)
     /// ```
     #[inline]
-    pub fn to_radix(&self, radix: u32) -> (Sign, Vec<u8>) {
-        (self.sign, self.data.to_radix(radix))
+    pub fn to_radix_le(&self, radix: u32) -> (Sign, Vec<u8>) {
+        (self.sign, self.data.to_radix_le(radix))
     }
 
     /// Returns the sign of the `BigInt` as a `Sign`.
