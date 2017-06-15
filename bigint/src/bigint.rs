@@ -980,6 +980,46 @@ impl BigInt {
         BigInt::from_biguint(sign, BigUint::from_bytes_le(bytes))
     }
 
+    /// Creates and initializes a `BigInt`. Each u8 of the input slice is
+    /// interpreted as one digit of the number
+    /// and must therefore be less than `radix`.
+    ///
+    /// The bytes are in big-endian byte order.
+    /// `radix` must be in the range `2...256`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use num_bigint::{BigInt, Sign};
+    ///
+    /// let inbase190 = vec![15, 33, 125, 12, 14];
+    /// let a = BigInt::from_radix_be(Sign::Minus, &inbase190, 190).unwrap();
+    /// assert_eq!(a.to_radix_be(190), (Sign:: Minus, inbase190));
+    /// ```
+    pub fn from_radix_be(sign: Sign, buf: &[u8], radix: u32) -> Option<BigInt> {
+        BigUint::from_radix_be(buf, radix).map(|u| BigInt::from_biguint(sign, u))
+    }
+
+    /// Creates and initializes a `BigInt`. Each u8 of the input slice is
+    /// interpreted as one digit of the number
+    /// and must therefore be less than `radix`.
+    ///
+    /// The bytes are in little-endian byte order.
+    /// `radix` must be in the range `2...256`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use num_bigint::{BigInt, Sign};
+    ///
+    /// let inbase190 = vec![14, 12, 125, 33, 15];
+    /// let a = BigInt::from_radix_be(Sign::Minus, &inbase190, 190).unwrap();
+    /// assert_eq!(a.to_radix_be(190), (Sign::Minus, inbase190));
+    /// ```
+    pub fn from_radix_le(sign: Sign, buf: &[u8], radix: u32) -> Option<BigInt> {
+        BigUint::from_radix_le(buf, radix).map(|u| BigInt::from_biguint(sign, u))
+    }
+
     /// Returns the sign and the byte representation of the `BigInt` in little-endian byte order.
     ///
     /// # Examples
