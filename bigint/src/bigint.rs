@@ -1,5 +1,5 @@
 use std::default::Default;
-use std::ops::{Add, Div, Mul, Neg, Rem, Shl, Shr, Sub};
+use std::ops::{Add, Div, Mul, Neg, Rem, Shl, Shr, Sub, Not};
 use std::str::{self, FromStr};
 use std::fmt;
 use std::cmp::Ordering::{self, Less, Greater, Equal};
@@ -16,8 +16,8 @@ use serde;
 use rand::Rng;
 
 use integer::Integer;
-use traits::{ToPrimitive, FromPrimitive, Num, CheckedAdd, CheckedSub, CheckedMul,
-             CheckedDiv, Signed, Zero, One};
+use traits::{ToPrimitive, FromPrimitive, Num, WrappingAdd, CheckedAdd, CheckedSub,
+             CheckedMul, CheckedDiv, Signed, Zero, One};
 
 use self::Sign::{Minus, NoSign, Plus};
 
@@ -926,6 +926,56 @@ impl BigInt {
         BigInt::from_biguint(sign, BigUint::new(digits))
     }
 
+    /// Creates and initializes a `BigInt` from an array of bytes in two's complement.
+    ///
+    /// The digits are in little-endian base 2^8.
+    #[inline]
+    pub fn from_twos_complement_bytes_le(mut digits: Vec<u8>) -> BigInt {
+        let sign = if digits.iter().all(Zero::is_zero) {
+            Sign::NoSign
+        } else {
+            digits.iter().rev().next()
+                .map(|v| if *v > 127 {
+                    Sign::Minus
+                } else {
+                    Sign::Plus
+                })
+                // we have at least one non-zero digit
+                .unwrap()
+        };
+
+        if sign == Sign::Minus {
+            // two's-complement the content to retrieve the magnitude
+            twos_complement_le(&mut digits);
+        }
+        BigInt::from_biguint(sign, BigUint::from_bytes_le(&*digits))
+    }
+
+    /// Creates and initializes a `BigInt` from an array of bytes in two's complement.
+    ///
+    /// The digits are in big-endian base 2^8.
+    #[inline]
+    pub fn from_twos_complement_bytes_be(mut digits: Vec<u8>) -> BigInt {
+        let sign = if digits.iter().all(Zero::is_zero) {
+            Sign::NoSign
+        } else {
+            digits.iter().next()
+                .map(|v| if *v > 127 {
+                    Sign::Minus
+                } else {
+                    Sign::Plus
+                })
+                // we have at least one non-zero digit
+                .unwrap()
+        };
+
+        if sign == Sign::Minus {
+            // two's-complement the content to retrieve the magnitude
+            twos_complement_be(&mut digits);
+        }
+        BigInt::from_biguint(sign, BigUint::from_bytes_be(&*digits))
+    }
+
     /// Creates and initializes a `BigInt`.
     ///
     /// The digits are in little-endian base 2^32.
@@ -994,6 +1044,23 @@ impl BigInt {
     pub fn to_bytes_le(&self) -> (Sign, Vec<u8>) {
         (self.sign, self.data.to_bytes_le())
     }
+    
+    /// Returns the two's complement byte representation of the `BigInt` in little-endian byte order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use num_bigint::ToBigInt;
+    ///
+    /// let i = -1125.to_bigint().unwrap();
+    /// assert_eq!(i.to_twos_complement_bytes_le(), vec![155, 251]);
+    /// ```
+    #[inline]
+    pub fn to_twos_complement_bytes_le(&self) -> Vec<u8> {
+        let mut bytes = self.data.to_bytes_le();
+        twos_complement_le(&mut bytes);
+        bytes
+    }
 
     /// Returns the sign and the byte representation of the `BigInt` in big-endian byte order.
     ///
@@ -1008,6 +1075,23 @@ impl BigInt {
     #[inline]
     pub fn to_bytes_be(&self) -> (Sign, Vec<u8>) {
         (self.sign, self.data.to_bytes_be())
+    }
+
+    /// Returns the two's complement byte representation of the `BigInt` in big-endian byte order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use num_bigint::ToBigInt;
+    ///
+    /// let i = -1125.to_bigint().unwrap();
+    /// assert_eq!(i.to_twos_complement_bytes_be(), vec![251, 155]);
+    /// ```
+    #[inline]
+    pub fn to_twos_complement_bytes_be(&self) -> Vec<u8> {
+        let mut bytes = self.data.to_bytes_be();
+        twos_complement_be(&mut bytes);
+        bytes
     }
 
     /// Returns the integer formatted as a string in the given radix.
@@ -1105,3 +1189,36 @@ impl BigInt {
         return Some(self.div(v));
     }
 }
+
+/// Perform in-place two's complement of the given digit range,
+/// in little-endian byte order.
+#[inline]
+fn twos_complement_le<T>(digits: &mut [T])
+    where T: Clone + Not<Output = T> + WrappingAdd + Zero + One
+{
+    let mut carry = true;
+    for d in digits {
+        *d = d.clone().not();
+        if carry {
+            *d = d.wrapping_add(&T::one());
+            carry = d.is_zero();
+        }
+    }
+}
+
+/// Perform in-place two's complement of the given digit range
+/// in big-endian byte order.
+#[inline]
+fn twos_complement_be<T>(digits: &mut [T])
+    where T: Clone + Not<Output = T> + WrappingAdd + Zero + One
+{
+    let mut carry = true;
+    for d in digits.iter_mut().rev() {
+        *d = d.clone().not();
+        if carry {
+            *d = d.wrapping_add(&T::one());
+            carry = d.is_zero();
+        }
+    }
+}
+

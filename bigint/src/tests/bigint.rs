@@ -107,6 +107,43 @@ fn test_to_bytes_le() {
 }
 
 #[test]
+fn test_from_twos_complement_bytes_le() {
+    fn check(s: Vec<u8>, result: &str) {
+        assert_eq!(BigInt::from_twos_complement_bytes_le(s),
+                   BigInt::parse_bytes(result.as_bytes(), 10).unwrap());
+    }
+
+    check(vec![], "0");
+    check(vec![0], "0");
+    check(vec![0; 10], "0");
+    check(vec![255, 127], "32767");
+    check(vec![255], "-1");
+    check(vec![0, 0, 0, 1], "16777216");
+    check(vec![156], "-100");
+    check(vec![0, 0, 128], "-8388608");
+    check(vec![255; 10], "-1");
+}
+
+#[test]
+fn test_from_twos_complement_bytes_be() {
+    fn check(s: Vec<u8>, result: &str) {
+        assert_eq!(BigInt::from_twos_complement_bytes_be(s),
+                   BigInt::parse_bytes(result.as_bytes(), 10).unwrap());
+    }
+
+    check(vec![], "0");
+    check(vec![0], "0");
+    check(vec![0; 10], "0");
+    check(vec![127, 255], "32767");
+    check(vec![255], "-1");
+    check(vec![1, 0, 0, 0], "16777216");
+    check(vec![156], "-100");
+    check(vec![128, 0, 0], "-8388608");
+    check(vec![255; 10], "-1");
+}
+
+
+#[test]
 fn test_cmp() {
     let vs: [&[BigDigit]; 4] = [&[2 as BigDigit], &[1, 1], &[2, 1], &[1, 1, 1]];
     let mut nums = Vec::new();
