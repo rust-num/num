@@ -107,41 +107,74 @@ fn test_to_bytes_le() {
 }
 
 #[test]
-fn test_from_twos_complement_bytes_le() {
-    fn check(s: Vec<u8>, result: &str) {
-        assert_eq!(BigInt::from_twos_complement_bytes_le(s),
-                   BigInt::parse_bytes(result.as_bytes(), 10).unwrap());
+fn test_to_signed_bytes_le() {
+    fn check(s: &str, result: Vec<u8>) {
+        assert_eq!(BigInt::parse_bytes(s.as_bytes(), 10).unwrap().to_signed_bytes_le(),
+                   result);
     }
 
-    check(vec![], "0");
-    check(vec![0], "0");
-    check(vec![0; 10], "0");
-    check(vec![255, 127], "32767");
-    check(vec![255], "-1");
-    check(vec![0, 0, 0, 1], "16777216");
-    check(vec![156], "-100");
-    check(vec![0, 0, 128], "-8388608");
-    check(vec![255; 10], "-1");
+    check("0", vec![0]);
+    check("32767", vec![0xff, 0x7f]);
+    check("-1", vec![0xff]);
+    check("16777216", vec![0, 0, 0, 1]);
+    check("-100", vec![156]);
+    check("-8388608", vec![0, 0, 0x80]);
+    check("-192", vec![0x40, 0xff]);
 }
 
 #[test]
-fn test_from_twos_complement_bytes_be() {
-    fn check(s: Vec<u8>, result: &str) {
-        assert_eq!(BigInt::from_twos_complement_bytes_be(s),
+fn test_from_signed_bytes_le() {
+    fn check(s: &[u8], result: &str) {
+        assert_eq!(BigInt::from_signed_bytes_le(s),
                    BigInt::parse_bytes(result.as_bytes(), 10).unwrap());
     }
 
-    check(vec![], "0");
-    check(vec![0], "0");
-    check(vec![0; 10], "0");
-    check(vec![127, 255], "32767");
-    check(vec![255], "-1");
-    check(vec![1, 0, 0, 0], "16777216");
-    check(vec![156], "-100");
-    check(vec![128, 0, 0], "-8388608");
-    check(vec![255; 10], "-1");
+    check(&[], "0");
+    check(&[0], "0");
+    check(&[0; 10], "0");
+    check(&[0xff, 0x7f], "32767");
+    check(&[0xff], "-1");
+    check(&[0, 0, 0, 1], "16777216");
+    check(&[156], "-100");
+    check(&[0, 0, 0x80], "-8388608");
+    check(&[0xff; 10], "-1");
+    check(&[0x40, 0xff], "-192");
 }
 
+#[test]
+fn test_to_signed_bytes_be() {
+    fn check(s: &str, result: Vec<u8>) {
+        assert_eq!(BigInt::parse_bytes(s.as_bytes(), 10).unwrap().to_signed_bytes_be(),
+                   result);
+    }
+
+    check("0", vec![0]);
+    check("32767", vec![0x7f, 0xff]);
+    check("-1", vec![255]);
+    check("16777216", vec![1, 0, 0, 0]);
+    check("-100", vec![156]);
+    check("-8388608", vec![128, 0, 0]);
+    check("-192", vec![0xff, 0x40]);
+}
+
+#[test]
+fn test_from_signed_bytes_be() {
+    fn check(s: &[u8], result: &str) {
+        assert_eq!(BigInt::from_signed_bytes_be(s),
+                   BigInt::parse_bytes(result.as_bytes(), 10).unwrap());
+    }
+
+    check(&[], "0");
+    check(&[0], "0");
+    check(&[0; 10], "0");
+    check(&[127, 255], "32767");
+    check(&[255], "-1");
+    check(&[1, 0, 0, 0], "16777216");
+    check(&[156], "-100");
+    check(&[128, 0, 0], "-8388608");
+    check(&[255; 10], "-1");
+    check(&[0xff, 0x40], "-192");
+}
 
 #[test]
 fn test_cmp() {

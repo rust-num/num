@@ -1,5 +1,5 @@
 use std::default::Default;
-use std::ops::{Add, Div, Mul, Neg, Rem, Shl, Shr, Sub, Not};
+use std::ops::{Add, Div, Mul, Neg, Rem, Shl, Shr, Sub, Not, DerefMut};
 use std::str::{self, FromStr};
 use std::fmt;
 use std::cmp::Ordering::{self, Less, Greater, Equal};
@@ -930,50 +930,43 @@ impl BigInt {
     ///
     /// The digits are in little-endian base 2^8.
     #[inline]
-    pub fn from_twos_complement_bytes_le(mut digits: Vec<u8>) -> BigInt {
-        let sign = if digits.iter().all(Zero::is_zero) {
-            Sign::NoSign
-        } else {
-            digits.iter().rev().next()
-                .map(|v| if *v > 127 {
-                    Sign::Minus
-                } else {
-                    Sign::Plus
-                })
-                // we have at least one non-zero digit
-                .unwrap()
+    pub fn from_signed_bytes_le(digits: &[u8]) -> BigInt {
+        let sign = match digits.last() {
+            Some(v) if *v > 0x7f => Sign::Minus,
+            Some(_) => Sign::Plus,
+            None => return BigInt::zero(),
         };
 
         if sign == Sign::Minus {
             // two's-complement the content to retrieve the magnitude
+            let mut digits = Vec::from(digits);
             twos_complement_le(&mut digits);
+            BigInt::from_biguint(sign, BigUint::from_bytes_le(&*digits))
+        } else {
+            BigInt::from_biguint(sign, BigUint::from_bytes_le(digits))
         }
-        BigInt::from_biguint(sign, BigUint::from_bytes_le(&*digits))
     }
 
-    /// Creates and initializes a `BigInt` from an array of bytes in two's complement.
+    /// Creates and initializes a `BigInt` from an array of bytes in
+    /// two's complement binary representation.
     ///
     /// The digits are in big-endian base 2^8.
     #[inline]
-    pub fn from_twos_complement_bytes_be(mut digits: Vec<u8>) -> BigInt {
-        let sign = if digits.iter().all(Zero::is_zero) {
-            Sign::NoSign
-        } else {
-            digits.iter().next()
-                .map(|v| if *v > 127 {
-                    Sign::Minus
-                } else {
-                    Sign::Plus
-                })
-                // we have at least one non-zero digit
-                .unwrap()
+    pub fn from_signed_bytes_be(digits: &[u8]) -> BigInt {
+        let sign = match digits.first() {
+            Some(v) if *v > 0x7f => Sign::Minus,
+            Some(_) => Sign::Plus,
+            None => return BigInt::zero(),
         };
 
         if sign == Sign::Minus {
             // two's-complement the content to retrieve the magnitude
+            let mut digits = Vec::from(digits);
             twos_complement_be(&mut digits);
+            BigInt::from_biguint(sign, BigUint::from_bytes_be(&*digits))
+        } else {
+            BigInt::from_biguint(sign, BigUint::from_bytes_be(digits))
         }
-        BigInt::from_biguint(sign, BigUint::from_bytes_be(&*digits))
     }
 
     /// Creates and initializes a `BigInt`.
@@ -1053,12 +1046,19 @@ impl BigInt {
     /// use num_bigint::ToBigInt;
     ///
     /// let i = -1125.to_bigint().unwrap();
-    /// assert_eq!(i.to_twos_complement_bytes_le(), vec![155, 251]);
+    /// assert_eq!(i.to_signed_bytes_le(), vec![155, 251]);
     /// ```
     #[inline]
-    pub fn to_twos_complement_bytes_le(&self) -> Vec<u8> {
+    pub fn to_signed_bytes_le(&self) -> Vec<u8> {
         let mut bytes = self.data.to_bytes_le();
-        twos_complement_le(&mut bytes);
+        let last_byte = bytes.last().map(|v| *v).unwrap_or(0);
+        if last_byte > 0x7f && !(last_byte == 0x80 && bytes.iter().rev().skip(1).all(Zero::is_zero)) {
+            // msb used by magnitude, extend by 1 byte
+            bytes.push(0);
+        }
+        if self.sign == Sign::Minus {
+            twos_complement_le(&mut bytes);
+        }        
         bytes
     }
 
@@ -1085,12 +1085,19 @@ impl BigInt {
     /// use num_bigint::ToBigInt;
     ///
     /// let i = -1125.to_bigint().unwrap();
-    /// assert_eq!(i.to_twos_complement_bytes_be(), vec![251, 155]);
+    /// assert_eq!(i.to_signed_bytes_be(), vec![251, 155]);
     /// ```
     #[inline]
-    pub fn to_twos_complement_bytes_be(&self) -> Vec<u8> {
+    pub fn to_signed_bytes_be(&self) -> Vec<u8> {
         let mut bytes = self.data.to_bytes_be();
-        twos_complement_be(&mut bytes);
+        let first_byte = bytes.first().map(|v| *v).unwrap_or(0);
+        if first_byte > 0x7f && !(first_byte == 0x80 && bytes.iter().skip(1).all(Zero::is_zero)) {
+            // msb used by magnitude, extend by 1 byte
+            bytes.insert(0, 0);
+        }
+        if self.sign == Sign::Minus {
+            twos_complement_be(&mut bytes);
+        }        
         bytes
     }
 
@@ -1190,30 +1197,30 @@ impl BigInt {
     }
 }
 
-/// Perform in-place two's complement of the given digit range,
+/// Perform in-place two's complement of the given binary representation,
 /// in little-endian byte order.
 #[inline]
-fn twos_complement_le<T>(digits: &mut [T])
-    where T: Clone + Not<Output = T> + WrappingAdd + Zero + One
-{
-    let mut carry = true;
-    for d in digits {
-        *d = d.clone().not();
-        if carry {
-            *d = d.wrapping_add(&T::one());
-            carry = d.is_zero();
-        }
-    }
+fn twos_complement_le(digits: &mut [u8]) {
+    twos_complement(digits)
 }
 
-/// Perform in-place two's complement of the given digit range
+/// Perform in-place two's complement of the given binary representation
 /// in big-endian byte order.
 #[inline]
-fn twos_complement_be<T>(digits: &mut [T])
-    where T: Clone + Not<Output = T> + WrappingAdd + Zero + One
+fn twos_complement_be(digits: &mut [u8]) {
+    twos_complement(digits.iter_mut().rev())
+}
+
+/// Perform in-place two's complement of the given digit iterator
+/// starting from the least significant byte.
+#[inline]
+fn twos_complement<T, R, I>(digits: I)
+    where I: IntoIterator<Item = R>,
+          R: DerefMut<Target = T>,
+          T: Clone + Not<Output = T> + WrappingAdd + Zero + One
 {
     let mut carry = true;
-    for d in digits.iter_mut().rev() {
+    for mut d in digits {
         *d = d.clone().not();
         if carry {
             *d = d.wrapping_add(&T::one());
@@ -1221,4 +1228,3 @@ fn twos_complement_be<T>(digits: &mut [T])
         }
     }
 }
-
