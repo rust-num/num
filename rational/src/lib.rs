@@ -612,7 +612,7 @@ impl<T> Into<(T, T)> for Ratio<T> {
 impl<T> serde::Serialize for Ratio<T>
     where T: serde::Serialize + Clone + Integer + PartialOrd
 {
-    fn serialize<S>(&self, serializer: &mut S) -> Result<(), S::Error>
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
         where S: serde::Serializer
     {
         (self.numer(), self.denom()).serialize(serializer)
@@ -620,15 +620,17 @@ impl<T> serde::Serialize for Ratio<T>
 }
 
 #[cfg(feature = "serde")]
-impl<T> serde::Deserialize for Ratio<T>
-    where T: serde::Deserialize + Clone + Integer + PartialOrd
+impl<'de, T> serde::Deserialize<'de> for Ratio<T>
+    where T: serde::Deserialize<'de> + Clone + Integer + PartialOrd
 {
-    fn deserialize<D>(deserializer: &mut D) -> Result<Self, D::Error>
-        where D: serde::Deserializer
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where D: serde::Deserializer<'de>
     {
         let (numer, denom): (T,T) = try!(serde::Deserialize::deserialize(deserializer));
         if denom.is_zero() {
-            Err(serde::de::Error::invalid_value("denominator is zero"))
+            Err(serde::de::Error::invalid_value(
+                    serde::de::Unexpected::Unsigned(0),
+                    &"denominator should be non-zero"))
         } else {
             Ok(Ratio::new_raw(numer, denom))
         }
