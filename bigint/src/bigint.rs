@@ -1,5 +1,5 @@
 use std::default::Default;
-use std::ops::{Add, Div, Mul, Neg, Rem, Shl, Shr, Sub, Not, DerefMut};
+use std::ops::{Add, Div, Mul, Neg, Rem, Shl, Shr, Sub, Not};
 use std::str::{self, FromStr};
 use std::fmt;
 use std::cmp::Ordering::{self, Less, Greater, Equal};
@@ -16,7 +16,7 @@ use serde;
 use rand::Rng;
 
 use integer::Integer;
-use traits::{ToPrimitive, FromPrimitive, Num, WrappingAdd, CheckedAdd, CheckedSub,
+use traits::{ToPrimitive, FromPrimitive, Num, CheckedAdd, CheckedSub,
              CheckedMul, CheckedDiv, Signed, Zero, One};
 
 use self::Sign::{Minus, NoSign, Plus};
@@ -1214,16 +1214,14 @@ fn twos_complement_be(digits: &mut [u8]) {
 /// Perform in-place two's complement of the given digit iterator
 /// starting from the least significant byte.
 #[inline]
-fn twos_complement<T, R, I>(digits: I)
-    where I: IntoIterator<Item = R>,
-          R: DerefMut<Target = T>,
-          T: Clone + Not<Output = T> + WrappingAdd + Zero + One
+fn twos_complement<'a, I>(digits: I)
+    where I: IntoIterator<Item = &'a mut u8>
 {
     let mut carry = true;
     for mut d in digits {
-        *d = d.clone().not();
+        *d = d.not();
         if carry {
-            *d = d.wrapping_add(&T::one());
+            *d = d.wrapping_add(1);
             carry = d.is_zero();
         }
     }
