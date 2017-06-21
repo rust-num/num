@@ -22,11 +22,10 @@ for feature in '' bigint rational complex; do
   cargo test --verbose --no-default-features --features="$feature"
 done
 
+if [ "$TRAVIS_RUST_VERSION" = 1.8.0 ]; then exit; fi
+
 # Build test for the serde feature
 cargo build --verbose --features "serde"
-
-
-if [ "$TRAVIS_RUST_VERSION" = 1.8.0 ]; then exit; fi
 
 # num-derive should build on 1.15.0+
 cargo build --verbose --manifest-path=derive/Cargo.toml
