@@ -70,7 +70,7 @@ impl Mul<Sign> for Sign {
 
 #[cfg(feature = "serde")]
 impl serde::Serialize for Sign {
-    fn serialize<S>(&self, serializer: &mut S) -> Result<(), S::Error>
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
         where S: serde::Serializer
     {
         match *self {
@@ -82,9 +82,9 @@ impl serde::Serialize for Sign {
 }
 
 #[cfg(feature = "serde")]
-impl serde::Deserialize for Sign {
-    fn deserialize<D>(deserializer: &mut D) -> Result<Self, D::Error>
-        where D: serde::Deserializer
+impl<'de> serde::Deserialize<'de> for Sign {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where D: serde::Deserializer<'de>
     {
         use serde::de::Error;
 
@@ -93,7 +93,9 @@ impl serde::Deserialize for Sign {
             -1 => Ok(Sign::Minus),
             0 => Ok(Sign::NoSign),
             1 => Ok(Sign::Plus),
-            _ => Err(D::Error::invalid_value("sign must be -1, 0, or 1")),
+            _ => Err(D::Error::invalid_value(
+                    serde::de::Unexpected::Signed(sign as i64),
+                    &"sign must be -1, 0, or 1")),
         }
     }
 }
@@ -753,7 +755,7 @@ impl From<BigUint> for BigInt {
 
 #[cfg(feature = "serde")]
 impl serde::Serialize for BigInt {
-    fn serialize<S>(&self, serializer: &mut S) -> Result<(), S::Error>
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
         where S: serde::Serializer
     {
         (self.sign, &self.data).serialize(serializer)
@@ -761,9 +763,9 @@ impl serde::Serialize for BigInt {
 }
 
 #[cfg(feature = "serde")]
-impl serde::Deserialize for BigInt {
-    fn deserialize<D>(deserializer: &mut D) -> Result<Self, D::Error>
-        where D: serde::Deserializer
+impl<'de> serde::Deserialize<'de> for BigInt {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where D: serde::Deserializer<'de>
     {
         let (sign, data) = try!(serde::Deserialize::deserialize(deserializer));
         Ok(BigInt {
