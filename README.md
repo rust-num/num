@@ -14,7 +14,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-num = "0.1"
+num = "0.2"
 ```
 
 and this to your crate root:
@@ -26,5 +26,4 @@ extern crate num;
 ## Compatibility
 
 Most of the `num` crates are tested for rustc 1.8 and greater.
-The exceptions are `num-derive` which requires at least rustc 1.15,
-and the deprecated `num-macros` which requires nightly rustc.
+The exception is `num-derive` which requires at least rustc 1.15.

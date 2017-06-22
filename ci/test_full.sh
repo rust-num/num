@@ -22,15 +22,10 @@ for feature in '' bigint rational complex; do
   cargo test --verbose --no-default-features --features="$feature"
 done
 
+if [ "$TRAVIS_RUST_VERSION" = 1.8.0 ]; then exit; fi
+
 # Build test for the serde feature
 cargo build --verbose --features "serde"
-
-# Downgrade serde and build test the 0.7.0 channel as well
-cargo update -p serde --precise 0.7.0
-cargo build --verbose --features "serde"
-
-
-if [ "$TRAVIS_RUST_VERSION" = 1.8.0 ]; then exit; fi
 
 # num-derive should build on 1.15.0+
 cargo build --verbose --manifest-path=derive/Cargo.toml
@@ -38,12 +33,10 @@ cargo build --verbose --manifest-path=derive/Cargo.toml
 
 if [ "$TRAVIS_RUST_VERSION" != nightly ]; then exit; fi
 
-# num-derive testing requires compiletest_rs, which requires nightly
+# num-derive testing requires compiletest_rs, which requires nightly.  It also
+# gets confused seeing multiple num with different features, so clean it first.
+cargo clean
 cargo test --verbose --manifest-path=derive/Cargo.toml
-
-# num-macros only works on nightly, soon to be deprecated
-cargo build --verbose --manifest-path=macros/Cargo.toml
-cargo test --verbose --manifest-path=macros/Cargo.toml
 
 # benchmarks only work on nightly
 cargo bench --verbose

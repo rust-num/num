@@ -7,16 +7,17 @@ keywords = ["mathematics", "numerics"]
 license = "MIT/Apache-2.0"
 repository = "https://github.com/rust-num/num"
 name = "num-iter"
-version = "0.1.33"
+version = "0.2.0-git"
+publish = false
 
 [dependencies]
 
 [dependencies.num-integer]
 optional = false
 path = "../integer"
-version = "0.1.32"
+version = "0.2.0-git"
 
 [dependencies.num-traits]
 optional = false
 path = "../traits"
-version = "0.1.32"
+version = "0.2.0-git"
