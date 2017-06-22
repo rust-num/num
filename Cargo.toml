@@ -56,17 +56,12 @@ version = "0.3.8"
 bigint = ["num-bigint"]
 complex = ["num-complex"]
 rational = ["num-rational"]
-default = ["bigint", "complex", "rational", "rustc-serialize"]
+default = ["bigint", "complex", "rational"]
 
 serde = [
   "num-bigint/serde",
   "num-complex/serde",
   "num-rational/serde"
-]
-rustc-serialize = [
-  "num-bigint/rustc-serialize",
-  "num-complex/rustc-serialize",
-  "num-rational/rustc-serialize"
 ]
 
 [workspace]

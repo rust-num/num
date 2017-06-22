@@ -14,8 +14,6 @@
        html_root_url = "https://rust-num.github.io/num/",
        html_playground_url = "http://play.integer32.com/")]
 
-#[cfg(feature = "rustc-serialize")]
-extern crate rustc_serialize;
 #[cfg(feature = "serde")]
 extern crate serde;
 #[cfg(feature = "num-bigint")]
@@ -40,7 +38,6 @@ use traits::{FromPrimitive, Float, PrimInt, Num, Signed, Zero, One, Bounded, Num
 
 /// Represents the ratio between 2 numbers.
 #[derive(Copy, Clone, Hash, Debug)]
-#[cfg_attr(feature = "rustc-serialize", derive(RustcEncodable, RustcDecodable))]
 #[allow(missing_docs)]
 pub struct Ratio<T> {
     numer: T,

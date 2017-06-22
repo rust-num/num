@@ -34,7 +34,6 @@ mod bigint_tests;
 
 /// A Sign is a `BigInt`'s composing element.
 #[derive(PartialEq, PartialOrd, Eq, Ord, Copy, Clone, Debug, Hash)]
-#[cfg_attr(feature = "rustc-serialize", derive(RustcEncodable, RustcDecodable))]
 pub enum Sign {
     Minus,
     NoSign,
@@ -102,7 +101,6 @@ impl<'de> serde::Deserialize<'de> for Sign {
 
 /// A big signed integer type.
 #[derive(Clone, Debug, Hash)]
-#[cfg_attr(feature = "rustc-serialize", derive(RustcEncodable, RustcDecodable))]
 pub struct BigInt {
     sign: Sign,
     data: BigUint,

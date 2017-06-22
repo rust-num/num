@@ -16,9 +16,6 @@
 
 extern crate num_traits as traits;
 
-#[cfg(feature = "rustc-serialize")]
-extern crate rustc_serialize;
-
 #[cfg(feature = "serde")]
 extern crate serde;
 
@@ -58,7 +55,6 @@ use traits::{Zero, One, Num, Float};
 /// }
 /// ```
 #[derive(PartialEq, Eq, Copy, Clone, Hash, Debug, Default)]
-#[cfg_attr(feature = "rustc-serialize", derive(RustcEncodable, RustcDecodable))]
 #[repr(C)]
 pub struct Complex<T> {
     /// Real portion of the complex number

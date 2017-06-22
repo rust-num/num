@@ -17,14 +17,10 @@ optional = false
 path = "../traits"
 version = "0.2.0-git"
 
-[dependencies.rustc-serialize]
-optional = true
-version = "0.3.19"
-
 [dependencies.serde]
 optional = true
 version = "1"
 
 [features]
-default = ["rustc-serialize"]
+default = []
 unstable = []

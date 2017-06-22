@@ -24,10 +24,6 @@ version = "0.2.0-git"
 optional = true
 version = "0.3.14"
 
-[dependencies.rustc-serialize]
-optional = true
-version = "0.3.19"
-
 [dependencies.serde]
 optional = true
 version = "1"
@@ -36,4 +32,4 @@ version = "1"
 version = "0.3.14"
 
 [features]
-default = ["rand", "rustc-serialize"]
+default = ["rand"]
