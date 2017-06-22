@@ -926,49 +926,6 @@ impl BigInt {
         BigInt::from_biguint(sign, BigUint::new(digits))
     }
 
-    /// Creates and initializes a `BigInt` from an array of bytes in two's complement.
-    ///
-    /// The digits are in little-endian base 2^8.
-    #[inline]
-    pub fn from_signed_bytes_le(digits: &[u8]) -> BigInt {
-        let sign = match digits.last() {
-            Some(v) if *v > 0x7f => Sign::Minus,
-            Some(_) => Sign::Plus,
-            None => return BigInt::zero(),
-        };
-
-        if sign == Sign::Minus {
-            // two's-complement the content to retrieve the magnitude
-            let mut digits = Vec::from(digits);
-            twos_complement_le(&mut digits);
-            BigInt::from_biguint(sign, BigUint::from_bytes_le(&*digits))
-        } else {
-            BigInt::from_biguint(sign, BigUint::from_bytes_le(digits))
-        }
-    }
-
-    /// Creates and initializes a `BigInt` from an array of bytes in
-    /// two's complement binary representation.
-    ///
-    /// The digits are in big-endian base 2^8.
-    #[inline]
-    pub fn from_signed_bytes_be(digits: &[u8]) -> BigInt {
-        let sign = match digits.first() {
-            Some(v) if *v > 0x7f => Sign::Minus,
-            Some(_) => Sign::Plus,
-            None => return BigInt::zero(),
-        };
-
-        if sign == Sign::Minus {
-            // two's-complement the content to retrieve the magnitude
-            let mut digits = Vec::from(digits);
-            twos_complement_be(&mut digits);
-            BigInt::from_biguint(sign, BigUint::from_bytes_be(&*digits))
-        } else {
-            BigInt::from_biguint(sign, BigUint::from_bytes_be(digits))
-        }
-    }
-
     /// Creates and initializes a `BigInt`.
     ///
     /// The digits are in little-endian base 2^32.
@@ -1023,6 +980,65 @@ impl BigInt {
         BigInt::from_biguint(sign, BigUint::from_bytes_le(bytes))
     }
 
+    /// Creates and initializes a `BigInt` from an array of bytes in
+    /// two's complement binary representation.
+    ///
+    /// The digits are in big-endian base 2^8.
+    #[inline]
+    pub fn from_signed_bytes_be(digits: &[u8]) -> BigInt {
+        let sign = match digits.first() {
+            Some(v) if *v > 0x7f => Sign::Minus,
+            Some(_) => Sign::Plus,
+            None => return BigInt::zero(),
+        };
+
+        if sign == Sign::Minus {
+            // two's-complement the content to retrieve the magnitude
+            let mut digits = Vec::from(digits);
+            twos_complement_be(&mut digits);
+            BigInt::from_biguint(sign, BigUint::from_bytes_be(&*digits))
+        } else {
+            BigInt::from_biguint(sign, BigUint::from_bytes_be(digits))
+        }
+    }
+
+    /// Creates and initializes a `BigInt` from an array of bytes in two's complement.
+    ///
+    /// The digits are in little-endian base 2^8.
+    #[inline]
+    pub fn from_signed_bytes_le(digits: &[u8]) -> BigInt {
+        let sign = match digits.last() {
+            Some(v) if *v > 0x7f => Sign::Minus,
+            Some(_) => Sign::Plus,
+            None => return BigInt::zero(),
+        };
+
+        if sign == Sign::Minus {
+            // two's-complement the content to retrieve the magnitude
+            let mut digits = Vec::from(digits);
+            twos_complement_le(&mut digits);
+            BigInt::from_biguint(sign, BigUint::from_bytes_le(&*digits))
+        } else {
+            BigInt::from_biguint(sign, BigUint::from_bytes_le(digits))
+        }
+    }
+
+    /// Creates and initializes a `BigInt`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use num_bigint::{BigInt, ToBigInt};
+    ///
+    /// assert_eq!(BigInt::parse_bytes(b"1234", 10), ToBigInt::to_bigint(&1234));
+    /// assert_eq!(BigInt::parse_bytes(b"ABCD", 16), ToBigInt::to_bigint(&0xABCD));
+    /// assert_eq!(BigInt::parse_bytes(b"G", 16), None);
+    /// ```
+    #[inline]
+    pub fn parse_bytes(buf: &[u8], radix: u32) -> Option<BigInt> {
+        str::from_utf8(buf).ok().and_then(|s| BigInt::from_str_radix(s, radix).ok())
+    }
+
     /// Creates and initializes a `BigInt`. Each u8 of the input slice is
     /// interpreted as one digit of the number
     /// and must therefore be less than `radix`.
@@ -1063,45 +1079,6 @@ impl BigInt {
         BigUint::from_radix_le(buf, radix).map(|u| BigInt::from_biguint(sign, u))
     }
 
-    /// Returns the sign and the byte representation of the `BigInt` in little-endian byte order.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use num_bigint::{ToBigInt, Sign};
-    ///
-    /// let i = -1125.to_bigint().unwrap();
-    /// assert_eq!(i.to_bytes_le(), (Sign::Minus, vec![101, 4]));
-    /// ```
-    #[inline]
-    pub fn to_bytes_le(&self) -> (Sign, Vec<u8>) {
-        (self.sign, self.data.to_bytes_le())
-    }
-    
-    /// Returns the two's complement byte representation of the `BigInt` in little-endian byte order.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use num_bigint::ToBigInt;
-    ///
-    /// let i = -1125.to_bigint().unwrap();
-    /// assert_eq!(i.to_signed_bytes_le(), vec![155, 251]);
-    /// ```
-    #[inline]
-    pub fn to_signed_bytes_le(&self) -> Vec<u8> {
-        let mut bytes = self.data.to_bytes_le();
-        let last_byte = bytes.last().map(|v| *v).unwrap_or(0);
-        if last_byte > 0x7f && !(last_byte == 0x80 && bytes.iter().rev().skip(1).all(Zero::is_zero)) {
-            // msb used by magnitude, extend by 1 byte
-            bytes.push(0);
-        }
-        if self.sign == Sign::Minus {
-            twos_complement_le(&mut bytes);
-        }        
-        bytes
-    }
-
     /// Returns the sign and the byte representation of the `BigInt` in big-endian byte order.
     ///
     /// # Examples
@@ -1115,6 +1092,21 @@ impl BigInt {
     #[inline]
     pub fn to_bytes_be(&self) -> (Sign, Vec<u8>) {
         (self.sign, self.data.to_bytes_be())
+    }
+
+    /// Returns the sign and the byte representation of the `BigInt` in little-endian byte order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use num_bigint::{ToBigInt, Sign};
+    ///
+    /// let i = -1125.to_bigint().unwrap();
+    /// assert_eq!(i.to_bytes_le(), (Sign::Minus, vec![101, 4]));
+    /// ```
+    #[inline]
+    pub fn to_bytes_le(&self) -> (Sign, Vec<u8>) {
+        (self.sign, self.data.to_bytes_le())
     }
 
     /// Returns the two's complement byte representation of the `BigInt` in big-endian byte order.
@@ -1137,7 +1129,31 @@ impl BigInt {
         }
         if self.sign == Sign::Minus {
             twos_complement_be(&mut bytes);
-        }        
+        }
+        bytes
+    }
+
+    /// Returns the two's complement byte representation of the `BigInt` in little-endian byte order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use num_bigint::ToBigInt;
+    ///
+    /// let i = -1125.to_bigint().unwrap();
+    /// assert_eq!(i.to_signed_bytes_le(), vec![155, 251]);
+    /// ```
+    #[inline]
+    pub fn to_signed_bytes_le(&self) -> Vec<u8> {
+        let mut bytes = self.data.to_bytes_le();
+        let last_byte = bytes.last().map(|v| *v).unwrap_or(0);
+        if last_byte > 0x7f && !(last_byte == 0x80 && bytes.iter().rev().skip(1).all(Zero::is_zero)) {
+            // msb used by magnitude, extend by 1 byte
+            bytes.push(0);
+        }
+        if self.sign == Sign::Minus {
+            twos_complement_le(&mut bytes);
+        }
         bytes
     }
 
@@ -1216,22 +1232,6 @@ impl BigInt {
     #[inline]
     pub fn sign(&self) -> Sign {
         self.sign
-    }
-
-    /// Creates and initializes a `BigInt`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use num_bigint::{BigInt, ToBigInt};
-    ///
-    /// assert_eq!(BigInt::parse_bytes(b"1234", 10), ToBigInt::to_bigint(&1234));
-    /// assert_eq!(BigInt::parse_bytes(b"ABCD", 16), ToBigInt::to_bigint(&0xABCD));
-    /// assert_eq!(BigInt::parse_bytes(b"G", 16), None);
-    /// ```
-    #[inline]
-    pub fn parse_bytes(buf: &[u8], radix: u32) -> Option<BigInt> {
-        str::from_utf8(buf).ok().and_then(|s| BigInt::from_str_radix(s, radix).ok())
     }
 
     /// Determines the fewest bits necessary to express the `BigInt`,

@@ -1088,6 +1088,23 @@ impl BigUint {
     }
 
 
+    /// Returns the byte representation of the `BigUint` in big-endian byte order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use num_bigint::BigUint;
+    ///
+    /// let i = BigUint::parse_bytes(b"1125", 10).unwrap();
+    /// assert_eq!(i.to_bytes_be(), vec![4, 101]);
+    /// ```
+    #[inline]
+    pub fn to_bytes_be(&self) -> Vec<u8> {
+        let mut v = self.to_bytes_le();
+        v.reverse();
+        v
+    }
+
     /// Returns the byte representation of the `BigUint` in little-endian byte order.
     ///
     /// # Examples
@@ -1107,23 +1124,6 @@ impl BigUint {
         }
     }
 
-    /// Returns the byte representation of the `BigUint` in big-endian byte order.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use num_bigint::BigUint;
-    ///
-    /// let i = BigUint::parse_bytes(b"1125", 10).unwrap();
-    /// assert_eq!(i.to_bytes_be(), vec![4, 101]);
-    /// ```
-    #[inline]
-    pub fn to_bytes_be(&self) -> Vec<u8> {
-        let mut v = self.to_bytes_le();
-        v.reverse();
-        v
-    }
-
     /// Returns the integer formatted as a string in the given radix.
     /// `radix` must be in the range `2...36`.
     ///
@@ -1140,25 +1140,6 @@ impl BigUint {
         let mut v = to_str_radix_reversed(self, radix);
         v.reverse();
         unsafe { String::from_utf8_unchecked(v) }
-    }
-
-    /// Returns the integer in the requested base in little-endian digit order.
-    /// The output is not given in a human readable alphabet but as a zero
-    /// based u8 number.
-    /// `radix` must be in the range `2...256`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use num_bigint::BigUint;
-    ///
-    /// assert_eq!(BigUint::from(0xFFFFu64).to_radix_le(159),
-    ///            vec![27, 94, 2]);
-    /// // 0xFFFF = 65535 = 27 + 94*159 + 2*(159^2)
-    /// ```
-    #[inline]
-    pub fn to_radix_le(&self, radix: u32) -> Vec<u8> {
-        to_radix_le(self, radix)
     }
 
     /// Returns the integer in the requested base in big-endian digit order.
@@ -1180,6 +1161,25 @@ impl BigUint {
         let mut v = to_radix_le(self, radix);
         v.reverse();
         v
+    }
+
+    /// Returns the integer in the requested base in little-endian digit order.
+    /// The output is not given in a human readable alphabet but as a zero
+    /// based u8 number.
+    /// `radix` must be in the range `2...256`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use num_bigint::BigUint;
+    ///
+    /// assert_eq!(BigUint::from(0xFFFFu64).to_radix_le(159),
+    ///            vec![27, 94, 2]);
+    /// // 0xFFFF = 65535 = 27 + 94*159 + 2*(159^2)
+    /// ```
+    #[inline]
+    pub fn to_radix_le(&self, radix: u32) -> Vec<u8> {
+        to_radix_le(self, radix)
     }
 
     /// Determines the fewest bits necessary to express the `BigUint`.
