@@ -436,6 +436,15 @@ impl<'a, 'b> Mul<&'b BigInt> for &'a BigInt {
     }
 }
 
+impl Mul<BigDigit> for BigInt {
+    type Output = BigInt;
+
+    #[inline]
+    fn mul(self, other: BigDigit) -> BigInt {
+        BigInt::from_biguint(self.sign, self.data * other)
+    }
+}
+
 forward_all_binop_to_ref_ref!(impl Div for BigInt, div);
 
 impl<'a, 'b> Div<&'b BigInt> for &'a BigInt {
