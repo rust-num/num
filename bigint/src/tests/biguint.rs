@@ -724,6 +724,27 @@ fn test_sub() {
 }
 
 #[test]
+fn test_scalar_sub() {
+    for elm in SUM_TRIPLES.iter() {
+        let (a_vec, b_vec, c_vec) = *elm;
+
+        if a_vec.len() == 1 {
+            let a = a_vec[0];
+            let b = BigUint::from_slice(b_vec);
+            let c = BigUint::from_slice(c_vec);
+            assert!(c - a == b);
+        }
+
+        if b_vec.len() == 1 {
+            let a = BigUint::from_slice(a_vec);
+            let b = b_vec[0];
+            let c = BigUint::from_slice(c_vec);
+            assert!(c - b == a);
+        }
+    }
+}
+
+#[test]
 #[should_panic]
 fn test_sub_fail_on_underflow() {
     let (a, b): (BigUint, BigUint) = (Zero::zero(), One::one());

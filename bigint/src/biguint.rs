@@ -437,6 +437,16 @@ impl<'a> Sub<BigUint> for &'a BigUint {
     }
 }
 
+impl Sub<BigDigit> for BigUint {
+    type Output = BigUint;
+
+    #[inline]
+    fn sub(mut self, other: BigDigit) -> BigUint {
+        sub2(&mut self.data[..], &[other]);
+        self.normalize()
+    }
+}
+
 forward_all_binop_to_ref_ref!(impl Mul for BigUint, mul);
 
 impl<'a, 'b> Mul<&'b BigUint> for &'a BigUint {
