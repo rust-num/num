@@ -479,7 +479,17 @@ impl<'a, 'b> Div<&'b BigUint> for &'a BigUint {
     #[inline]
     fn div(self, other: &BigUint) -> BigUint {
         let (q, _) = self.div_rem(other);
-        return q;
+        q
+    }
+}
+
+impl Div<BigDigit> for BigUint {
+    type Output = BigUint;
+
+    #[inline]
+    fn div(self, other: BigDigit) -> BigUint {
+        let (q, _) = div_rem_digit(self, other);
+        q
     }
 }
 
@@ -491,7 +501,17 @@ impl<'a, 'b> Rem<&'b BigUint> for &'a BigUint {
     #[inline]
     fn rem(self, other: &BigUint) -> BigUint {
         let (_, r) = self.div_rem(other);
-        return r;
+        r
+    }
+}
+
+impl Rem<BigDigit> for BigUint {
+    type Output = BigDigit;
+
+    #[inline]
+    fn rem(self, other: BigDigit) -> BigDigit {
+        let (_, r) = div_rem_digit(self, other);
+        r
     }
 }
 

@@ -867,6 +867,41 @@ fn test_div_rem() {
 }
 
 #[test]
+fn test_scalar_div_rem() {
+    for elm in MUL_TRIPLES.iter() {
+        let (a_vec, b_vec, c_vec) = *elm;
+        let c = BigUint::from_slice(c_vec);
+
+        if a_vec.len() == 1 && a_vec[0] != 0 {
+            let a = a_vec[0];
+            let b = BigUint::from_slice(b_vec);
+            assert!(c.clone() / a == b);
+            assert!(c.clone() % a == Zero::zero());
+        }
+
+        if b_vec.len() == 1 && b_vec[0] != 0 {
+            let a = BigUint::from_slice(a_vec);
+            let b = b_vec[0];
+            assert!(c.clone() / b == a);
+            assert!(c.clone() % b == Zero::zero());
+        }
+    }
+
+    for elm in DIV_REM_QUADRUPLES.iter() {
+        let (a_vec, b_vec, c_vec, d_vec) = *elm;
+        let a = BigUint::from_slice(a_vec);
+        let c = BigUint::from_slice(c_vec);
+
+        if b_vec.len() == 1 && b_vec[0] != 0 {
+            let b = b_vec[0];
+            let d = d_vec[0];
+            assert!(a.clone() / b == c);
+            assert!(a.clone() % b == d);
+        }
+    }
+}
+
+#[test]
 fn test_checked_add() {
     for elm in SUM_TRIPLES.iter() {
         let (a_vec, b_vec, c_vec) = *elm;
