@@ -433,7 +433,7 @@ pub fn div_rem(u: &BigUint, d: &BigUint) -> (BigUint, BigUint) {
     // q0, our guess, is calculated by dividing the last few digits of a by the last digit of b
     // - this should give us a guess that is "close" to the actual quotient, but is possibly
     // greater than the actual quotient. If q0 * b > a, we simply use iterated subtraction
-    // until we have a guess such that q0 & b <= a.
+    // until we have a guess such that q0 * b <= a.
     //
 
     let bn = *b.data.last().unwrap();
