@@ -394,6 +394,23 @@ impl<'a> Add<&'a BigUint> for BigUint {
     }
 }
 
+impl Add<BigDigit> for BigUint {
+    type Output = BigUint;
+
+    #[inline]
+    fn add(mut self, other: BigDigit) -> BigUint {
+        if self.data.len() == 0 {
+            self.data.push(0);
+        }
+
+        let carry = __add2(&mut self.data, &[other]);
+        if carry != 0 {
+            self.data.push(carry);
+        }
+        self
+    }
+}
+
 forward_val_val_binop!(impl Sub for BigUint, sub);
 forward_ref_ref_binop!(impl Sub for BigUint, sub);
 
