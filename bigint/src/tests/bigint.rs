@@ -833,6 +833,59 @@ fn test_div_rem() {
 }
 
 #[test]
+fn test_scalar_div_rem() {
+    fn check_sub(a: &BigInt, b: BigDigit, ans_q: &BigInt, ans_r: &BigInt) {
+        let (q, r) = (a / b, a % b);
+        if !r.is_zero() {
+            assert_eq!(r.sign, a.sign);
+        }
+        assert!(r.abs() <= From::from(b));
+        assert!(*a == b * &q + &r);
+        assert!(q == *ans_q);
+        assert!(r == *ans_r);
+
+        let (a, b, ans_q, ans_r) = (a.clone(), b.clone(), ans_q.clone(), ans_r.clone());
+        assert_op!(a / b == ans_q);
+        assert_op!(a % b == ans_r);
+    }
+
+    fn check(a: &BigInt, b: BigDigit, q: &BigInt, r: &BigInt) {
+        check_sub(a, b, q, r);
+        check_sub(&a.neg(), b, &q.neg(), &r.neg());
+    }
+
+    for elm in MUL_TRIPLES.iter() {
+        let (a_vec, b_vec, c_vec) = *elm;
+        let a = BigInt::from_slice(Plus, a_vec);
+        let b = BigInt::from_slice(Plus, b_vec);
+        let c = BigInt::from_slice(Plus, c_vec);
+
+        if a_vec.len() == 1 && a_vec[0] != 0 {
+            let a = a_vec[0];
+            check(&c, a, &b, &Zero::zero());
+        }
+
+        if b_vec.len() == 1 && b_vec[0] != 0 {
+            let b = b_vec[0];
+            check(&c, b, &a, &Zero::zero());
+        }
+    }
+
+    for elm in DIV_REM_QUADRUPLES.iter() {
+        let (a_vec, b_vec, c_vec, d_vec) = *elm;
+        let a = BigInt::from_slice(Plus, a_vec);
+        let c = BigInt::from_slice(Plus, c_vec);
+        let d = BigInt::from_slice(Plus, d_vec);
+
+        if b_vec.len() == 1 && b_vec[0] != 0 {
+            let b = b_vec[0];
+            check(&a, b, &c, &d);
+        }
+    }
+
+}
+
+#[test]
 fn test_checked_add() {
     for elm in SUM_TRIPLES.iter() {
         let (a_vec, b_vec, c_vec) = *elm;

@@ -508,6 +508,26 @@ impl<'a, 'b> Div<&'b BigInt> for &'a BigInt {
     }
 }
 
+forward_all_scalar_binop_to_val_val!(impl Div<BigDigit> for BigInt, div);
+
+impl Div<BigDigit> for BigInt {
+    type Output = BigInt;
+
+    #[inline]
+    fn div(self, other: BigDigit) -> BigInt {
+        BigInt::from_biguint(self.sign, self.data / other)
+    }
+}
+
+impl Div<BigInt> for BigDigit {
+    type Output = BigInt;
+
+    #[inline]
+    fn div(self, other: BigInt) -> BigInt {
+        BigInt::from_biguint(other.sign, self / other.data)
+    }
+}
+
 forward_all_binop_to_ref_ref!(impl Rem for BigInt, rem);
 
 impl<'a, 'b> Rem<&'b BigInt> for &'a BigInt {
@@ -517,6 +537,26 @@ impl<'a, 'b> Rem<&'b BigInt> for &'a BigInt {
     fn rem(self, other: &BigInt) -> BigInt {
         let (_, r) = self.div_rem(other);
         r
+    }
+}
+
+forward_all_scalar_binop_to_val_val!(impl Rem<BigDigit> for BigInt, rem);
+
+impl Rem<BigDigit> for BigInt {
+    type Output = BigInt;
+
+    #[inline]
+    fn rem(self, other: BigDigit) -> BigInt {
+        BigInt::from_biguint(self.sign, self.data % other)
+    }
+}
+
+impl Rem<BigInt> for BigDigit {
+    type Output = BigInt;
+
+    #[inline]
+    fn rem(self, other: BigInt) -> BigInt {
+        BigInt::from_biguint(Plus, self % other.data)
     }
 }
 
