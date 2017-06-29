@@ -105,7 +105,7 @@ macro_rules! forward_ref_ref_binop_commutative {
     }
 }
 
-macro_rules! forward_scalar_val_val_binop {
+macro_rules! forward_scalar_val_val_binop_commutative {
     (impl $imp:ident<$scalar:ty> for $res:ty, $method: ident) => {
         impl $imp<$res> for $scalar {
             type Output = $res;
@@ -118,7 +118,7 @@ macro_rules! forward_scalar_val_val_binop {
     }
 }
 
-macro_rules! forward_scalar_val_ref_binop {
+macro_rules! forward_scalar_val_ref_binop_commutative {
     (impl $imp:ident<$scalar:ty> for $res:ty, $method:ident) => {
         impl<'a> $imp<&'a $scalar> for $res {
             type Output = $res;
@@ -140,7 +140,7 @@ macro_rules! forward_scalar_val_ref_binop {
     }
 }
 
-macro_rules! forward_scalar_ref_val_binop {
+macro_rules! forward_scalar_ref_val_binop_commutative {
     (impl $imp:ident<$scalar:ty> for $res:ty, $method:ident) => {
         impl<'a> $imp<$scalar> for &'a $res {
             type Output = $res;
@@ -162,7 +162,7 @@ macro_rules! forward_scalar_ref_val_binop {
     }
 }
 
-macro_rules! forward_scalar_ref_ref_binop {
+macro_rules! forward_scalar_ref_ref_binop_commutative {
     (impl $imp:ident<$scalar:ty> for $res:ty, $method:ident) => {
         impl<'a, 'b> $imp<&'b $scalar> for &'a $res {
             type Output = $res;
@@ -211,11 +211,11 @@ macro_rules! forward_all_binop_to_val_ref_commutative {
     };
 }
 
-macro_rules! forward_all_scalar_binop_to_val_val {
+macro_rules! forward_all_scalar_binop_to_val_val_commutative {
     (impl $imp:ident<$scalar:ty> for $res:ty, $method:ident) => {
-        forward_scalar_val_val_binop!(impl $imp<$scalar> for $res, $method);
-        forward_scalar_val_ref_binop!(impl $imp<$scalar> for $res, $method);
-        forward_scalar_ref_val_binop!(impl $imp<$scalar> for $res, $method);
-        forward_scalar_ref_ref_binop!(impl $imp<$scalar> for $res, $method);
+        forward_scalar_val_val_binop_commutative!(impl $imp<$scalar> for $res, $method);
+        forward_scalar_val_ref_binop_commutative!(impl $imp<$scalar> for $res, $method);
+        forward_scalar_ref_val_binop_commutative!(impl $imp<$scalar> for $res, $method);
+        forward_scalar_ref_ref_binop_commutative!(impl $imp<$scalar> for $res, $method);
     }
 }

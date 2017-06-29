@@ -394,7 +394,7 @@ impl<'a> Add<&'a BigUint> for BigUint {
     }
 }
 
-forward_all_scalar_binop_to_val_val!(impl Add<BigDigit> for BigUint, add);
+forward_all_scalar_binop_to_val_val_commutative!(impl Add<BigDigit> for BigUint, add);
 
 impl Add<BigDigit> for BigUint {
     type Output = BigUint;
@@ -460,7 +460,7 @@ impl<'a, 'b> Mul<&'b BigUint> for &'a BigUint {
     }
 }
 
-forward_all_scalar_binop_to_val_val!(impl Mul<BigDigit> for BigUint, mul);
+forward_all_scalar_binop_to_val_val_commutative!(impl Mul<BigDigit> for BigUint, mul);
 
 impl Mul<BigDigit> for BigUint {
     type Output = BigUint;
