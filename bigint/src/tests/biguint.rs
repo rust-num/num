@@ -692,22 +692,22 @@ fn test_add() {
 
 #[test]
 fn test_scalar_add() {
-  for elm in SUM_TRIPLES.iter() {
-      let (a_vec, b_vec, c_vec) = *elm;
-      let c = BigUint::from_slice(c_vec);
+    for elm in SUM_TRIPLES.iter() {
+        let (a_vec, b_vec, c_vec) = *elm;
+        let a = BigUint::from_slice(a_vec);
+        let b = BigUint::from_slice(b_vec);
+        let c = BigUint::from_slice(c_vec);
 
-      if a_vec.len() == 1 {
-          let a = a_vec[0];
-          let b = BigUint::from_slice(b_vec);
-          assert_op!(a + b == c);
-          assert_op!(b + a == c);
-      }
+        if a_vec.len() == 1 {
+            let a = a_vec[0];
+            assert_op!(a + b == c);
+            assert_op!(b + a == c);
+        }
 
-      if b_vec.len() == 1 {
-          let a = BigUint::from_slice(a_vec);
-          let b = b_vec[0];
-          assert_op!(a + b == c);
-          assert_op!(b + a == c);
+        if b_vec.len() == 1 {
+            let b = b_vec[0];
+            assert_op!(a + b == c);
+            assert_op!(b + a == c);
         }
     }
 }
@@ -729,24 +729,21 @@ fn test_sub() {
 fn test_scalar_sub() {
     for elm in SUM_TRIPLES.iter() {
         let (a_vec, b_vec, c_vec) = *elm;
+        let a = BigUint::from_slice(a_vec);
+        let b = BigUint::from_slice(b_vec);
+        let c = BigUint::from_slice(c_vec);
 
         if a_vec.len() == 1 {
             let a = a_vec[0];
-            let b = BigUint::from_slice(b_vec);
-            let c = BigUint::from_slice(c_vec);
             assert_op!(c - a == b);
         }
 
         if b_vec.len() == 1 {
-            let a = BigUint::from_slice(a_vec);
             let b = b_vec[0];
-            let c = BigUint::from_slice(c_vec);
             assert_op!(c - b == a);
         }
 
         if c_vec.len() == 1 {
-            let a = BigUint::from_slice(a_vec);
-            let b = BigUint::from_slice(b_vec);
             let c = c_vec[0];
             assert_op!(c - a == b);
             assert_op!(c - b == a);
@@ -792,6 +789,7 @@ const DIV_REM_QUADRUPLES: &'static [(&'static [BigDigit],
            &'static [BigDigit],
            &'static [BigDigit],
            &'static [BigDigit])] = &[(&[1], &[2], &[], &[1]),
+                                     (&[3], &[2], &[1], &[1]),
                                      (&[1, 1], &[2], &[M / 2 + 1], &[1]),
                                      (&[1, 1, 1], &[2], &[M / 2 + 1, M / 2 + 1], &[1]),
                                      (&[0, 1], &[N1], &[1], &[1]),
@@ -825,17 +823,17 @@ fn test_mul() {
 fn test_scalar_mul() {
     for elm in MUL_TRIPLES.iter() {
         let (a_vec, b_vec, c_vec) = *elm;
+        let a = BigUint::from_slice(a_vec);
+        let b = BigUint::from_slice(b_vec);
         let c = BigUint::from_slice(c_vec);
 
         if a_vec.len() == 1 {
-            let b = BigUint::from_slice(b_vec);
             let a = a_vec[0];
             assert_op!(a * b == c);
             assert_op!(b * a == c);
         }
 
         if b_vec.len() == 1 {
-            let a = BigUint::from_slice(a_vec);
             let b = b_vec[0];
             assert_op!(a * b == c);
             assert_op!(b * a == c);
@@ -882,33 +880,52 @@ fn test_div_rem() {
 fn test_scalar_div_rem() {
     for elm in MUL_TRIPLES.iter() {
         let (a_vec, b_vec, c_vec) = *elm;
+        let a = BigUint::from_slice(a_vec);
+        let b = BigUint::from_slice(b_vec);
         let c = BigUint::from_slice(c_vec);
 
         if a_vec.len() == 1 && a_vec[0] != 0 {
             let a = a_vec[0];
-            let b = BigUint::from_slice(b_vec);
-            assert!(c.clone() / a == b);
-            assert!(c.clone() % a == Zero::zero());
+            assert_op!(c / a == b);
+            assert_op!(c % a == Zero::zero());
         }
 
         if b_vec.len() == 1 && b_vec[0] != 0 {
-            let a = BigUint::from_slice(a_vec);
             let b = b_vec[0];
-            assert!(c.clone() / b == a);
-            assert!(c.clone() % b == Zero::zero());
+            assert_op!(c / b == a);
+            assert_op!(c % b == Zero::zero());
+        }
+
+        if c_vec.len() == 1 {
+            let c = c_vec[0];
+            if !a.is_zero() {
+                assert_op!(c / a == b);
+                assert_op!(c % a == Zero::zero());
+            }
+            if !b.is_zero() {
+                assert_op!(c / b == a);
+                assert_op!(c % b == Zero::zero());
+            }
         }
     }
 
     for elm in DIV_REM_QUADRUPLES.iter() {
         let (a_vec, b_vec, c_vec, d_vec) = *elm;
         let a = BigUint::from_slice(a_vec);
+        let b = BigUint::from_slice(b_vec);
         let c = BigUint::from_slice(c_vec);
+        let d = BigUint::from_slice(d_vec);
 
         if b_vec.len() == 1 && b_vec[0] != 0 {
             let b = b_vec[0];
-            let d = d_vec[0];
-            assert!(a.clone() / b == c);
-            assert!(a.clone() % b == d);
+            assert_op!(a / b == c);
+            assert_op!(a % b == d);
+        }
+
+        if a_vec.len() == 1 && !b.is_zero() {
+            let a = a_vec[0];
+            assert_op!(a / b == c);
+            assert_op!(a % b == d);
         }
     }
 }

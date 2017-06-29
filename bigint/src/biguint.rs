@@ -503,6 +503,8 @@ impl<'a, 'b> Div<&'b BigUint> for &'a BigUint {
     }
 }
 
+forward_all_scalar_binop_to_val_val!(impl Div<BigDigit> for BigUint, div);
+
 impl Div<BigDigit> for BigUint {
     type Output = BigUint;
 
@@ -510,6 +512,20 @@ impl Div<BigDigit> for BigUint {
     fn div(self, other: BigDigit) -> BigUint {
         let (q, _) = div_rem_digit(self, other);
         q
+    }
+}
+
+impl Div<BigUint> for BigDigit {
+    type Output = BigUint;
+
+    #[inline]
+    fn div(self, mut other: BigUint) -> BigUint {
+        other = other.normalize();
+        match other.data.len() {
+            0 => panic!(),
+            1 => From::from(self / other.data[0]),
+            _ => Zero::zero()
+        }
     }
 }
 
@@ -525,13 +541,29 @@ impl<'a, 'b> Rem<&'b BigUint> for &'a BigUint {
     }
 }
 
+forward_all_scalar_binop_to_val_val!(impl Rem<BigDigit> for BigUint, rem);
+
 impl Rem<BigDigit> for BigUint {
-    type Output = BigDigit;
+    type Output = BigUint;
 
     #[inline]
-    fn rem(self, other: BigDigit) -> BigDigit {
+    fn rem(self, other: BigDigit) -> BigUint {
         let (_, r) = div_rem_digit(self, other);
-        r
+        From::from(r)
+    }
+}
+
+impl Rem<BigUint> for BigDigit {
+    type Output = BigUint;
+
+    #[inline]
+    fn rem(self, mut other: BigUint) -> BigUint {
+        other = other.normalize();
+        match other.data.len() {
+            0 => panic!(),
+            1 => From::from(self % other.data[0]),
+            _ => other
+        }
     }
 }
 
