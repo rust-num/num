@@ -27,6 +27,8 @@ use self::algorithms::{__add2, add2, sub2, sub2rev};
 use self::algorithms::{biguint_shl, biguint_shr};
 use self::algorithms::{cmp_slice, fls, ilog2};
 
+use UsizePromotion;
+
 use ParseBigIntError;
 
 #[cfg(test)]

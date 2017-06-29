@@ -28,6 +28,9 @@ use biguint;
 use biguint::to_str_radix_reversed;
 use biguint::BigUint;
 
+use UsizePromotion;
+use IsizePromotion;
+
 #[cfg(test)]
 #[path = "tests/bigint.rs"]
 mod bigint_tests;
@@ -301,17 +304,19 @@ impl Signed for BigInt {
 
 // A convenience method for getting the absolute value of an i32 in a u32.
 fn i32_abs_as_u32(a: i32) -> u32 {
-    match a.checked_abs() {
-        Some(x) => x as u32,
-        None => a as u32
+    if a == i32::min_value() {
+        a as u32
+    } else {
+        a.abs() as u32
     }
 }
 
 // A convenience method for getting the absolute value of an i64 in a u64.
 fn i64_abs_as_u64(a: i64) -> u64 {
-    match a.checked_abs() {
-        Some(x) => x as u64,
-        None => a as u64
+    if a == i64::min_value() {
+        a as u64
+    } else {
+        a.abs() as u64
     }
 }
 

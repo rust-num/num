@@ -210,35 +210,17 @@ macro_rules! promote_scalars {
     }
 }
 
-macro_rules! promote_unsigned_scalars_to_u32 {
+macro_rules! promote_unsigned_scalars {
     (impl $imp:ident for $res:ty, $method:ident) => {
-        #[cfg(target_pointer_width = "32")]
-        promote_scalars!(impl $imp<u32> for $res, $method, u8, u16, usize);
-        #[cfg(target_pointer_width = "64")]
         promote_scalars!(impl $imp<u32> for $res, $method, u8, u16);
+        promote_scalars!(impl $imp<UsizePromotion> for $res, $method, usize);
     }
 }
 
-macro_rules! promote_unsigned_scalars_to_u64 {
+macro_rules! promote_signed_scalars {
     (impl $imp:ident for $res:ty, $method:ident) => {
-        #[cfg(target_pointer_width = "64")]
-        promote_scalars!(impl $imp<u64> for $res, $method, usize);
-    }
-}
-
-macro_rules! promote_signed_scalars_to_i32 {
-    (impl $imp:ident for $res:ty, $method:ident) => {
-        #[cfg(target_pointer_width = "32")]
-        promote_scalars!(impl $imp<i32> for $res, $method, i8, i16, isize);
-        #[cfg(target_pointer_width = "64")]
         promote_scalars!(impl $imp<i32> for $res, $method, i8, i16);
-    }
-}
-
-macro_rules! promote_signed_scalars_to_i64 {
-    (impl $imp:ident for $res:ty, $method:ident) => {
-        #[cfg(target_pointer_width = "64")]
-        promote_scalars!(impl $imp<i64> for $res, $method, isize);
+        promote_scalars!(impl $imp<IsizePromotion> for $res, $method, isize);
     }
 }
 
@@ -281,20 +263,6 @@ macro_rules! forward_all_scalar_binop_to_val_val_commutative {
     (impl $imp:ident<$scalar:ty> for $res:ty, $method:ident) => {
         forward_scalar_val_val_binop_commutative!(impl $imp<$scalar> for $res, $method);
         forward_all_scalar_binop_to_val_val!(impl $imp<$scalar> for $res, $method);
-    }
-}
-
-macro_rules! promote_unsigned_scalars {
-    (impl $imp:ident for $res:ty, $method:ident) => {
-        promote_unsigned_scalars_to_u32!(impl $imp for $res, $method);
-        promote_unsigned_scalars_to_u64!(impl $imp for $res, $method);
-    }
-}
-
-macro_rules! promote_signed_scalars {
-    (impl $imp:ident for $res:ty, $method:ident) => {
-        promote_signed_scalars_to_i32!(impl $imp for $res, $method);
-        promote_signed_scalars_to_i64!(impl $imp for $res, $method);
     }
 }
 
