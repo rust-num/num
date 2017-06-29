@@ -567,6 +567,14 @@ fn test_scalar_add() {
             assert_op!(b + a == c);
             assert_op!(a + nc == nb);
             assert_op!(nc + a == nb);
+
+            if a <= i32::max_value() as u32 {
+                let na = -(a as i32);
+                assert_op!(na + nb == nc);
+                assert_op!(nb + na == nc);
+                assert_op!(na + c == b);
+                assert_op!(c + na == b);
+            }
         }
 
         if b_vec.len() == 1 {
@@ -575,6 +583,14 @@ fn test_scalar_add() {
             assert_op!(b + a == c);
             assert_op!(b + nc == na);
             assert_op!(nc + b == na);
+
+            if b <= i32::max_value() as u32 {
+                let nb = -(b as i32);
+                assert_op!(na + nb == nc);
+                assert_op!(nb + na == nc);
+                assert_op!(nb + c == a);
+                assert_op!(c + nb == a);
+            }
         }
     }
 }
@@ -614,6 +630,14 @@ fn test_scalar_sub() {
             assert_op!(a - c == nb);
             assert_op!(a - nb == c);
             assert_op!(nb - a == nc);
+
+            if a <= i32::max_value() as u32 {
+                let na = -(a as i32);
+                assert_op!(nc - na == nb);
+                assert_op!(na - nc == b);
+                assert_op!(na - b == nc);
+                assert_op!(b - na == c);
+            }
         }
 
         if b_vec.len() == 1 {
@@ -622,6 +646,14 @@ fn test_scalar_sub() {
             assert_op!(b - c == na);
             assert_op!(b - na == c);
             assert_op!(na - b == nc);
+
+            if b <= i32::max_value() as u32 {
+                let nb = -(b as i32);
+                assert_op!(nc - nb == na);
+                assert_op!(nb - nc == a);
+                assert_op!(nb - a == nc);
+                assert_op!(a - nb == c);
+            }
         }
 
         if c_vec.len() == 1 {
@@ -630,6 +662,14 @@ fn test_scalar_sub() {
             assert_op!(a - c == nb);
             assert_op!(c - b == a);
             assert_op!(b - c == na);
+
+            if c <= i32::max_value() as u32 {
+                let nc = -(c as i32);
+                assert_op!(nc - na == nb);
+                assert_op!(na - nc == b);
+                assert_op!(nc - nb == na);
+                assert_op!(nb - nc == a);
+            }
         }
     }
 }
@@ -665,6 +705,7 @@ static DIV_REM_QUADRUPLES: &'static [(&'static [BigDigit],
            &'static [BigDigit],
            &'static [BigDigit],
            &'static [BigDigit])] = &[(&[1], &[2], &[], &[1]),
+                                     (&[3], &[2], &[1], &[1]),
                                      (&[1, 1], &[2], &[M / 2 + 1], &[1]),
                                      (&[1, 1, 1], &[2], &[M / 2 + 1, M / 2 + 1], &[1]),
                                      (&[0, 1], &[N1], &[1], &[1]),
@@ -714,6 +755,14 @@ fn test_scalar_mul() {
             assert_op!(a * b == c);
             assert_op!(nb * a == nc);
             assert_op!(a * nb == nc);
+
+            if a <= i32::max_value() as u32 {
+                let na = -(a as i32);
+                assert_op!(nb * na == c);
+                assert_op!(na * nb == c);
+                assert_op!(b * na == nc);
+                assert_op!(na * b == nc);
+            }
         }
 
         if b_vec.len() == 1 {
@@ -722,6 +771,14 @@ fn test_scalar_mul() {
             assert_op!(b * a == c);
             assert_op!(na * b == nc);
             assert_op!(b * na == nc);
+
+            if b <= i32::max_value() as u32 {
+                let nb = -(b as i32);
+                assert_op!(na * nb == c);
+                assert_op!(nb * na == c);
+                assert_op!(a * nb == nc);
+                assert_op!(nb * a == nc);
+            }
         }
     }
 }
@@ -847,6 +904,12 @@ fn test_scalar_div_rem() {
         let (a, b, ans_q, ans_r) = (a.clone(), b.clone(), ans_q.clone(), ans_r.clone());
         assert_op!(a / b == ans_q);
         assert_op!(a % b == ans_r);
+
+        if b <= i32::max_value() as u32 {
+            let nb = -(b as i32);
+            assert_op!(a / nb == -ans_q.clone());
+            assert_op!(a % nb == ans_r);
+        }
     }
 
     fn check(a: &BigInt, b: BigDigit, q: &BigInt, r: &BigInt) {
