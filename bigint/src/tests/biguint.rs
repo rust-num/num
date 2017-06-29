@@ -734,14 +734,22 @@ fn test_scalar_sub() {
             let a = a_vec[0];
             let b = BigUint::from_slice(b_vec);
             let c = BigUint::from_slice(c_vec);
-            assert!(c - a == b);
+            assert_op!(c - a == b);
         }
 
         if b_vec.len() == 1 {
             let a = BigUint::from_slice(a_vec);
             let b = b_vec[0];
             let c = BigUint::from_slice(c_vec);
-            assert!(c - b == a);
+            assert_op!(c - b == a);
+        }
+
+        if c_vec.len() == 1 {
+            let a = BigUint::from_slice(a_vec);
+            let b = BigUint::from_slice(b_vec);
+            let c = c_vec[0];
+            assert_op!(c - a == b);
+            assert_op!(c - b == a);
         }
     }
 }

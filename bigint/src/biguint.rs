@@ -439,6 +439,8 @@ impl<'a> Sub<BigUint> for &'a BigUint {
     }
 }
 
+forward_all_scalar_binop_to_val_val!(impl Sub<BigDigit> for BigUint, sub);
+
 impl Sub<BigDigit> for BigUint {
     type Output = BigUint;
 
@@ -446,6 +448,20 @@ impl Sub<BigDigit> for BigUint {
     fn sub(mut self, other: BigDigit) -> BigUint {
         sub2(&mut self.data[..], &[other]);
         self.normalize()
+    }
+}
+
+impl Sub<BigUint> for BigDigit {
+    type Output = BigUint;
+
+    #[inline]
+    fn sub(self, mut other: BigUint) -> BigUint {
+        if other.data.len() == 0 {
+            other.data.push(0);
+        }
+
+        sub2rev(&[self], &mut other.data[..]);
+        other.normalize()
     }
 }
 
