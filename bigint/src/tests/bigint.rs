@@ -556,9 +556,10 @@ fn test_add() {
 fn test_scalar_add() {
     for elm in SUM_TRIPLES.iter() {
         let (a_vec, b_vec, c_vec) = *elm;
+        let a = BigInt::from_slice(Plus, a_vec);
         let b = BigInt::from_slice(Plus, b_vec);
         let c = BigInt::from_slice(Plus, c_vec);
-        let (nb, nc) = (-&b, -&c);
+        let (na, nb, nc) = (-&a, -&b, -&c);
 
         if a_vec.len() == 1 {
             let a = a_vec[0];
@@ -566,6 +567,14 @@ fn test_scalar_add() {
             assert_op!(b + a == c);
             assert_op!(a + nc == nb);
             assert_op!(nc + a == nb);
+        }
+
+        if b_vec.len() == 1 {
+            let b = b_vec[0];
+            assert_op!(a + b == c);
+            assert_op!(b + a == c);
+            assert_op!(b + nc == na);
+            assert_op!(nc + b == na);
         }
     }
 }
@@ -587,6 +596,41 @@ fn test_sub() {
         assert_op!(a - nb == c);
         assert_op!(nc - na == nb);
         assert_op!(a - a == Zero::zero());
+    }
+}
+
+#[test]
+fn test_scalar_sub() {
+    for elm in SUM_TRIPLES.iter() {
+        let (a_vec, b_vec, c_vec) = *elm;
+        let a = BigInt::from_slice(Plus, a_vec);
+        let b = BigInt::from_slice(Plus, b_vec);
+        let c = BigInt::from_slice(Plus, c_vec);
+        let (na, nb, nc) = (-&a, -&b, -&c);
+
+        if a_vec.len() == 1 {
+            let a = a_vec[0];
+            assert_op!(c - a == b);
+            assert_op!(a - c == nb);
+            assert_op!(a - nb == c);
+            assert_op!(nb - a == nc);
+        }
+
+        if b_vec.len() == 1 {
+            let b = b_vec[0];
+            assert_op!(c - b == a);
+            assert_op!(b - c == na);
+            assert_op!(b - na == c);
+            assert_op!(na - b == nc);
+        }
+
+        if c_vec.len() == 1 {
+            let c = c_vec[0];
+            assert_op!(c - a == b);
+            assert_op!(a - c == nb);
+            assert_op!(c - b == a);
+            assert_op!(b - c == na);
+        }
     }
 }
 

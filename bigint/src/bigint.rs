@@ -445,6 +445,35 @@ impl Sub<BigInt> for BigInt {
     }
 }
 
+forward_all_scalar_binop_to_val_val!(impl Sub<BigDigit> for BigInt, sub);
+
+impl Sub<BigDigit> for BigInt {
+    type Output = BigInt;
+
+    #[inline]
+    fn sub(self, other: BigDigit) -> BigInt {
+        match self.sign {
+            NoSign => BigInt::from_biguint(Minus, From::from(other)),
+            Minus => BigInt::from_biguint(Minus, self.data + other),
+            Plus =>
+                match self.data.cmp(&From::from(other)) {
+                    Equal => Zero::zero(),
+                    Greater => BigInt::from_biguint(Plus, self.data - other),
+                    Less => BigInt::from_biguint(Minus, other - self.data),
+                }
+        }
+    }
+}
+
+impl Sub<BigInt> for BigDigit {
+    type Output = BigInt;
+
+    #[inline]
+    fn sub(self, other: BigInt) -> BigInt {
+        -(other - self)
+    }
+}
+
 forward_all_binop_to_ref_ref!(impl Mul for BigInt, mul);
 
 impl<'a, 'b> Mul<&'b BigInt> for &'a BigInt {
