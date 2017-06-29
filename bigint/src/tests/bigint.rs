@@ -553,6 +553,24 @@ fn test_add() {
 }
 
 #[test]
+fn test_scalar_add() {
+    for elm in SUM_TRIPLES.iter() {
+        let (a_vec, b_vec, c_vec) = *elm;
+        let b = BigInt::from_slice(Plus, b_vec);
+        let c = BigInt::from_slice(Plus, c_vec);
+        let (nb, nc) = (-&b, -&c);
+
+        if a_vec.len() == 1 {
+            let a = a_vec[0];
+            assert_op!(a + b == c);
+            assert_op!(b + a == c);
+            assert_op!(a + nc == nb);
+            assert_op!(nc + a == nb);
+        }
+    }
+}
+
+#[test]
 fn test_sub() {
     for elm in SUM_TRIPLES.iter() {
         let (a_vec, b_vec, c_vec) = *elm;

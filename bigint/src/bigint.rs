@@ -362,6 +362,26 @@ impl Add<BigInt> for BigInt {
     }
 }
 
+forward_all_scalar_binop_to_val_val_commutative!(impl Add<BigDigit> for BigInt, add);
+
+impl Add<BigDigit> for BigInt {
+    type Output = BigInt;
+
+    #[inline]
+    fn add(self, other: BigDigit) -> BigInt {
+        match self.sign {
+            NoSign => From::from(other),
+            Plus => BigInt::from_biguint(Plus, self.data + other),
+            Minus =>
+                match self.data.cmp(&From::from(other)) {
+                    Equal => Zero::zero(),
+                    Less => BigInt::from_biguint(Plus, other - self.data),
+                    Greater => BigInt::from_biguint(Minus, self.data - other),
+                }
+        }
+    }
+}
+
 // We want to forward to BigUint::sub, but it's not clear how that will go until
 // we compare both sign and magnitude.  So we duplicate this body for every
 // val/ref combination, deferring that decision to BigUint's own forwarding.
