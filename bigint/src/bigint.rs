@@ -485,6 +485,8 @@ impl<'a, 'b> Mul<&'b BigInt> for &'a BigInt {
     }
 }
 
+forward_all_scalar_binop_to_val_val_commutative!(impl Mul<BigDigit> for BigInt, mul);
+
 impl Mul<BigDigit> for BigInt {
     type Output = BigInt;
 

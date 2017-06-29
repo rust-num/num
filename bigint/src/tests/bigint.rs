@@ -703,23 +703,25 @@ fn test_mul() {
 fn test_scalar_mul() {
     for elm in MUL_TRIPLES.iter() {
         let (a_vec, b_vec, c_vec) = *elm;
+        let a = BigInt::from_slice(Plus, a_vec);
+        let b = BigInt::from_slice(Plus, b_vec);
         let c = BigInt::from_slice(Plus, c_vec);
-        let nc = BigInt::from_slice(Minus, c_vec);
+        let (na, nb, nc) = (-&a, -&b, -&c);
 
         if a_vec.len() == 1 {
-            let b = BigInt::from_slice(Plus, b_vec);
-            let nb = BigInt::from_slice(Minus, b_vec);
             let a = a_vec[0];
-            assert!(b * a == c);
-            assert!(nb * a == nc);
+            assert_op!(b * a == c);
+            assert_op!(a * b == c);
+            assert_op!(nb * a == nc);
+            assert_op!(a * nb == nc);
         }
 
         if b_vec.len() == 1 {
-            let a = BigInt::from_slice(Plus, a_vec);
-            let na = BigInt::from_slice(Minus, a_vec);
             let b = b_vec[0];
-            assert!(a * b == c);
-            assert!(na * b == nc);
+            assert_op!(a * b == c);
+            assert_op!(b * a == c);
+            assert_op!(na * b == nc);
+            assert_op!(b * na == nc);
         }
     }
 }

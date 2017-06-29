@@ -483,9 +483,13 @@ impl Mul<BigDigit> for BigUint {
 
     #[inline]
     fn mul(mut self, other: BigDigit) -> BigUint {
-        let carry = scalar_mul(&mut self.data[..], other);
-        if carry != 0 {
-            self.data.push(carry);
+        if other == 0 {
+            self.data.clear();
+        } else {
+            let carry = scalar_mul(&mut self.data[..], other);
+            if carry != 0 {
+                self.data.push(carry);
+            }
         }
         self
     }
