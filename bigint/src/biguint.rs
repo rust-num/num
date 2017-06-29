@@ -394,6 +394,8 @@ impl<'a> Add<&'a BigUint> for BigUint {
     }
 }
 
+forward_all_scalar_binop_to_val_val!(impl Add<BigDigit> for BigUint, add);
+
 impl Add<BigDigit> for BigUint {
     type Output = BigUint;
 

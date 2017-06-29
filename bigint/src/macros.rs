@@ -105,6 +105,85 @@ macro_rules! forward_ref_ref_binop_commutative {
     }
 }
 
+macro_rules! forward_scalar_val_val_binop {
+    (impl $imp:ident<$scalar:ty> for $res:ty, $method: ident) => {
+        impl $imp<$res> for $scalar {
+            type Output = $res;
+
+            #[inline]
+            fn $method(self, other: $res) -> $res {
+                $imp::$method(other, self)
+            }
+        }
+    }
+}
+
+macro_rules! forward_scalar_val_ref_binop {
+    (impl $imp:ident<$scalar:ty> for $res:ty, $method:ident) => {
+        impl<'a> $imp<&'a $scalar> for $res {
+            type Output = $res;
+
+            #[inline]
+            fn $method(self, other: &$scalar) -> $res {
+                $imp::$method(self, *other)
+            }
+        }
+
+        impl<'a> $imp<$res> for &'a $scalar {
+            type Output = $res;
+
+            #[inline]
+            fn $method(self, other: $res) -> $res {
+                $imp::$method(other, *self)
+            }
+        }
+    }
+}
+
+macro_rules! forward_scalar_ref_val_binop {
+    (impl $imp:ident<$scalar:ty> for $res:ty, $method:ident) => {
+        impl<'a> $imp<$scalar> for &'a $res {
+            type Output = $res;
+
+            #[inline]
+            fn $method(self, other: $scalar) -> $res {
+                $imp::$method(self.clone(), other)
+            }
+        }
+
+        impl<'a> $imp<&'a $res> for $scalar {
+            type Output = $res;
+
+            #[inline]
+            fn $method(self, other: &$res) -> $res {
+                $imp::$method(other.clone(), self)
+            }
+        }
+    }
+}
+
+macro_rules! forward_scalar_ref_ref_binop {
+    (impl $imp:ident<$scalar:ty> for $res:ty, $method:ident) => {
+        impl<'a, 'b> $imp<&'b $scalar> for &'a $res {
+            type Output = $res;
+
+            #[inline]
+            fn $method(self, other: &$scalar) -> $res {
+                $imp::$method(self.clone(), *other)
+            }
+        }
+
+        impl<'a, 'b> $imp<&'a $res> for &'b $scalar {
+            type Output = $res;
+
+            #[inline]
+            fn $method(self, other: &$res) -> $res {
+                $imp::$method(other.clone(), *self)
+            }
+        }
+    }
+}
+
 // Forward everything to ref-ref, when reusing storage is not helpful
 macro_rules! forward_all_binop_to_ref_ref {
     (impl $imp:ident for $res:ty, $method:ident) => {
@@ -130,4 +209,13 @@ macro_rules! forward_all_binop_to_val_ref_commutative {
         forward_ref_val_binop_commutative!(impl $imp for $res, $method);
         forward_ref_ref_binop_commutative!(impl $imp for $res, $method);
     };
+}
+
+macro_rules! forward_all_scalar_binop_to_val_val {
+    (impl $imp:ident<$scalar:ty> for $res:ty, $method:ident) => {
+        forward_scalar_val_val_binop!(impl $imp<$scalar> for $res, $method);
+        forward_scalar_val_ref_binop!(impl $imp<$scalar> for $res, $method);
+        forward_scalar_ref_val_binop!(impl $imp<$scalar> for $res, $method);
+        forward_scalar_ref_ref_binop!(impl $imp<$scalar> for $res, $method);
+    }
 }
