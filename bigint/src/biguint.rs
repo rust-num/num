@@ -460,6 +460,8 @@ impl<'a, 'b> Mul<&'b BigUint> for &'a BigUint {
     }
 }
 
+forward_all_scalar_binop_to_val_val!(impl Mul<BigDigit> for BigUint, mul);
+
 impl Mul<BigDigit> for BigUint {
     type Output = BigUint;
 

@@ -822,13 +822,15 @@ fn test_scalar_mul() {
         if a_vec.len() == 1 {
             let b = BigUint::from_slice(b_vec);
             let a = a_vec[0];
-            assert!(b * a == c);
+            assert_op!(a * b == c);
+            assert_op!(b * a == c);
         }
 
         if b_vec.len() == 1 {
             let a = BigUint::from_slice(a_vec);
             let b = b_vec[0];
-            assert!(a * b == c);
+            assert_op!(a * b == c);
+            assert_op!(b * a == c);
         }
     }
 }
