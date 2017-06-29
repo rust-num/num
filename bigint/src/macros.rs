@@ -184,6 +184,50 @@ macro_rules! forward_scalar_ref_ref_binop {
     }
 }
 
+macro_rules! promote_scalars {
+    (impl $imp:ident<$promo:ty> for $res:ty, $method:ident, $( $scalar:ty ),*) => {
+        $(
+            forward_all_scalar_binop_to_val_val!(impl $imp<$scalar> for $res, $method);
+
+            impl $imp<$scalar> for $res {
+                type Output = $res;
+
+                #[inline]
+                fn $method(self, other: $scalar) -> $res {
+                    $imp::$method(self, other as $promo)
+                }
+            }
+
+            impl $imp<$res> for $scalar {
+                type Output = $res;
+
+                #[inline]
+                fn $method(self, other: $res) -> $res {
+                    $imp::$method(self as $promo, other)
+                }
+            }
+        )*
+    }
+}
+
+macro_rules! promote_unsigned_scalars_to_u32 {
+    (impl $imp:ident for $res:ty, $method:ident) => {
+        #[cfg(target_pointer_width = "32")]
+        promote_scalars!(impl $imp<u32> for $res, $method, u8, u16, usize);
+        #[cfg(target_pointer_width = "64")]
+        promote_scalars!(impl $imp<u32> for $res, $method, u8, u16);
+    }
+}
+
+macro_rules! promote_signed_scalars_to_i32 {
+    (impl $imp:ident for $res:ty, $method:ident) => {
+        #[cfg(target_pointer_width = "32")]
+        promote_scalars!(impl $imp<i32> for $res, $method, i8, i16, isize);
+        #[cfg(target_pointer_width = "64")]
+        promote_scalars!(impl $imp<i32> for $res, $method, i8, i16);
+    }
+}
+
 // Forward everything to ref-ref, when reusing storage is not helpful
 macro_rules! forward_all_binop_to_ref_ref {
     (impl $imp:ident for $res:ty, $method:ident) => {
@@ -223,5 +267,24 @@ macro_rules! forward_all_scalar_binop_to_val_val_commutative {
     (impl $imp:ident<$scalar:ty> for $res:ty, $method:ident) => {
         forward_scalar_val_val_binop_commutative!(impl $imp<$scalar> for $res, $method);
         forward_all_scalar_binop_to_val_val!(impl $imp<$scalar> for $res, $method);
+    }
+}
+
+macro_rules! promote_unsigned_scalars {
+    (impl $imp:ident for $res:ty, $method:ident) => {
+        promote_unsigned_scalars_to_u32!(impl $imp for $res, $method);
+    }
+}
+
+macro_rules! promote_signed_scalars {
+    (impl $imp:ident for $res:ty, $method:ident) => {
+        promote_signed_scalars_to_i32!(impl $imp for $res, $method);
+    }
+}
+
+macro_rules! promote_all_scalars {
+    (impl $imp:ident for $res:ty, $method:ident) => {
+        promote_unsigned_scalars!(impl $imp for $res, $method);
+        promote_signed_scalars!(impl $imp for $res, $method);
     }
 }

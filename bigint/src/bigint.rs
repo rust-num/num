@@ -370,6 +370,7 @@ impl Add<BigInt> for BigInt {
     }
 }
 
+promote_all_scalars!(impl Add for BigInt, add);
 forward_all_scalar_binop_to_val_val_commutative!(impl Add<BigDigit> for BigInt, add);
 
 impl Add<BigDigit> for BigInt {
@@ -468,6 +469,7 @@ impl Sub<BigInt> for BigInt {
     }
 }
 
+promote_all_scalars!(impl Sub for BigInt, sub);
 forward_all_scalar_binop_to_val_val!(impl Sub<BigDigit> for BigInt, sub);
 
 impl Sub<BigDigit> for BigInt {
@@ -536,6 +538,7 @@ impl<'a, 'b> Mul<&'b BigInt> for &'a BigInt {
     }
 }
 
+promote_all_scalars!(impl Mul for BigInt, mul);
 forward_all_scalar_binop_to_val_val_commutative!(impl Mul<BigDigit> for BigInt, mul);
 
 impl Mul<BigDigit> for BigInt {
@@ -574,6 +577,7 @@ impl<'a, 'b> Div<&'b BigInt> for &'a BigInt {
     }
 }
 
+promote_all_scalars!(impl Div for BigInt, div);
 forward_all_scalar_binop_to_val_val!(impl Div<BigDigit> for BigInt, div);
 
 impl Div<BigDigit> for BigInt {
@@ -634,6 +638,7 @@ impl<'a, 'b> Rem<&'b BigInt> for &'a BigInt {
     }
 }
 
+promote_all_scalars!(impl Rem for BigInt, rem);
 forward_all_scalar_binop_to_val_val!(impl Rem<BigDigit> for BigInt, rem);
 
 impl Rem<BigDigit> for BigInt {

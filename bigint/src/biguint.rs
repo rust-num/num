@@ -394,6 +394,7 @@ impl<'a> Add<&'a BigUint> for BigUint {
     }
 }
 
+promote_unsigned_scalars!(impl Add for BigUint, add);
 forward_all_scalar_binop_to_val_val_commutative!(impl Add<BigDigit> for BigUint, add);
 
 impl Add<BigDigit> for BigUint {
@@ -439,6 +440,7 @@ impl<'a> Sub<BigUint> for &'a BigUint {
     }
 }
 
+promote_unsigned_scalars!(impl Sub for BigUint, sub);
 forward_all_scalar_binop_to_val_val!(impl Sub<BigDigit> for BigUint, sub);
 
 impl Sub<BigDigit> for BigUint {
@@ -476,6 +478,7 @@ impl<'a, 'b> Mul<&'b BigUint> for &'a BigUint {
     }
 }
 
+promote_unsigned_scalars!(impl Mul for BigUint, mul);
 forward_all_scalar_binop_to_val_val_commutative!(impl Mul<BigDigit> for BigUint, mul);
 
 impl Mul<BigDigit> for BigUint {
@@ -507,6 +510,7 @@ impl<'a, 'b> Div<&'b BigUint> for &'a BigUint {
     }
 }
 
+promote_unsigned_scalars!(impl Div for BigUint, div);
 forward_all_scalar_binop_to_val_val!(impl Div<BigDigit> for BigUint, div);
 
 impl Div<BigDigit> for BigUint {
@@ -544,6 +548,7 @@ impl<'a, 'b> Rem<&'b BigUint> for &'a BigUint {
     }
 }
 
+promote_unsigned_scalars!(impl Rem for BigUint, rem);
 forward_all_scalar_binop_to_val_val!(impl Rem<BigDigit> for BigUint, rem);
 
 impl Rem<BigDigit> for BigUint {
