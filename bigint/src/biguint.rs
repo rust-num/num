@@ -519,8 +519,7 @@ impl Div<BigUint> for BigDigit {
     type Output = BigUint;
 
     #[inline]
-    fn div(self, mut other: BigUint) -> BigUint {
-        other = other.normalize();
+    fn div(self, other: BigUint) -> BigUint {
         match other.data.len() {
             0 => panic!(),
             1 => From::from(self / other.data[0]),
@@ -557,8 +556,7 @@ impl Rem<BigUint> for BigDigit {
     type Output = BigUint;
 
     #[inline]
-    fn rem(self, mut other: BigUint) -> BigUint {
-        other = other.normalize();
+    fn rem(self, other: BigUint) -> BigUint {
         match other.data.len() {
             0 => panic!(),
             1 => From::from(self % other.data[0]),
