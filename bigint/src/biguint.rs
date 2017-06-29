@@ -402,7 +402,7 @@ impl Add<BigDigit> for BigUint {
 
     #[inline]
     fn add(mut self, other: BigDigit) -> BigUint {
-        if self.data.len() == 0 {
+        if self.data.len() == 0 && other != 0 {
             self.data.push(0);
         }
 
