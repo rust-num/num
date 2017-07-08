@@ -12,7 +12,7 @@ extern crate num;
 #[macro_use]
 extern crate num_derive;
 
-#[derive(Debug, PartialEq, FromPrimitive)]
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive)]
 enum Color {
     Red,
     Blue,
@@ -28,4 +28,25 @@ fn test_from_primitive_for_trivial_case() {
 
     assert_eq!(v,
                [Some(Color::Red), Some(Color::Blue), Some(Color::Green), None]);
+}
+
+#[test]
+fn test_to_primitive_for_trivial_case() {
+    let v: [Option<u64>; 3] = [num::ToPrimitive::to_u64(&Color::Red),
+                               num::ToPrimitive::to_u64(&Color::Blue),
+                               num::ToPrimitive::to_u64(&Color::Green)];
+
+    assert_eq!(v, [Some(0), Some(1), Some(2)]);
+}
+
+#[test]
+fn test_reflexive_for_trivial_case() {
+    let before: [u64; 3] = [0, 1, 2];
+    let after: Vec<Option<u64>> = before.iter()
+        .map(|&x| -> Option<Color> { num::FromPrimitive::from_u64(x) })
+        .map(|x| x.and_then(|x| num::ToPrimitive::to_u64(&x)))
+        .collect();
+    let before = before.into_iter().cloned().map(Some).collect::<Vec<_>>();
+
+    assert_eq!(before, after);
 }
