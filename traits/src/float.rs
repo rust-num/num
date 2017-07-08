@@ -324,7 +324,7 @@ pub trait Float
     fn signum(self) -> Self;
 
     /// Returns `true` if `self` is positive, including `+0.0`,
-    /// `Float::infinity()`, and `f64::NAN` with newer versions of Rust.
+    /// `Float::infinity()`, and with newer versions of Rust `f64::NAN`.
     ///
     /// ```
     /// use num_traits::Float;
@@ -342,7 +342,7 @@ pub trait Float
     fn is_sign_positive(self) -> bool;
 
     /// Returns `true` if `self` is negative, including `-0.0`,
-    /// `Float::neg_infinity()`, and `-f64::NAN` with newer versions of Rust.
+    /// `Float::neg_infinity()`, and with newer versions of Rust `-f64::NAN`.
     ///
     /// ```
     /// use num_traits::Float;
