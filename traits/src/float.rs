@@ -330,14 +330,14 @@ pub trait Float
     /// use num_traits::Float;
     /// use std::f64;
     ///
-    /// let nan: f64 = f64::NAN;
+    /// let neg_nan: f64 = -f64::NAN;
     ///
     /// let f = 7.0;
     /// let g = -7.0;
     ///
     /// assert!(f.is_sign_positive());
     /// assert!(!g.is_sign_positive());
-    /// assert!(!nan.is_sign_negative());
+    /// assert!(!neg_nan.is_sign_positive());
     /// ```
     fn is_sign_positive(self) -> bool;
 
@@ -348,14 +348,14 @@ pub trait Float
     /// use num_traits::Float;
     /// use std::f64;
     ///
-    /// let neg_nan: f64 = -f64::NAN;
+    /// let nan: f64 = f64::NAN;
     ///
     /// let f = 7.0;
     /// let g = -7.0;
     ///
     /// assert!(!f.is_sign_negative());
     /// assert!(g.is_sign_negative());
-    /// assert!(!neg_nan.is_sign_positive());
+    /// assert!(!nan.is_sign_negative());
     /// ```
     fn is_sign_negative(self) -> bool;
 
