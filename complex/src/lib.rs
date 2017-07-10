@@ -773,7 +773,7 @@ impl<T> FromStr for Complex<T> where
                         // if `a` is imaginary, let `b` be real (and vice versa)
                         match a.rfind('i') {
                             None => "0i".to_string(),
-                            Some(u) => "0".to_string()
+                            _ => "0".to_string()
                         }
                     }
                     Some(s) => {
@@ -790,7 +790,7 @@ impl<T> FromStr for Complex<T> where
                 try!(T::from_str(&a)
                     .map_err(|_| ParseComplexError { kind: ComplexErrorKind::ParseError }))
             },
-            Some(u) => {
+            _ => {
                 try!(T::from_str(&b)
                     .map_err(|_| ParseComplexError { kind: ComplexErrorKind::ParseError }))
             }
@@ -802,7 +802,7 @@ impl<T> FromStr for Complex<T> where
                 try!(T::from_str(&b)
                     .map_err(|_| ParseComplexError { kind: ComplexErrorKind::ParseError }))
             },
-            Some(u) => {
+            _ => {
                 a.pop();
                 try!(T::from_str(&a)
                     .map_err(|_| ParseComplexError { kind: ComplexErrorKind::ParseError }))
