@@ -755,7 +755,7 @@ impl<T> FromStr for Complex<T> where
 
         let mut a = match split_p.next() {
             None => return Err(ParseComplexError { kind: ComplexErrorKind::ParseError }),
-            Some(s) => s.to_string()
+            Some(s) => s.trim_right().to_string()
         };
 
         let mut b = match split_p.next() {
@@ -765,7 +765,7 @@ impl<T> FromStr for Complex<T> where
 
                 a = match split_m.next() {
                     None => return Err(ParseComplexError { kind: ComplexErrorKind::ParseError }),
-                    Some(s) => s.to_string()
+                    Some(s) => s.trim_right().to_string()
                 };
 
                 let c = match split_m.next() {
@@ -777,12 +777,12 @@ impl<T> FromStr for Complex<T> where
                         }
                     }
                     Some(s) => {
-                        "-".to_string() + s
+                        "-".to_string() + s.trim_left()
                     }
                 };
                 c
             },
-            Some(s) => s.to_string()
+            Some(s) => s.trim_left().to_string()
         };
 
         let re = match a.rfind('i') {
@@ -798,12 +798,51 @@ impl<T> FromStr for Complex<T> where
 
         let im = match a.rfind('i') {
             None => {
-                b.pop();
+                // a is real
+                match b.pop() {
+                    // b was empty
+                    None => return Err(ParseComplexError { kind: ComplexErrorKind::ParseError }),
+                    Some(c) => {
+                        if c == 'i' {
+                            // b is imaginary
+                            if b.is_empty() {
+                                // b was just 'i'
+                                b = "1".to_string();
+                            } else if b == "-" {
+                                // b was just '-i'
+                                b = "-1".to_string();
+                            }
+                        } else {
+                            // given a sum or difference of two reals
+                            return Err(ParseComplexError { kind: ComplexErrorKind::ParseError });
+                        }
+                    }
+                }
+
                 try!(T::from_str(&b)
                     .map_err(|_| ParseComplexError { kind: ComplexErrorKind::ParseError }))
             },
             _ => {
-                a.pop();
+                // a contains an 'i'
+                match a.pop() {
+                    None => return Err(ParseComplexError { kind: ComplexErrorKind::ParseError }),
+                    Some(c) => {
+                        if c == 'i' {
+                            // a is imaginary
+                            if a.is_empty() {
+                                // a was just 'i'
+                                a = "1".to_string();
+                            } else if a == "-" {
+                                // a was just '-i'
+                                a = "-1".to_string();
+                            }
+                        } else {
+                            // given a sum or difference of two reals
+                            return Err(ParseComplexError { kind: ComplexErrorKind::ParseError });
+                        }
+                    }
+                }
+
                 try!(T::from_str(&a)
                     .map_err(|_| ParseComplexError { kind: ComplexErrorKind::ParseError }))
             }
@@ -881,6 +920,7 @@ mod test {
 
     use super::{Complex64, Complex};
     use std::f64;
+    use std::str::FromStr;
 
     use traits::{Zero, One, Float};
 
@@ -1501,5 +1541,37 @@ mod test {
         assert!(!a.is_normal());
         assert!(!b.is_normal());
         assert!(_1_1i.is_normal());
+    }
+
+    #[test]
+    fn test_from_string() {
+        fn test(z: Complex64, s: String) {
+            assert_eq!(FromStr::from_str(&s), Ok(z));
+        }
+        test(_0_0i, "0".to_string());
+        test(_0_0i, "0i".to_string());
+        test(_0_0i, "-0".to_string());
+        test(_0_0i, "-0i".to_string());
+        test(_0_0i, "0 + 0i".to_string());
+        test(_0_0i, "0 - 0i".to_string());
+
+        test(_1_0i, "1".to_string());
+        test(_1_0i, "1 + 0i".to_string());
+        test(_1_0i, "1 - 0i".to_string());
+
+        test(_1_1i, "1 + i".to_string());
+        test(_1_1i, "1 + 1i".to_string());
+
+        test(_0_1i, "i".to_string());
+        test(_0_1i, "1i".to_string());
+        test(_0_1i, "0 + i".to_string());
+        test(_0_1i, "-0 + i".to_string());
+        test(_0_1i, "0 + 1i".to_string());
+        test(_0_1i, "-0 + 1i".to_string());
+
+        test(_neg1_1i, "-1 + i".to_string());
+        test(_neg1_1i, "-1 + 1i".to_string());
+
+        test(_05_05i, "0.5 + 0.5i".to_string());
     }
 }
