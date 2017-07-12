@@ -1,5 +1,5 @@
 use integer::Integer;
-use {BigDigit, DoubleBigDigit, BigUint, ToBigUint, big_digit};
+use {BigDigit, BigUint, ToBigUint, big_digit};
 use {BigInt, RandBigInt, ToBigInt};
 use Sign::Plus;
 
@@ -22,6 +22,24 @@ macro_rules! assert_op {
         assert_eq!((&$left) $op $right.clone(), $expected);
         assert_eq!($left.clone() $op (&$right), $expected);
         assert_eq!($left.clone() $op $right.clone(), $expected);
+    };
+}
+
+/// Assert that an op works for scalar left or right
+macro_rules! assert_scalar_op {
+    (($($to:ident),*) $left:ident $op:tt $right:ident == $expected:expr) => {
+        $(
+            if let Some(left) = $left.$to() {
+                assert_op!(left $op $right == $expected);
+            }
+            if let Some(right) = $right.$to() {
+                assert_op!($left $op right == $expected);
+            }
+        )*
+    };
+    ($left:ident $op:tt $right:ident == $expected:expr) => {
+        assert_scalar_op!((to_u8, to_u16, to_u32, to_u64, to_usize)
+                          $left $op $right == $expected);
     };
 }
 
@@ -677,16 +695,6 @@ const SUM_TRIPLES: &'static [(&'static [BigDigit],
                                      (&[1, 1, 1], &[N1, N1], &[0, 1, 2]),
                                      (&[2, 2, 1], &[N1, N2], &[1, 1, 2])];
 
-fn get_scalar(vec: &[BigDigit]) -> BigDigit {
-    vec.get(0).map_or(0, BigDigit::clone)
-}
-
-fn get_scalar_double(vec: &[BigDigit]) -> DoubleBigDigit {
-    let lo = vec.get(0).map_or(0, BigDigit::clone);
-    let hi = vec.get(1).map_or(0, BigDigit::clone);
-    big_digit::to_doublebigdigit(hi, lo)
-}
-
 #[test]
 fn test_add() {
     for elm in SUM_TRIPLES.iter() {
@@ -708,29 +716,8 @@ fn test_scalar_add() {
         let b = BigUint::from_slice(b_vec);
         let c = BigUint::from_slice(c_vec);
 
-        if a_vec.len() <= 1 {
-            let a = get_scalar(a_vec);
-            assert_op!(a + b == c);
-            assert_op!(b + a == c);
-        }
-
-        if a_vec.len() <= 2 {
-            let a = get_scalar_double(a_vec);
-            assert_op!(a + b == c);
-            assert_op!(b + a == c);
-        }
-
-        if b_vec.len() <= 1 {
-            let b = get_scalar(b_vec);
-            assert_op!(a + b == c);
-            assert_op!(b + a == c);
-        }
-
-        if b_vec.len() <= 2 {
-            let b = get_scalar_double(b_vec);
-            assert_op!(a + b == c);
-            assert_op!(b + a == c);
-        }
+        assert_scalar_op!(a + b == c);
+        assert_scalar_op!(b + a == c);
     }
 }
 
@@ -755,21 +742,8 @@ fn test_scalar_sub() {
         let b = BigUint::from_slice(b_vec);
         let c = BigUint::from_slice(c_vec);
 
-        if a_vec.len() == 1 {
-            let a = a_vec[0];
-            assert_op!(c - a == b);
-        }
-
-        if b_vec.len() == 1 {
-            let b = b_vec[0];
-            assert_op!(c - b == a);
-        }
-
-        if c_vec.len() == 1 {
-            let c = c_vec[0];
-            assert_op!(c - a == b);
-            assert_op!(c - b == a);
-        }
+        assert_scalar_op!(c - a == b);
+        assert_scalar_op!(c - b == a);
     }
 }
 
@@ -849,17 +823,8 @@ fn test_scalar_mul() {
         let b = BigUint::from_slice(b_vec);
         let c = BigUint::from_slice(c_vec);
 
-        if a_vec.len() == 1 {
-            let a = a_vec[0];
-            assert_op!(a * b == c);
-            assert_op!(b * a == c);
-        }
-
-        if b_vec.len() == 1 {
-            let b = b_vec[0];
-            assert_op!(a * b == c);
-            assert_op!(b * a == c);
-        }
+        assert_scalar_op!(a * b == c);
+        assert_scalar_op!(b * a == c);
     }
 }
 
@@ -906,28 +871,14 @@ fn test_scalar_div_rem() {
         let b = BigUint::from_slice(b_vec);
         let c = BigUint::from_slice(c_vec);
 
-        if a_vec.len() == 1 && a_vec[0] != 0 {
-            let a = a_vec[0];
-            assert_op!(c / a == b);
-            assert_op!(c % a == Zero::zero());
+        if !a.is_zero() {
+            assert_scalar_op!(c / a == b);
+            assert_scalar_op!(c % a == Zero::zero());
         }
 
-        if b_vec.len() == 1 && b_vec[0] != 0 {
-            let b = b_vec[0];
-            assert_op!(c / b == a);
-            assert_op!(c % b == Zero::zero());
-        }
-
-        if c_vec.len() == 1 {
-            let c = c_vec[0];
-            if !a.is_zero() {
-                assert_op!(c / a == b);
-                assert_op!(c % a == Zero::zero());
-            }
-            if !b.is_zero() {
-                assert_op!(c / b == a);
-                assert_op!(c % b == Zero::zero());
-            }
+        if !b.is_zero() {
+            assert_scalar_op!(c / b == a);
+            assert_scalar_op!(c % b == Zero::zero());
         }
     }
 
@@ -938,16 +889,9 @@ fn test_scalar_div_rem() {
         let c = BigUint::from_slice(c_vec);
         let d = BigUint::from_slice(d_vec);
 
-        if b_vec.len() == 1 && b_vec[0] != 0 {
-            let b = b_vec[0];
-            assert_op!(a / b == c);
-            assert_op!(a % b == d);
-        }
-
-        if a_vec.len() == 1 && !b.is_zero() {
-            let a = a_vec[0];
-            assert_op!(a / b == c);
-            assert_op!(a % b == d);
+        if !b.is_zero() {
+            assert_scalar_op!(a / b == c);
+            assert_scalar_op!(a % b == d);
         }
     }
 }
