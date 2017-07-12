@@ -360,13 +360,13 @@ pub trait Float
     /// ```
     #[inline]
     fn signum(self) -> Self {
-        if self.is_sign_positive() {
-            return Self::one();
+        if self.is_nan() {
+            Self::nan()
+        } else if self.is_sign_negative() {
+            -Self::one()
+        } else {
+            Self::one()
         }
-        if self.is_sign_negative() {
-            return -Self::one();
-        }
-        Self::nan()
     }
 
     /// Returns `true` if `self` is positive, including `+0.0`,
@@ -387,7 +387,7 @@ pub trait Float
     /// ```
     #[inline]
     fn is_sign_positive(self) -> bool {
-        self > Self::zero() || (Self::one() / self) == Self::infinity()
+        !self.is_sign_negative()
     }
 
     /// Returns `true` if `self` is negative, including `-0.0`,
@@ -408,7 +408,8 @@ pub trait Float
     /// ```
     #[inline]
     fn is_sign_negative(self) -> bool {
-        self < Self::zero() || (Self::one() / self) == Self::neg_infinity()
+        let (_, _, sign) = self.integer_decode();
+        sign < 0
     }
 
     /// Fused multiply-add. Computes `(self * a) + b` with only one rounding
