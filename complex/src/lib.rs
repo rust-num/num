@@ -671,36 +671,89 @@ macro_rules! real_arithmetic {
             }
         )*
     );
-    (@implement $imp:ident::$method:ident for $($real:ident),*) => (
-        impl<T: Clone + Num> $imp<T> for Complex<T> {
-            type Output = Complex<T>;
-
-            #[inline]
-            fn $method(self, other: T) -> Complex<T> {
-                self.$method(Complex::from(other))
-            }
-        }
-        $(
-            impl $imp<Complex<$real>> for $real {
-                type Output = Complex<$real>;
-
-                #[inline]
-                fn $method(self, other: Complex<$real>) -> Complex<$real> {
-                    Complex::from(self).$method(other)
-                }
-            }
-        )*
-    );
     ($($real:ident),*) => (
         real_arithmetic!(@forward Add::add for $($real),*);
         real_arithmetic!(@forward Sub::sub for $($real),*);
         real_arithmetic!(@forward Mul::mul for $($real),*);
         real_arithmetic!(@forward Div::div for $($real),*);
-        real_arithmetic!(@implement Add::add for $($real),*);
-        real_arithmetic!(@implement Sub::sub for $($real),*);
-        real_arithmetic!(@implement Mul::mul for $($real),*);
-        real_arithmetic!(@implement Div::div for $($real),*);
+
+        $(
+            impl Add<Complex<$real>> for $real {
+                type Output = Complex<$real>;
+
+                #[inline]
+                fn add(self, other: Complex<$real>) -> Complex<$real> {
+                    Complex::new(self + other.re, other.im)
+                }
+            }
+
+            impl Sub<Complex<$real>> for $real {
+                type Output = Complex<$real>;
+
+                #[inline]
+                fn sub(self, other: Complex<$real>) -> Complex<$real> {
+                    Complex::new(self - other.re, $real::zero() - other.im)
+                }
+            }
+
+            impl Mul<Complex<$real>> for $real {
+                type Output = Complex<$real>;
+
+                #[inline]
+                fn mul(self, other: Complex<$real>) -> Complex<$real> {
+                    Complex::new(self * other.re, self * other.im)
+                }
+            }
+
+            impl Div<Complex<$real>> for $real {
+                type Output = Complex<$real>;
+
+                #[inline]
+                fn div(self, other: Complex<$real>) -> Complex<$real> {
+                    // a / (c + i d) == [a * (c - i d)] / (c*c + d*d)
+                    let norm_sqr = other.norm_sqr();
+                    Complex::new(self * other.re / norm_sqr.clone(),
+                                 $real::zero() - self * other.im / norm_sqr)
+                }
+            }
+        )*
     );
+}
+
+impl<T: Clone + Num> Add<T> for Complex<T> {
+    type Output = Complex<T>;
+
+    #[inline]
+    fn add(self, other: T) -> Complex<T> {
+        Complex::new(self.re + other, self.im)
+    }
+}
+
+impl<T: Clone + Num> Sub<T> for Complex<T> {
+    type Output = Complex<T>;
+
+    #[inline]
+    fn sub(self, other: T) -> Complex<T> {
+        Complex::new(self.re - other, self.im)
+    }
+}
+
+impl<T: Clone + Num> Mul<T> for Complex<T> {
+    type Output = Complex<T>;
+
+    #[inline]
+    fn mul(self, other: T) -> Complex<T> {
+        Complex::new(self.re * other.clone(), self.im * other)
+    }
+}
+
+impl<T: Clone + Num> Div<T> for Complex<T> {
+    type Output = Complex<T>;
+
+    #[inline]
+    fn div(self, other: T) -> Complex<T> {
+        Complex::new(self.re / other.clone(), self.im / other)
+    }
 }
 
 real_arithmetic!(usize, u8, u16, u32, u64, isize, i8, i16, i32, i64, f32, f64);
