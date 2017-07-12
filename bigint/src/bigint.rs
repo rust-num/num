@@ -23,10 +23,13 @@ use self::Sign::{Minus, NoSign, Plus};
 
 use super::ParseBigIntError;
 use super::big_digit;
-use super::big_digit::BigDigit;
+use super::big_digit::{BigDigit, DoubleBigDigit};
 use biguint;
 use biguint::to_str_radix_reversed;
 use biguint::BigUint;
+
+use UsizePromotion;
+use IsizePromotion;
 
 #[cfg(test)]
 #[path = "tests/bigint.rs"]
@@ -299,6 +302,26 @@ impl Signed for BigInt {
     }
 }
 
+// A convenience method for getting the absolute value of an i32 in a u32.
+#[inline]
+fn i32_abs_as_u32(a: i32) -> u32 {
+    if a == i32::min_value() {
+        a as u32
+    } else {
+        a.abs() as u32
+    }
+}
+
+// A convenience method for getting the absolute value of an i64 in a u64.
+#[inline]
+fn i64_abs_as_u64(a: i64) -> u64 {
+    if a == i64::min_value() {
+        a as u64
+    } else {
+        a.abs() as u64
+    }
+}
+
 // We want to forward to BigUint::add, but it's not clear how that will go until
 // we compare both sign and magnitude.  So we duplicate this body for every
 // val/ref combination, deferring that decision to BigUint's own forwarding.
@@ -359,6 +382,75 @@ impl Add<BigInt> for BigInt {
     #[inline]
     fn add(self, other: BigInt) -> BigInt {
         bigint_add!(self, self, self.data, other, other, other.data)
+    }
+}
+
+promote_all_scalars!(impl Add for BigInt, add);
+forward_all_scalar_binop_to_val_val_commutative!(impl Add<BigDigit> for BigInt, add);
+forward_all_scalar_binop_to_val_val_commutative!(impl Add<DoubleBigDigit> for BigInt, add);
+
+impl Add<BigDigit> for BigInt {
+    type Output = BigInt;
+
+    #[inline]
+    fn add(self, other: BigDigit) -> BigInt {
+        match self.sign {
+            NoSign => From::from(other),
+            Plus => BigInt::from_biguint(Plus, self.data + other),
+            Minus =>
+                match self.data.cmp(&From::from(other)) {
+                    Equal => Zero::zero(),
+                    Less => BigInt::from_biguint(Plus, other - self.data),
+                    Greater => BigInt::from_biguint(Minus, self.data - other),
+                }
+        }
+    }
+}
+
+impl Add<DoubleBigDigit> for BigInt {
+    type Output = BigInt;
+
+    #[inline]
+    fn add(self, other: DoubleBigDigit) -> BigInt {
+        match self.sign {
+            NoSign => From::from(other),
+            Plus => BigInt::from_biguint(Plus, self.data + other),
+            Minus =>
+                match self.data.cmp(&From::from(other)) {
+                    Equal => Zero::zero(),
+                    Less => BigInt::from_biguint(Plus, other - self.data),
+                    Greater => BigInt::from_biguint(Minus, self.data - other),
+                }
+        }
+    }
+}
+
+forward_all_scalar_binop_to_val_val_commutative!(impl Add<i32> for BigInt, add);
+forward_all_scalar_binop_to_val_val_commutative!(impl Add<i64> for BigInt, add);
+
+impl Add<i32> for BigInt {
+    type Output = BigInt;
+
+    #[inline]
+    fn add(self, other: i32) -> BigInt {
+        if other >= 0 {
+            self + other as u32
+        } else {
+            self - i32_abs_as_u32(other)
+        }
+    }
+}
+
+impl Add<i64> for BigInt {
+    type Output = BigInt;
+
+    #[inline]
+    fn add(self, other: i64) -> BigInt {
+        if other >= 0 {
+            self + other as u64
+        } else {
+            self - i64_abs_as_u64(other)
+        }
     }
 }
 
@@ -425,6 +517,119 @@ impl Sub<BigInt> for BigInt {
     }
 }
 
+promote_all_scalars!(impl Sub for BigInt, sub);
+forward_all_scalar_binop_to_val_val!(impl Sub<BigDigit> for BigInt, sub);
+forward_all_scalar_binop_to_val_val!(impl Sub<DoubleBigDigit> for BigInt, sub);
+
+impl Sub<BigDigit> for BigInt {
+    type Output = BigInt;
+
+    #[inline]
+    fn sub(self, other: BigDigit) -> BigInt {
+        match self.sign {
+            NoSign => BigInt::from_biguint(Minus, From::from(other)),
+            Minus => BigInt::from_biguint(Minus, self.data + other),
+            Plus =>
+                match self.data.cmp(&From::from(other)) {
+                    Equal => Zero::zero(),
+                    Greater => BigInt::from_biguint(Plus, self.data - other),
+                    Less => BigInt::from_biguint(Minus, other - self.data),
+                }
+        }
+    }
+}
+
+impl Sub<BigInt> for BigDigit {
+    type Output = BigInt;
+
+    #[inline]
+    fn sub(self, other: BigInt) -> BigInt {
+        -(other - self)
+    }
+}
+
+impl Sub<DoubleBigDigit> for BigInt {
+    type Output = BigInt;
+
+    #[inline]
+    fn sub(self, other: DoubleBigDigit) -> BigInt {
+        match self.sign {
+            NoSign => BigInt::from_biguint(Minus, From::from(other)),
+            Minus => BigInt::from_biguint(Minus, self.data + other),
+            Plus =>
+                match self.data.cmp(&From::from(other)) {
+                    Equal => Zero::zero(),
+                    Greater => BigInt::from_biguint(Plus, self.data - other),
+                    Less => BigInt::from_biguint(Minus, other - self.data),
+                }
+        }
+    }
+}
+
+impl Sub<BigInt> for DoubleBigDigit {
+    type Output = BigInt;
+
+    #[inline]
+    fn sub(self, other: BigInt) -> BigInt {
+        -(other - self)
+    }
+}
+
+forward_all_scalar_binop_to_val_val!(impl Sub<i32> for BigInt, sub);
+forward_all_scalar_binop_to_val_val!(impl Sub<i64> for BigInt, sub);
+
+impl Sub<i32> for BigInt {
+    type Output = BigInt;
+
+    #[inline]
+    fn sub(self, other: i32) -> BigInt {
+        if other >= 0 {
+            self - other as u32
+        } else {
+            self + i32_abs_as_u32(other)
+        }
+    }
+}
+
+impl Sub<BigInt> for i32 {
+    type Output = BigInt;
+
+    #[inline]
+    fn sub(self, other: BigInt) -> BigInt {
+        if self >= 0 {
+            self as u32 - other
+        } else {
+            -other - i32_abs_as_u32(self)
+        }
+    }
+}
+
+impl Sub<i64> for BigInt {
+    type Output = BigInt;
+
+    #[inline]
+    fn sub(self, other: i64) -> BigInt {
+        if other >= 0 {
+            self - other as u64
+        } else {
+            self + i64_abs_as_u64(other)
+        }
+    }
+}
+
+impl Sub<BigInt> for i64 {
+    type Output = BigInt;
+
+    #[inline]
+    fn sub(self, other: BigInt) -> BigInt {
+        if self >= 0 {
+            self as u64 - other
+        } else {
+            -other - i64_abs_as_u64(self)
+        }
+    }
+}
+
 forward_all_binop_to_ref_ref!(impl Mul for BigInt, mul);
 
 impl<'a, 'b> Mul<&'b BigInt> for &'a BigInt {
@@ -433,6 +638,57 @@ impl<'a, 'b> Mul<&'b BigInt> for &'a BigInt {
     #[inline]
     fn mul(self, other: &BigInt) -> BigInt {
         BigInt::from_biguint(self.sign * other.sign, &self.data * &other.data)
+    }
+}
+
+promote_all_scalars!(impl Mul for BigInt, mul);
+forward_all_scalar_binop_to_val_val_commutative!(impl Mul<BigDigit> for BigInt, mul);
+forward_all_scalar_binop_to_val_val_commutative!(impl Mul<DoubleBigDigit> for BigInt, mul);
+
+impl Mul<BigDigit> for BigInt {
+    type Output = BigInt;
+
+    #[inline]
+    fn mul(self, other: BigDigit) -> BigInt {
+        BigInt::from_biguint(self.sign, self.data * other)
+    }
+}
+
+impl Mul<DoubleBigDigit> for BigInt {
+    type Output = BigInt;
+
+    #[inline]
+    fn mul(self, other: DoubleBigDigit) -> BigInt {
+        BigInt::from_biguint(self.sign, self.data * other)
+    }
+}
+
+forward_all_scalar_binop_to_val_val_commutative!(impl Mul<i32> for BigInt, mul);
+forward_all_scalar_binop_to_val_val_commutative!(impl Mul<i64> for BigInt, mul);
+
+impl Mul<i32> for BigInt {
+    type Output = BigInt;
+
+    #[inline]
+    fn mul(self, other: i32) -> BigInt {
+        if other >= 0 {
+            self * other as u32
+        } else {
+            -(self * i32_abs_as_u32(other))
+        }
+    }
+}
+
+impl Mul<i64> for BigInt {
+    type Output = BigInt;
+
+    #[inline]
+    fn mul(self, other: i64) -> BigInt {
+        if other >= 0 {
+            self * other as u64
+        } else {
+            -(self * i64_abs_as_u64(other))
+        }
     }
 }
 
@@ -448,6 +704,101 @@ impl<'a, 'b> Div<&'b BigInt> for &'a BigInt {
     }
 }
 
+promote_all_scalars!(impl Div for BigInt, div);
+forward_all_scalar_binop_to_val_val!(impl Div<BigDigit> for BigInt, div);
+forward_all_scalar_binop_to_val_val!(impl Div<DoubleBigDigit> for BigInt, div);
+
+impl Div<BigDigit> for BigInt {
+    type Output = BigInt;
+
+    #[inline]
+    fn div(self, other: BigDigit) -> BigInt {
+        BigInt::from_biguint(self.sign, self.data / other)
+    }
+}
+
+impl Div<BigInt> for BigDigit {
+    type Output = BigInt;
+
+    #[inline]
+    fn div(self, other: BigInt) -> BigInt {
+        BigInt::from_biguint(other.sign, self / other.data)
+    }
+}
+
+impl Div<DoubleBigDigit> for BigInt {
+    type Output = BigInt;
+
+    #[inline]
+    fn div(self, other: DoubleBigDigit) -> BigInt {
+        BigInt::from_biguint(self.sign, self.data / other)
+    }
+}
+
+impl Div<BigInt> for DoubleBigDigit {
+    type Output = BigInt;
+
+    #[inline]
+    fn div(self, other: BigInt) -> BigInt {
+        BigInt::from_biguint(other.sign, self / other.data)
+    }
+}
+
+forward_all_scalar_binop_to_val_val!(impl Div<i32> for BigInt, div);
+forward_all_scalar_binop_to_val_val!(impl Div<i64> for BigInt, div);
+
+impl Div<i32> for BigInt {
+    type Output = BigInt;
+
+    #[inline]
+    fn div(self, other: i32) -> BigInt {
+        if other >= 0 {
+            self / other as u32
+        } else {
+            -(self / i32_abs_as_u32(other))
+        }
+    }
+}
+
+impl Div<BigInt> for i32 {
+    type Output = BigInt;
+
+    #[inline]
+    fn div(self, other: BigInt) -> BigInt {
+        if self >= 0 {
+            self as u32 / other
+        } else {
+            -(i32_abs_as_u32(self) / other)
+        }
+    }
+}
+
+impl Div<i64> for BigInt {
+    type Output = BigInt;
+
+    #[inline]
+    fn div(self, other: i64) -> BigInt {
+        if other >= 0 {
+            self / other as u64
+        } else {
+            -(self / i64_abs_as_u64(other))
+        }
+    }
+}
+
+impl Div<BigInt> for i64 {
+    type Output = BigInt;
+
+    #[inline]
+    fn div(self, other: BigInt) -> BigInt {
+        if self >= 0 {
+            self as u64 / other
+        } else {
+            -(i64_abs_as_u64(self) / other)
+        }
+    }
+}
+
 forward_all_binop_to_ref_ref!(impl Rem for BigInt, rem);
 
 impl<'a, 'b> Rem<&'b BigInt> for &'a BigInt {
@@ -457,6 +808,101 @@ impl<'a, 'b> Rem<&'b BigInt> for &'a BigInt {
     fn rem(self, other: &BigInt) -> BigInt {
         let (_, r) = self.div_rem(other);
         r
+    }
+}
+
+promote_all_scalars!(impl Rem for BigInt, rem);
+forward_all_scalar_binop_to_val_val!(impl Rem<BigDigit> for BigInt, rem);
+forward_all_scalar_binop_to_val_val!(impl Rem<DoubleBigDigit> for BigInt, rem);
+
+impl Rem<BigDigit> for BigInt {
+    type Output = BigInt;
+
+    #[inline]
+    fn rem(self, other: BigDigit) -> BigInt {
+        BigInt::from_biguint(self.sign, self.data % other)
+    }
+}
+
+impl Rem<BigInt> for BigDigit {
+    type Output = BigInt;
+
+    #[inline]
+    fn rem(self, other: BigInt) -> BigInt {
+        BigInt::from_biguint(Plus, self % other.data)
+    }
+}
+
+impl Rem<DoubleBigDigit> for BigInt {
+    type Output = BigInt;
+
+    #[inline]
+    fn rem(self, other: DoubleBigDigit) -> BigInt {
+        BigInt::from_biguint(self.sign, self.data % other)
+    }
+}
+
+impl Rem<BigInt> for DoubleBigDigit {
+    type Output = BigInt;
+
+    #[inline]
+    fn rem(self, other: BigInt) -> BigInt {
+        BigInt::from_biguint(Plus, self % other.data)
+    }
+}
+
+forward_all_scalar_binop_to_val_val!(impl Rem<i32> for BigInt, rem);
+forward_all_scalar_binop_to_val_val!(impl Rem<i64> for BigInt, rem);
+
+impl Rem<i32> for BigInt {
+    type Output = BigInt;
+
+    #[inline]
+    fn rem(self, other: i32) -> BigInt {
+        if other >= 0 {
+            self % other as u32
+        } else {
+            self % i32_abs_as_u32(other)
+        }
+    }
+}
+
+impl Rem<BigInt> for i32 {
+    type Output = BigInt;
+
+    #[inline]
+    fn rem(self, other: BigInt) -> BigInt {
+        if self >= 0 {
+            self as u32 % other
+        } else {
+            -(i32_abs_as_u32(self) % other)
+        }
+    }
+}
+
+impl Rem<i64> for BigInt {
+    type Output = BigInt;
+
+    #[inline]
+    fn rem(self, other: i64) -> BigInt {
+        if other >= 0 {
+            self % other as u64
+        } else {
+            self % i64_abs_as_u64(other)
+        }
+    }
+}
+
+impl Rem<BigInt> for i64 {
+    type Output = BigInt;
+
+    #[inline]
+    fn rem(self, other: BigInt) -> BigInt {
+        if self >= 0 {
+            self as u64 % other
+        } else {
+            -(i64_abs_as_u64(self) % other)
+        }
     }
 }
 
