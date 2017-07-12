@@ -303,6 +303,7 @@ impl Signed for BigInt {
 }
 
 // A convenience method for getting the absolute value of an i32 in a u32.
+#[inline]
 fn i32_abs_as_u32(a: i32) -> u32 {
     if a == i32::min_value() {
         a as u32
@@ -312,6 +313,7 @@ fn i32_abs_as_u32(a: i32) -> u32 {
 }
 
 // A convenience method for getting the absolute value of an i64 in a u64.
+#[inline]
 fn i64_abs_as_u64(a: i64) -> u64 {
     if a == i64::min_value() {
         a as u64
