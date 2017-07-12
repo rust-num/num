@@ -24,6 +24,25 @@ macro_rules! assert_op {
     };
 }
 
+/// Assert that an op works for scalar left or right
+macro_rules! assert_scalar_op {
+    (($($to:ident),*) $left:ident $op:tt $right:ident == $expected:expr) => {
+        $(
+            if let Some(left) = $left.$to() {
+                assert_op!(left $op $right == $expected);
+            }
+            if let Some(right) = $right.$to() {
+                assert_op!($left $op right == $expected);
+            }
+        )*
+    };
+    ($left:ident $op:tt $right:ident == $expected:expr) => {
+        assert_scalar_op!((to_u8, to_u16, to_u32, to_u64, to_usize,
+                           to_i8, to_i16, to_i32, to_i64, to_isize)
+                          $left $op $right == $expected);
+    };
+}
+
 #[test]
 fn test_from_biguint() {
     fn check(inp_s: Sign, inp_n: usize, ans_s: Sign, ans_n: usize) {
@@ -553,6 +572,26 @@ fn test_add() {
 }
 
 #[test]
+fn test_scalar_add() {
+    for elm in SUM_TRIPLES.iter() {
+        let (a_vec, b_vec, c_vec) = *elm;
+        let a = BigInt::from_slice(Plus, a_vec);
+        let b = BigInt::from_slice(Plus, b_vec);
+        let c = BigInt::from_slice(Plus, c_vec);
+        let (na, nb, nc) = (-&a, -&b, -&c);
+
+        assert_scalar_op!(a + b == c);
+        assert_scalar_op!(b + a == c);
+        assert_scalar_op!(c + na == b);
+        assert_scalar_op!(c + nb == a);
+        assert_scalar_op!(a + nc == nb);
+        assert_scalar_op!(b + nc == na);
+        assert_scalar_op!(na + nb == nc);
+        assert_scalar_op!(a + na == Zero::zero());
+    }
+}
+
+#[test]
 fn test_sub() {
     for elm in SUM_TRIPLES.iter() {
         let (a_vec, b_vec, c_vec) = *elm;
@@ -569,6 +608,26 @@ fn test_sub() {
         assert_op!(a - nb == c);
         assert_op!(nc - na == nb);
         assert_op!(a - a == Zero::zero());
+    }
+}
+
+#[test]
+fn test_scalar_sub() {
+    for elm in SUM_TRIPLES.iter() {
+        let (a_vec, b_vec, c_vec) = *elm;
+        let a = BigInt::from_slice(Plus, a_vec);
+        let b = BigInt::from_slice(Plus, b_vec);
+        let c = BigInt::from_slice(Plus, c_vec);
+        let (na, nb, nc) = (-&a, -&b, -&c);
+
+        assert_scalar_op!(c - a == b);
+        assert_scalar_op!(c - b == a);
+        assert_scalar_op!(nb - a == nc);
+        assert_scalar_op!(na - b == nc);
+        assert_scalar_op!(b - na == c);
+        assert_scalar_op!(a - nb == c);
+        assert_scalar_op!(nc - na == nb);
+        assert_scalar_op!(a - a == Zero::zero());
     }
 }
 
@@ -603,6 +662,7 @@ static DIV_REM_QUADRUPLES: &'static [(&'static [BigDigit],
            &'static [BigDigit],
            &'static [BigDigit],
            &'static [BigDigit])] = &[(&[1], &[2], &[], &[1]),
+                                     (&[3], &[2], &[1], &[1]),
                                      (&[1, 1], &[2], &[M / 2 + 1], &[1]),
                                      (&[1, 1, 1], &[2], &[M / 2 + 1, M / 2 + 1], &[1]),
                                      (&[0, 1], &[N1], &[1], &[1]),
@@ -634,6 +694,24 @@ fn test_mul() {
 
         assert!(a == &b * &c + &d);
         assert!(a == &c * &b + &d);
+    }
+}
+
+#[test]
+fn test_scalar_mul() {
+    for elm in MUL_TRIPLES.iter() {
+        let (a_vec, b_vec, c_vec) = *elm;
+        let a = BigInt::from_slice(Plus, a_vec);
+        let b = BigInt::from_slice(Plus, b_vec);
+        let c = BigInt::from_slice(Plus, c_vec);
+        let (na, nb, nc) = (-&a, -&b, -&c);
+
+        assert_scalar_op!(a * b == c);
+        assert_scalar_op!(b * a == c);
+        assert_scalar_op!(na * nb == c);
+
+        assert_scalar_op!(na * b == nc);
+        assert_scalar_op!(nb * a == nc);
     }
 }
 
@@ -741,6 +819,65 @@ fn test_div_rem() {
             check(&a, &b, &c, &d);
         }
     }
+}
+
+#[test]
+fn test_scalar_div_rem() {
+    fn check_sub(a: &BigInt, b: BigDigit, ans_q: &BigInt, ans_r: &BigInt) {
+        let (q, r) = (a / b, a % b);
+        if !r.is_zero() {
+            assert_eq!(r.sign, a.sign);
+        }
+        assert!(r.abs() <= From::from(b));
+        assert!(*a == b * &q + &r);
+        assert!(q == *ans_q);
+        assert!(r == *ans_r);
+
+        let (a, b, ans_q, ans_r) = (a.clone(), b.clone(), ans_q.clone(), ans_r.clone());
+        assert_op!(a / b == ans_q);
+        assert_op!(a % b == ans_r);
+
+        if b <= i32::max_value() as u32 {
+            let nb = -(b as i32);
+            assert_op!(a / nb == -ans_q.clone());
+            assert_op!(a % nb == ans_r);
+        }
+    }
+
+    fn check(a: &BigInt, b: BigDigit, q: &BigInt, r: &BigInt) {
+        check_sub(a, b, q, r);
+        check_sub(&a.neg(), b, &q.neg(), &r.neg());
+    }
+
+    for elm in MUL_TRIPLES.iter() {
+        let (a_vec, b_vec, c_vec) = *elm;
+        let a = BigInt::from_slice(Plus, a_vec);
+        let b = BigInt::from_slice(Plus, b_vec);
+        let c = BigInt::from_slice(Plus, c_vec);
+
+        if a_vec.len() == 1 && a_vec[0] != 0 {
+            let a = a_vec[0];
+            check(&c, a, &b, &Zero::zero());
+        }
+
+        if b_vec.len() == 1 && b_vec[0] != 0 {
+            let b = b_vec[0];
+            check(&c, b, &a, &Zero::zero());
+        }
+    }
+
+    for elm in DIV_REM_QUADRUPLES.iter() {
+        let (a_vec, b_vec, c_vec, d_vec) = *elm;
+        let a = BigInt::from_slice(Plus, a_vec);
+        let c = BigInt::from_slice(Plus, c_vec);
+        let d = BigInt::from_slice(Plus, d_vec);
+
+        if b_vec.len() == 1 && b_vec[0] != 0 {
+            let b = b_vec[0];
+            check(&a, b, &c, &d);
+        }
+    }
+
 }
 
 #[test]
