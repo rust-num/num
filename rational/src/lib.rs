@@ -25,8 +25,7 @@ extern crate num_integer as integer;
 use std::cmp;
 use std::error::Error;
 use std::fmt;
-#[cfg(test)]
-use std::hash;
+use std::hash::{Hash, Hasher};
 use std::ops::{Add, Div, Mul, Neg, Rem, Sub};
 use std::str::FromStr;
 
@@ -37,7 +36,7 @@ use integer::Integer;
 use traits::{FromPrimitive, Float, PrimInt, Num, Signed, Zero, One, Bounded, NumCast};
 
 /// Represents the ratio between 2 numbers.
-#[derive(Copy, Clone, Hash, Debug)]
+#[derive(Copy, Clone, Debug)]
 #[allow(missing_docs)]
 pub struct Ratio<T> {
     numer: T,
@@ -343,6 +342,24 @@ impl<T: Clone + Integer> PartialEq for Ratio<T> {
 }
 
 impl<T: Clone + Integer> Eq for Ratio<T> {}
+
+// NB: We can't just `#[derive(Hash)]`, because it needs to agree
+// with `Eq` even for non-reduced ratios.
+impl<T: Clone + Integer + Hash> Hash for Ratio<T> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        recurse(&self.numer, &self.denom, state);
+
+        fn recurse<T: Integer + Hash, H: Hasher>(numer: &T, denom: &T, state: &mut H) {
+            if !denom.is_zero() {
+                let (int, rem) = numer.div_mod_floor(denom);
+                int.hash(state);
+                recurse(denom, &rem, state);
+            } else {
+                denom.hash(state);
+            }
+        }
+    }
+}
 
 
 macro_rules! forward_val_val_binop {
@@ -842,8 +859,8 @@ fn approximate_float_unsigned<T, F>(val: F, max_error: F, max_iterations: usize)
 }
 
 #[cfg(test)]
-fn hash<T: hash::Hash>(x: &T) -> u64 {
-    use std::hash::{BuildHasher, Hasher};
+fn hash<T: Hash>(x: &T) -> u64 {
+    use std::hash::BuildHasher;
     use std::collections::hash_map::RandomState;
     let mut hasher = <RandomState as BuildHasher>::Hasher::new();
     x.hash(&mut hasher);
@@ -1365,6 +1382,17 @@ mod test {
     fn test_hash() {
         assert!(::hash(&_0) != ::hash(&_1));
         assert!(::hash(&_0) != ::hash(&_3_2));
+
+        // a == b -> hash(a) == hash(b)
+        let a = Rational::new_raw(4, 2);
+        let b = Rational::new_raw(6, 3);
+        assert_eq!(a, b);
+        assert_eq!(::hash(&a), ::hash(&b));
+
+        let a = Rational::new_raw(123456789, 1000);
+        let b = Rational::new_raw(123456789 * 5, 5000);
+        assert_eq!(a, b);
+        assert_eq!(::hash(&a), ::hash(&b));
     }
 
     #[test]

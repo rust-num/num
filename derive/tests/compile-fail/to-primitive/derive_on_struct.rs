@@ -12,12 +12,11 @@ extern crate num;
 #[macro_use]
 extern crate num_derive;
 
-#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive)]
-enum Color {}
-
-#[test]
-fn test_empty_enum() {
-    let v: [Option<Color>; 1] = [num::FromPrimitive::from_u64(0)];
-
-    assert_eq!(v, [None]);
+#[derive(Debug, PartialEq, ToPrimitive)] //~ ERROR
+struct Color {
+    r: u8,
+    g: u8,
+    b: u8,
 }
+
+fn main() {}

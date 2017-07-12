@@ -25,6 +25,24 @@ macro_rules! assert_op {
     };
 }
 
+/// Assert that an op works for scalar left or right
+macro_rules! assert_scalar_op {
+    (($($to:ident),*) $left:ident $op:tt $right:ident == $expected:expr) => {
+        $(
+            if let Some(left) = $left.$to() {
+                assert_op!(left $op $right == $expected);
+            }
+            if let Some(right) = $right.$to() {
+                assert_op!($left $op right == $expected);
+            }
+        )*
+    };
+    ($left:ident $op:tt $right:ident == $expected:expr) => {
+        assert_scalar_op!((to_u8, to_u16, to_u32, to_u64, to_usize)
+                          $left $op $right == $expected);
+    };
+}
+
 #[test]
 fn test_from_slice() {
     fn check(slice: &[BigDigit], data: &[BigDigit]) {
@@ -691,6 +709,19 @@ fn test_add() {
 }
 
 #[test]
+fn test_scalar_add() {
+    for elm in SUM_TRIPLES.iter() {
+        let (a_vec, b_vec, c_vec) = *elm;
+        let a = BigUint::from_slice(a_vec);
+        let b = BigUint::from_slice(b_vec);
+        let c = BigUint::from_slice(c_vec);
+
+        assert_scalar_op!(a + b == c);
+        assert_scalar_op!(b + a == c);
+    }
+}
+
+#[test]
 fn test_sub() {
     for elm in SUM_TRIPLES.iter() {
         let (a_vec, b_vec, c_vec) = *elm;
@@ -700,6 +731,19 @@ fn test_sub() {
 
         assert_op!(c - a == b);
         assert_op!(c - b == a);
+    }
+}
+
+#[test]
+fn test_scalar_sub() {
+    for elm in SUM_TRIPLES.iter() {
+        let (a_vec, b_vec, c_vec) = *elm;
+        let a = BigUint::from_slice(a_vec);
+        let b = BigUint::from_slice(b_vec);
+        let c = BigUint::from_slice(c_vec);
+
+        assert_scalar_op!(c - a == b);
+        assert_scalar_op!(c - b == a);
     }
 }
 
@@ -741,6 +785,7 @@ const DIV_REM_QUADRUPLES: &'static [(&'static [BigDigit],
            &'static [BigDigit],
            &'static [BigDigit],
            &'static [BigDigit])] = &[(&[1], &[2], &[], &[1]),
+                                     (&[3], &[2], &[1], &[1]),
                                      (&[1, 1], &[2], &[M / 2 + 1], &[1]),
                                      (&[1, 1, 1], &[2], &[M / 2 + 1, M / 2 + 1], &[1]),
                                      (&[0, 1], &[N1], &[1], &[1]),
@@ -767,6 +812,19 @@ fn test_mul() {
 
         assert!(a == &b * &c + &d);
         assert!(a == &c * &b + &d);
+    }
+}
+
+#[test]
+fn test_scalar_mul() {
+    for elm in MUL_TRIPLES.iter() {
+        let (a_vec, b_vec, c_vec) = *elm;
+        let a = BigUint::from_slice(a_vec);
+        let b = BigUint::from_slice(b_vec);
+        let c = BigUint::from_slice(c_vec);
+
+        assert_scalar_op!(a * b == c);
+        assert_scalar_op!(b * a == c);
     }
 }
 
@@ -801,6 +859,39 @@ fn test_div_rem() {
             assert_op!(a / b == c);
             assert_op!(a % b == d);
             assert!(a.div_rem(&b) == (c, d));
+        }
+    }
+}
+
+#[test]
+fn test_scalar_div_rem() {
+    for elm in MUL_TRIPLES.iter() {
+        let (a_vec, b_vec, c_vec) = *elm;
+        let a = BigUint::from_slice(a_vec);
+        let b = BigUint::from_slice(b_vec);
+        let c = BigUint::from_slice(c_vec);
+
+        if !a.is_zero() {
+            assert_scalar_op!(c / a == b);
+            assert_scalar_op!(c % a == Zero::zero());
+        }
+
+        if !b.is_zero() {
+            assert_scalar_op!(c / b == a);
+            assert_scalar_op!(c % b == Zero::zero());
+        }
+    }
+
+    for elm in DIV_REM_QUADRUPLES.iter() {
+        let (a_vec, b_vec, c_vec, d_vec) = *elm;
+        let a = BigUint::from_slice(a_vec);
+        let b = BigUint::from_slice(b_vec);
+        let c = BigUint::from_slice(c_vec);
+        let d = BigUint::from_slice(d_vec);
+
+        if !b.is_zero() {
+            assert_scalar_op!(a / b == c);
+            assert_scalar_op!(a % b == d);
         }
     }
 }
