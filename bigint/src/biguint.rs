@@ -429,7 +429,7 @@ impl Add<DoubleBigDigit> for BigUint {
             self.data.push(0);
         }
 
-        let (lo, hi) = big_digit::from_doublebigdigit(other);
+        let (hi, lo) = big_digit::from_doublebigdigit(other);
         let carry = __add2(&mut self.data, &[lo, hi]);
         if carry != 0 {
             self.data.push(carry);
@@ -497,7 +497,7 @@ impl Sub<DoubleBigDigit> for BigUint {
 
     #[inline]
     fn sub(mut self, other: DoubleBigDigit) -> BigUint {
-        let (lo, hi) = big_digit::from_doublebigdigit(other);
+        let (hi, lo) = big_digit::from_doublebigdigit(other);
         sub2(&mut self.data[..], &[lo, hi]);
         self.normalize()
     }
@@ -512,7 +512,7 @@ impl Sub<BigUint> for DoubleBigDigit {
             other.data.push(0);
         }
 
-        let (lo, hi) = big_digit::from_doublebigdigit(self);
+        let (hi, lo) = big_digit::from_doublebigdigit(self);
         sub2rev(&[lo, hi], &mut other.data[..]);
         other.normalize()
     }
@@ -561,7 +561,7 @@ impl Mul<DoubleBigDigit> for BigUint {
         } else if other <= BigDigit::max_value() as DoubleBigDigit {
             self * other as BigDigit
         } else {
-            let (lo, hi) = big_digit::from_doublebigdigit(other);
+            let (hi, lo) = big_digit::from_doublebigdigit(other);
             mul3(&self.data[..], &[lo, hi])
         }
     }
@@ -624,7 +624,7 @@ impl Div<BigUint> for DoubleBigDigit {
         match other.data.len() {
             0 => panic!(),
             1 => From::from(self / other.data[0] as u64),
-            2 => From::from(self / big_digit::to_doublebigdigit(other.data[0], other.data[1])),
+            2 => From::from(self / big_digit::to_doublebigdigit(other.data[1], other.data[0])),
             _ => Zero::zero(),
         }
     }
