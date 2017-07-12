@@ -1,4 +1,4 @@
-use {BigDigit, BigUint, big_digit};
+use {BigDigit, DoubleBigDigit, BigUint, big_digit};
 use {Sign, BigInt, RandBigInt, ToBigInt};
 use Sign::{Minus, NoSign, Plus};
 
@@ -532,6 +532,16 @@ const SUM_TRIPLES: &'static [(&'static [BigDigit],
                                      (&[1, 1, 1], &[N1, N1], &[0, 1, 2]),
                                      (&[2, 2, 1], &[N1, N2], &[1, 1, 2])];
 
+fn get_scalar(vec: &[BigDigit]) -> BigDigit {
+    vec.get(0).map_or(0, BigDigit::clone)
+}
+
+fn get_scalar_double(vec: &[BigDigit]) -> DoubleBigDigit {
+    let lo = vec.get(0).map_or(0, BigDigit::clone);
+    let hi = vec.get(1).map_or(0, BigDigit::clone);
+    big_digit::to_doublebigdigit(hi, lo)
+}
+
 #[test]
 fn test_add() {
     for elm in SUM_TRIPLES.iter() {
@@ -561,8 +571,8 @@ fn test_scalar_add() {
         let c = BigInt::from_slice(Plus, c_vec);
         let (na, nb, nc) = (-&a, -&b, -&c);
 
-        if a_vec.len() == 1 {
-            let a = a_vec[0];
+        if a_vec.len() <= 1 {
+            let a = get_scalar(a_vec);
             assert_op!(a + b == c);
             assert_op!(b + a == c);
             assert_op!(a + nc == nb);
@@ -577,8 +587,24 @@ fn test_scalar_add() {
             }
         }
 
-        if b_vec.len() == 1 {
-            let b = b_vec[0];
+        if a_vec.len() <= 2 {
+            let a = get_scalar_double(a_vec);
+            assert_op!(a + b == c);
+            assert_op!(b + a == c);
+            assert_op!(a + nc == nb);
+            assert_op!(nc + a == nb);
+
+            if a <= i64::max_value() as u64 {
+                let na = -(a as i64);
+                assert_op!(na + nb == nc);
+                assert_op!(nb + na == nc);
+                assert_op!(na + c == b);
+                assert_op!(c + na == b);
+            }
+        }
+
+        if b_vec.len() <= 1 {
+            let b = get_scalar(b_vec);
             assert_op!(a + b == c);
             assert_op!(b + a == c);
             assert_op!(b + nc == na);
@@ -586,6 +612,22 @@ fn test_scalar_add() {
 
             if b <= i32::max_value() as u32 {
                 let nb = -(b as i32);
+                assert_op!(na + nb == nc);
+                assert_op!(nb + na == nc);
+                assert_op!(nb + c == a);
+                assert_op!(c + nb == a);
+            }
+        }
+
+        if b_vec.len() <= 2 {
+            let b = get_scalar_double(b_vec);
+            assert_op!(a + b == c);
+            assert_op!(b + a == c);
+            assert_op!(b + nc == na);
+            assert_op!(nc + b == na);
+
+            if b <= i64::max_value() as u64 {
+                let nb = -(b as i64);
                 assert_op!(na + nb == nc);
                 assert_op!(nb + na == nc);
                 assert_op!(nb + c == a);

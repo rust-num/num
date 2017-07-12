@@ -405,13 +405,15 @@ impl Add<BigDigit> for BigUint {
 
     #[inline]
     fn add(mut self, other: BigDigit) -> BigUint {
-        if self.data.len() == 0 && other != 0 {
-            self.data.push(0);
-        }
+        if other != 0 {
+            if self.data.len() == 0 {
+                self.data.push(0);
+            }
 
-        let carry = __add2(&mut self.data, &[other]);
-        if carry != 0 {
-            self.data.push(carry);
+            let carry = __add2(&mut self.data, &[other]);
+            if carry != 0 {
+                self.data.push(carry);
+            }
         }
         self
     }
@@ -422,19 +424,20 @@ impl Add<DoubleBigDigit> for BigUint {
 
     #[inline]
     fn add(mut self, other: DoubleBigDigit) -> BigUint {
-        if self.data.len() == 0 && other != 0 {
-            self.data.push(0);
-        }
-        if self.data.len() == 1 && other > BigDigit::max_value() as DoubleBigDigit {
-            self.data.push(0);
-        }
-
         let (hi, lo) = big_digit::from_doublebigdigit(other);
-        let carry = __add2(&mut self.data, &[lo, hi]);
-        if carry != 0 {
-            self.data.push(carry);
+        if hi == 0 {
+            self + lo
+        } else {
+            while self.data.len() < 2 {
+                self.data.push(0);
+            }
+
+            let carry = __add2(&mut self.data, &[lo, hi]);
+            if carry != 0 {
+                self.data.push(carry);
+            }
+            self
         }
-        self
     }
 }
 

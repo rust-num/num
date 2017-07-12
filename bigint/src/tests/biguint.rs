@@ -1,5 +1,5 @@
 use integer::Integer;
-use {BigDigit, BigUint, ToBigUint, big_digit};
+use {BigDigit, DoubleBigDigit, BigUint, ToBigUint, big_digit};
 use {BigInt, RandBigInt, ToBigInt};
 use Sign::Plus;
 
@@ -677,6 +677,16 @@ const SUM_TRIPLES: &'static [(&'static [BigDigit],
                                      (&[1, 1, 1], &[N1, N1], &[0, 1, 2]),
                                      (&[2, 2, 1], &[N1, N2], &[1, 1, 2])];
 
+fn get_scalar(vec: &[BigDigit]) -> BigDigit {
+    vec.get(0).map_or(0, BigDigit::clone)
+}
+
+fn get_scalar_double(vec: &[BigDigit]) -> DoubleBigDigit {
+    let lo = vec.get(0).map_or(0, BigDigit::clone);
+    let hi = vec.get(1).map_or(0, BigDigit::clone);
+    big_digit::to_doublebigdigit(hi, lo)
+}
+
 #[test]
 fn test_add() {
     for elm in SUM_TRIPLES.iter() {
@@ -698,14 +708,26 @@ fn test_scalar_add() {
         let b = BigUint::from_slice(b_vec);
         let c = BigUint::from_slice(c_vec);
 
-        if a_vec.len() == 1 {
-            let a = a_vec[0];
+        if a_vec.len() <= 1 {
+            let a = get_scalar(a_vec);
             assert_op!(a + b == c);
             assert_op!(b + a == c);
         }
 
-        if b_vec.len() == 1 {
-            let b = b_vec[0];
+        if a_vec.len() <= 2 {
+            let a = get_scalar_double(a_vec);
+            assert_op!(a + b == c);
+            assert_op!(b + a == c);
+        }
+
+        if b_vec.len() <= 1 {
+            let b = get_scalar(b_vec);
+            assert_op!(a + b == c);
+            assert_op!(b + a == c);
+        }
+
+        if b_vec.len() <= 2 {
+            let b = get_scalar_double(b_vec);
             assert_op!(a + b == c);
             assert_op!(b + a == c);
         }
