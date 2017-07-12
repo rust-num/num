@@ -527,13 +527,15 @@ mod opassign {
 
     impl<T: Clone + NumAssign> AddAssign for Complex<T> {
         fn add_assign(&mut self, other: Complex<T>) {
-            *self = self.clone() + other;
+            self.re += other.re;
+            self.im += other.im;
         }
     }
 
     impl<T: Clone + NumAssign> SubAssign for Complex<T> {
         fn sub_assign(&mut self, other: Complex<T>) {
-            *self = self.clone() - other;
+            self.re -= other.re;
+            self.im -= other.im;
         }
     }
 
