@@ -1569,77 +1569,76 @@ mod test {
     }
 
     #[test]
-    fn test_from_string() {
+    fn test_from_str() {
         fn test(z: Complex64, s: String) {
             assert_eq!(FromStr::from_str(&s), Ok(z));
         }
-        test(_0_0i, "0".to_string());
-        test(_0_0i, "0i".to_string());
-        test(_0_0i, "0j".to_string());
-        test(_0_0i, "-0".to_string());
-        test(_0_0i, "-0i".to_string());
-        test(_0_0i, "-0j".to_string());
         test(_0_0i, "0 + 0i".to_string());
-        test(_0_0i, "0 + 0j".to_string());
-        test(_0_0i, "0+0i".to_string());
         test(_0_0i, "0+0j".to_string());
-        test(_0_0i, "0 - 0i".to_string());
         test(_0_0i, "0 - 0j".to_string());
         test(_0_0i, "0-0i".to_string());
-        test(_0_0i, "0-0j".to_string());
+        test(_0_0i, "0i + 0".to_string());
+        test(_0_0i, "0".to_string());
+        test(_0_0i, "-0".to_string());
+        test(_0_0i, "0i".to_string());
+        test(_0_0i, "0j".to_string());
+        test(_0_0i, "-0i".to_string());
 
-        test(_1_0i, "1".to_string());
         test(_1_0i, "1 + 0i".to_string());
-        test(_1_0i, "1 + 0j".to_string());
-        test(_1_0i, "1+0i".to_string());
         test(_1_0i, "1+0j".to_string());
-        test(_1_0i, "1 - 0i".to_string());
         test(_1_0i, "1 - 0j".to_string());
         test(_1_0i, "1-0i".to_string());
-        test(_1_0i, "1-0j".to_string());
+        test(_1_0i, "-0j+1".to_string());
+        test(_1_0i, "1".to_string());
 
         test(_1_1i, "1 + i".to_string());
-        test(_1_1i, "1 + j".to_string());
-        test(_1_1i, "1+i".to_string());
         test(_1_1i, "1+j".to_string());
-        test(_1_1i, "1 + 1i".to_string());
         test(_1_1i, "1 + 1j".to_string());
         test(_1_1i, "1+1i".to_string());
-        test(_1_1i, "1+1j".to_string());
+        test(_1_1i, "i + 1".to_string());
+        test(_1_1i, "1i+1".to_string());
+        test(_1_1i, "j+1".to_string());
 
-        test(_0_1i, "i".to_string());
-        test(_0_1i, "j".to_string());
-        test(_0_1i, "1i".to_string());
-        test(_0_1i, "1j".to_string());
         test(_0_1i, "0 + i".to_string());
-        test(_0_1i, "0 + j".to_string());
-        test(_0_1i, "0+i".to_string());
         test(_0_1i, "0+j".to_string());
-        test(_0_1i, "-0 + i".to_string());
         test(_0_1i, "-0 + j".to_string());
         test(_0_1i, "-0+i".to_string());
-        test(_0_1i, "-0+j".to_string());
         test(_0_1i, "0 + 1i".to_string());
-        test(_0_1i, "0 + 1j".to_string());
-        test(_0_1i, "0+1i".to_string());
         test(_0_1i, "0+1j".to_string());
-        test(_0_1i, "-0 + 1i".to_string());
         test(_0_1i, "-0 + 1j".to_string());
         test(_0_1i, "-0+1i".to_string());
-        test(_0_1i, "-0+1j".to_string());
+        test(_0_1i, "j + 0".to_string());
+        test(_0_1i, "i".to_string());
+        test(_0_1i, "j".to_string());
+        test(_0_1i, "1j".to_string());
 
         test(_neg1_1i, "-1 + i".to_string());
-        test(_neg1_1i, "-1 + j".to_string());
-        test(_neg1_1i, "-1+i".to_string());
         test(_neg1_1i, "-1+j".to_string());
-        test(_neg1_1i, "-1 + 1i".to_string());
         test(_neg1_1i, "-1 + 1j".to_string());
         test(_neg1_1i, "-1+1i".to_string());
-        test(_neg1_1i, "-1+1j".to_string());
+        test(_neg1_1i, "1i-1".to_string());
+        test(_neg1_1i, "j + -1".to_string());
 
         test(_05_05i, "0.5 + 0.5i".to_string());
-        test(_05_05i, "0.5 + 0.5j".to_string());
-        test(_05_05i, "0.5+0.5i".to_string());
         test(_05_05i, "0.5+0.5j".to_string());
+        test(_05_05i, "5e-1+0.5j".to_string());
+        test(_05_05i, "5E-1 + 0.5j".to_string());
+        test(_05_05i, "5E-1i + 0.5".to_string());
+        test(_05_05i, "0.05e+1j + 50E-2".to_string());
+    }
+
+    #[test]
+    fn test_from_str_fail() {
+        fn test(s: &str) {
+            let complex: Result<Complex64, _> = FromStr::from_str(s);
+            assert!(complex.is_err());
+        }
+        test("foo");
+        test("6E");
+        test("0 + 2.718");
+        test("1 - -2i");
+        test("314e-2ij");
+        test("4.3j - i");
+        test("1i - 2i");
     }
 }
