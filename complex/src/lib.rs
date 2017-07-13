@@ -750,42 +750,64 @@ impl<T> FromStr for Complex<T> where
     /// Parses `a +/- bi`; `ai +/- b`; `a`; or `bi` where `a` and `b` are of type `T`
     fn from_str(s: &str) -> Result<Complex<T>, ParseComplexError>
     {
-        // first try to split on " + "
-        let mut split_p = s.splitn(2, " + ");
+        let imag = 'i';
 
-        let mut a = match split_p.next() {
-            None => return Err(ParseComplexError { kind: ComplexErrorKind::ParseError }),
-            Some(s) => s.trim_right().to_string()
-        };
+        let mut a = String::with_capacity(s.len());
+        let mut b = String::with_capacity(s.len());
 
-        let mut b = match split_p.next() {
-            // no second item could mean we need to split on " - " instead
-            None => {
-                let mut split_m = s.splitn(2, " - ");
+        let mut first = true;
+        let mut char_indices = s.char_indices();
+        let mut pc = ' ';
 
-                a = match split_m.next() {
-                    None => return Err(ParseComplexError { kind: ComplexErrorKind::ParseError }),
-                    Some(s) => s.trim_right().to_string()
-                };
-
-                let c = match split_m.next() {
-                    None => {
-                        // if `a` is imaginary, let `b` be real (and vice versa)
-                        match a.rfind('i') {
-                            None => "0i".to_string(),
-                            _ => "0".to_string()
+        loop {
+            match char_indices.next() {
+                Some(t) => {
+                    let i = t.0;
+                    let cc = t.1;
+                    if cc == '+' {
+                        // handle exponents
+                        if pc != 'e' && pc != 'E' {
+                            first = false;
+                            // don't carry '+' over into b
+                            pc = ' ';
+                            continue;
+                        }
+                    } else if cc == '-' {
+                        // handle exponents and negative numbers
+                        if i > 0 && pc != 'e' && pc != 'E' {
+                            first = false;
+                            // DO carry '-' over into b
                         }
                     }
-                    Some(s) => {
-                        "-".to_string() + s.trim_left()
-                    }
-                };
-                c
-            },
-            Some(s) => s.trim_left().to_string()
-        };
 
-        let re = match a.rfind('i') {
+                    if !first && cc == ' ' && pc == '-' {
+                        // ignore whitespace between minus sign and next number
+                        continue;
+                    }
+
+                    if first {
+                        a.push(cc);
+                    } else {
+                        b.push(cc);
+                    }
+
+                    pc = cc;
+                },
+                None => break,
+            }
+        }
+
+        a = a.trim_right().to_string();
+        b = b.trim_left().to_string();
+
+        if b.is_empty() {
+            b = match a.rfind(imag) {
+                None => "0i".to_string(),
+                _ => "0".to_string()
+            };
+        }
+
+        let re = match a.rfind(imag) {
             None => {
                 try!(T::from_str(&a)
                     .map_err(|_| ParseComplexError { kind: ComplexErrorKind::ParseError }))
@@ -796,20 +818,20 @@ impl<T> FromStr for Complex<T> where
             }
         };
 
-        let im = match a.rfind('i') {
+        let im = match a.rfind(imag) {
             None => {
                 // a is real
                 match b.pop() {
                     // b was empty
                     None => return Err(ParseComplexError { kind: ComplexErrorKind::ParseError }),
                     Some(c) => {
-                        if c == 'i' {
+                        if c == imag {
                             // b is imaginary
                             if b.is_empty() {
-                                // b was just 'i'
+                                // b was just 'imag'
                                 b = "1".to_string();
                             } else if b == "-" {
-                                // b was just '-i'
+                                // b was just '-imag'
                                 b = "-1".to_string();
                             }
                         } else {
@@ -823,17 +845,17 @@ impl<T> FromStr for Complex<T> where
                     .map_err(|_| ParseComplexError { kind: ComplexErrorKind::ParseError }))
             },
             _ => {
-                // a contains an 'i'
+                // a contains imag
                 match a.pop() {
                     None => return Err(ParseComplexError { kind: ComplexErrorKind::ParseError }),
                     Some(c) => {
-                        if c == 'i' {
+                        if c == imag {
                             // a is imaginary
                             if a.is_empty() {
-                                // a was just 'i'
+                                // a was just 'imag'
                                 a = "1".to_string();
                             } else if a == "-" {
-                                // a was just '-i'
+                                // a was just '-imag'
                                 a = "-1".to_string();
                             }
                         } else {
@@ -1553,25 +1575,38 @@ mod test {
         test(_0_0i, "-0".to_string());
         test(_0_0i, "-0i".to_string());
         test(_0_0i, "0 + 0i".to_string());
+        test(_0_0i, "0+0i".to_string());
         test(_0_0i, "0 - 0i".to_string());
+        test(_0_0i, "0-0i".to_string());
 
         test(_1_0i, "1".to_string());
         test(_1_0i, "1 + 0i".to_string());
+        test(_1_0i, "1+0i".to_string());
         test(_1_0i, "1 - 0i".to_string());
+        test(_1_0i, "1-0i".to_string());
 
         test(_1_1i, "1 + i".to_string());
+        test(_1_1i, "1+i".to_string());
         test(_1_1i, "1 + 1i".to_string());
+        test(_1_1i, "1+1i".to_string());
 
         test(_0_1i, "i".to_string());
         test(_0_1i, "1i".to_string());
         test(_0_1i, "0 + i".to_string());
+        test(_0_1i, "0+i".to_string());
         test(_0_1i, "-0 + i".to_string());
+        test(_0_1i, "-0+i".to_string());
         test(_0_1i, "0 + 1i".to_string());
+        test(_0_1i, "0+1i".to_string());
         test(_0_1i, "-0 + 1i".to_string());
+        test(_0_1i, "-0+1i".to_string());
 
         test(_neg1_1i, "-1 + i".to_string());
+        test(_neg1_1i, "-1+i".to_string());
         test(_neg1_1i, "-1 + 1i".to_string());
+        test(_neg1_1i, "-1+1i".to_string());
 
         test(_05_05i, "0.5 + 0.5i".to_string());
+        test(_05_05i, "0.5+0.5i".to_string());
     }
 }
