@@ -750,7 +750,10 @@ impl<T> FromStr for Complex<T> where
     /// Parses `a +/- bi`; `ai +/- b`; `a`; or `bi` where `a` and `b` are of type `T`
     fn from_str(s: &str) -> Result<Complex<T>, ParseComplexError>
     {
-        let imag = 'i';
+        let imag = match s.rfind('j') {
+            None => 'i',
+            _ => 'j'
+        };
 
         let mut a = String::with_capacity(s.len());
         let mut b = String::with_capacity(s.len());
@@ -1572,41 +1575,71 @@ mod test {
         }
         test(_0_0i, "0".to_string());
         test(_0_0i, "0i".to_string());
+        test(_0_0i, "0j".to_string());
         test(_0_0i, "-0".to_string());
         test(_0_0i, "-0i".to_string());
+        test(_0_0i, "-0j".to_string());
         test(_0_0i, "0 + 0i".to_string());
+        test(_0_0i, "0 + 0j".to_string());
         test(_0_0i, "0+0i".to_string());
+        test(_0_0i, "0+0j".to_string());
         test(_0_0i, "0 - 0i".to_string());
+        test(_0_0i, "0 - 0j".to_string());
         test(_0_0i, "0-0i".to_string());
+        test(_0_0i, "0-0j".to_string());
 
         test(_1_0i, "1".to_string());
         test(_1_0i, "1 + 0i".to_string());
+        test(_1_0i, "1 + 0j".to_string());
         test(_1_0i, "1+0i".to_string());
+        test(_1_0i, "1+0j".to_string());
         test(_1_0i, "1 - 0i".to_string());
+        test(_1_0i, "1 - 0j".to_string());
         test(_1_0i, "1-0i".to_string());
+        test(_1_0i, "1-0j".to_string());
 
         test(_1_1i, "1 + i".to_string());
+        test(_1_1i, "1 + j".to_string());
         test(_1_1i, "1+i".to_string());
+        test(_1_1i, "1+j".to_string());
         test(_1_1i, "1 + 1i".to_string());
+        test(_1_1i, "1 + 1j".to_string());
         test(_1_1i, "1+1i".to_string());
+        test(_1_1i, "1+1j".to_string());
 
         test(_0_1i, "i".to_string());
+        test(_0_1i, "j".to_string());
         test(_0_1i, "1i".to_string());
+        test(_0_1i, "1j".to_string());
         test(_0_1i, "0 + i".to_string());
+        test(_0_1i, "0 + j".to_string());
         test(_0_1i, "0+i".to_string());
+        test(_0_1i, "0+j".to_string());
         test(_0_1i, "-0 + i".to_string());
+        test(_0_1i, "-0 + j".to_string());
         test(_0_1i, "-0+i".to_string());
+        test(_0_1i, "-0+j".to_string());
         test(_0_1i, "0 + 1i".to_string());
+        test(_0_1i, "0 + 1j".to_string());
         test(_0_1i, "0+1i".to_string());
+        test(_0_1i, "0+1j".to_string());
         test(_0_1i, "-0 + 1i".to_string());
+        test(_0_1i, "-0 + 1j".to_string());
         test(_0_1i, "-0+1i".to_string());
+        test(_0_1i, "-0+1j".to_string());
 
         test(_neg1_1i, "-1 + i".to_string());
+        test(_neg1_1i, "-1 + j".to_string());
         test(_neg1_1i, "-1+i".to_string());
+        test(_neg1_1i, "-1+j".to_string());
         test(_neg1_1i, "-1 + 1i".to_string());
+        test(_neg1_1i, "-1 + 1j".to_string());
         test(_neg1_1i, "-1+1i".to_string());
+        test(_neg1_1i, "-1+1j".to_string());
 
         test(_05_05i, "0.5 + 0.5i".to_string());
+        test(_05_05i, "0.5 + 0.5j".to_string());
         test(_05_05i, "0.5+0.5i".to_string());
+        test(_05_05i, "0.5+0.5j".to_string());
     }
 }
