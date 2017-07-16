@@ -32,6 +32,10 @@ cargo build --verbose --features "serde"
 
 if [ "$TRAVIS_RUST_VERSION" = 1.8.0 ]; then exit; fi
 
+# Build test for the quickcheck feature.
+cargo build --verbose --features=quickcheck
+cargo test --verbose --features=quickcheck
+
 # num-derive should build on 1.15.0+
 cargo build --verbose --manifest-path=derive/Cargo.toml
 

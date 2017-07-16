@@ -20,6 +20,10 @@ version = "0.1.32"
 path = "../traits"
 version = "0.1.32"
 
+[dependencies.quickcheck]
+optional = true
+version = "0.4.1"
+
 [dependencies.rand]
 optional = true
 version = "0.3.14"

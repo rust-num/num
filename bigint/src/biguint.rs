@@ -10,6 +10,9 @@ use std::{f32, f64};
 use std::{u8, u64};
 use std::ascii::AsciiExt;
 
+#[cfg(feature = "quickcheck")]
+use quickcheck;
+
 #[cfg(feature = "serde")]
 use serde;
 
@@ -1441,6 +1444,46 @@ impl BigUint {
             self.data.pop();
         }
         self
+    }
+}
+
+#[cfg(feature = "quickcheck")]
+impl quickcheck::Arbitrary for BigUint {
+    fn arbitrary<G: quickcheck::Gen>(g: &mut G) -> Self {
+        use quickcheck::Arbitrary;
+
+        Self::new(Arbitrary::arbitrary(g))
+    }
+
+    fn shrink(&self) -> Box<Iterator<Item = Self>> {
+        use quickcheck::empty_shrinker;
+        use std::iter::once;
+
+        /// Based on the UnsignedShrinker for primitive types in quickcheck
+        /// itself.
+        struct Iter(BigUint, BigUint);
+        impl Iterator for Iter {
+            type Item = BigUint;
+
+            fn next(&mut self) -> Option<BigUint> {
+                if (self.0.clone() - &self.1) < self.0 {
+                    let result = Some(self.0.clone() - &self.1);
+                    // TODO This would benefit from in-place `/=`.
+                    self.1 = self.1.clone() / BigUint::from_usize(2).unwrap();
+                    result
+                } else {
+                    None
+                }
+            }
+        }
+
+        if self.is_zero() {
+            empty_shrinker()
+        } else {
+            let two = BigUint::from_usize(2).unwrap();
+            let shrinker = Iter(self.clone(), self.clone() / two);
+            Box::new(once(Self::zero()).chain(shrinker))
+        }
     }
 }
 

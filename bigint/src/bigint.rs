@@ -6,6 +6,9 @@ use std::cmp::Ordering::{self, Less, Greater, Equal};
 use std::{i64, u64};
 use std::ascii::AsciiExt;
 
+#[cfg(feature = "quickcheck")]
+use quickcheck;
+
 #[cfg(feature = "serde")]
 use serde;
 
@@ -1193,6 +1196,55 @@ impl From<BigUint> for BigInt {
                 sign: Plus,
                 data: n,
             }
+        }
+    }
+}
+
+#[cfg(feature = "quickcheck")]
+impl quickcheck::Arbitrary for BigInt {
+    fn arbitrary<G: quickcheck::Gen>(g: &mut G) -> Self {
+        use quickcheck::Arbitrary;
+
+        let sign = if g.gen() {
+            Sign::Plus 
+        } else {
+            Sign::Minus
+        };
+
+        Self::new(sign, Arbitrary::arbitrary(g))
+    }
+
+    fn shrink(&self) -> Box<Iterator<Item = Self>> {
+        use quickcheck::empty_shrinker;
+
+        /// Based on the SignedShrinker for primitive types in quickcheck
+        /// itself.
+        struct Iter(BigInt, BigInt);
+        impl Iterator for Iter {
+            type Item = BigInt;
+
+            fn next(&mut self) -> Option<BigInt> {
+                if (self.0.clone() - &self.1).abs() < self.0.abs() {
+                    let result = Some(self.0.clone() - &self.1);
+                    // TODO This would benefit from in-place `/=`.
+                    self.1 = self.1.clone() / BigInt::from_usize(2).unwrap();
+                    result
+                } else {
+                    None
+                }
+            }
+        }
+
+        if self.is_zero() {
+            empty_shrinker()
+        } else {
+            let two = BigInt::from_usize(2).unwrap();
+            let shrinker = Iter(self.clone(), self.clone() / two);
+            let mut items = vec![Self::zero()];
+            if shrinker.1.is_negative() {
+                items.push(shrinker.0.abs());
+            }
+            Box::new(items.into_iter().chain(shrinker))
         }
     }
 }

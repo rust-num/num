@@ -14,6 +14,8 @@
        html_root_url = "https://rust-num.github.io/num/",
        html_playground_url = "http://play.integer32.com/")]
 
+#[cfg(feature = "quickcheck")]
+extern crate quickcheck;
 #[cfg(feature = "rustc-serialize")]
 extern crate rustc_serialize;
 #[cfg(feature = "serde")]
@@ -622,6 +624,64 @@ impl<T: FromStr + Clone + Integer> FromStr for Ratio<T> {
 impl<T> Into<(T, T)> for Ratio<T> {
     fn into(self) -> (T, T) {
         (self.numer, self.denom)
+    }
+}
+
+#[cfg(feature = "quickcheck")]
+impl<T: quickcheck::Arbitrary + Integer> quickcheck::Arbitrary for Ratio<T> {
+    fn arbitrary<G: quickcheck::Gen>(g: &mut G) -> Self {
+        Ratio::new(T::arbitrary(g), T::arbitrary(g))
+    }
+
+    fn shrink(&self) -> Box<Iterator<Item = Self>> {
+        use quickcheck::Arbitrary;
+
+        struct Shrinker<T: Arbitrary + Integer> {
+            mode: bool,
+            numer: T,
+            denom: T,
+            numer_iter: Option<Box<Iterator<Item = T>>>,
+            denom_iter: Option<Box<Iterator<Item = T>>>,
+        }
+        
+        impl<T: Arbitrary + Integer> Shrinker<T> {
+            fn new(numer: T, denom: T) -> Self {
+                Shrinker {
+                    mode: true,
+                    numer: numer.clone(),
+                    denom: denom,
+                    numer_iter: Some(numer.shrink()),
+                    denom_iter: None,
+                }
+            }
+        }
+        
+        impl<T: Arbitrary + Integer> Iterator for Shrinker<T> {
+            type Item = Ratio<T>;
+        
+            fn next(&mut self) -> Option<Ratio<T>> {
+                match self.mode {
+                    true => if let Some(numer) = self.numer_iter.as_mut().unwrap().next() {
+                        Some(Ratio::new(numer, self.denom.clone()))
+                    } else {
+                        self.mode = false;
+                        self.numer_iter = None;
+                        self.denom_iter = Some(self.denom.clone().shrink());
+                        self.next()
+                    },
+                    false => if let Some(denom) = self.denom_iter.as_mut().unwrap().next() {
+                        Some(Ratio::new(self.numer.clone(), denom))
+                    } else if let Some(numer) = self.numer_iter.as_mut().unwrap().next() {
+                        self.numer = numer;
+                        self.next()
+                    } else {
+                        None
+                    }
+                }
+            }
+        }
+
+        Box::new(Shrinker::new(self.numer.clone(), self.denom.clone()))
     }
 }
 
