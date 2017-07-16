@@ -743,12 +743,12 @@ impl<T> fmt::Binary for Complex<T> where
 }
 
 impl<T> FromStr for Complex<T> where
-    T: FromStr + Num + PartialOrd + Clone
+    T: FromStr + Num + PartialOrd + Clone + std::fmt::Debug, T::Err: Error + PartialEq
 {
-    type Err = ParseComplexError;
+    type Err = ParseComplexError<T>;
 
     /// Parses `a +/- bi`; `ai +/- b`; `a`; or `bi` where `a` and `b` are of type `T`
-    fn from_str(s: &str) -> Result<Complex<T>, ParseComplexError>
+    fn from_str(s: &str) -> Result<Complex<T>, ParseComplexError<T>>
     {
         let imag = match s.rfind('j') {
             None => 'i',
@@ -819,12 +819,12 @@ impl<T> FromStr for Complex<T> where
         } else if b.ends_with(imag) {
             re = a; im = b;
         } else {
-            return Err(ParseComplexError { kind: ComplexErrorKind::ParseError });
+            return Err(ParseComplexError { kind: ComplexErrorKind::ExprError });
         }
 
         // parse re
         let re = try!(T::from_str(re)
-            .map_err(|_| ParseComplexError { kind: ComplexErrorKind::ParseError }));
+            .map_err(|e| ParseComplexError { kind: ComplexErrorKind::ParseError(e) }));
 
         // pop imaginary unit off
         let mut im = &im[..im.len()-1];
@@ -837,7 +837,7 @@ impl<T> FromStr for Complex<T> where
 
         // parse im
         let im = try!(T::from_str(im)
-            .map_err(|_| ParseComplexError { kind: ComplexErrorKind::ParseError }));
+            .map_err(|e| ParseComplexError { kind: ComplexErrorKind::ParseError(e) }));
 
         Ok(Complex::new(re, im))
     }
@@ -866,32 +866,44 @@ impl<T> serde::Deserialize for Complex<T> where
     }
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
-pub struct ParseComplexError {
-    kind: ComplexErrorKind,
+#[derive(Debug, PartialEq)]
+pub struct ParseComplexError<T> where
+    T: FromStr + std::fmt::Debug + PartialEq, T::Err: Error + PartialEq
+{
+    kind: ComplexErrorKind<T>,
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
-enum ComplexErrorKind {
-    ParseError,
+#[derive(Debug, PartialEq)]
+enum ComplexErrorKind<T> where
+    T: FromStr + std::fmt::Debug + PartialEq, T::Err: Error + PartialEq
+{
+    ParseError(T::Err),
+    ExprError
 }
 
-impl Error for ParseComplexError {
+impl<T> Error for ParseComplexError<T> where
+    T: FromStr + std::fmt::Debug + PartialEq, T::Err: Error + PartialEq
+{
     fn description(&self) -> &str {
         self.kind.description()
     }
 }
 
-impl fmt::Display for ParseComplexError {
+impl<T> fmt::Display for ParseComplexError<T> where
+    T: FromStr + std::fmt::Debug + PartialEq, T::Err: Error + PartialEq
+{
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.description().fmt(f)
     }
 }
 
-impl ComplexErrorKind {
-    fn description(&self) -> &'static str {
+impl<T> ComplexErrorKind<T> where
+    T: FromStr + std::fmt::Debug + PartialEq, T::Err: Error + PartialEq
+{
+    fn description(&self) -> &str {
         match *self {
-            ComplexErrorKind::ParseError => "failed to parse complex number",
+            ComplexErrorKind::ParseError(ref e) => e.description(),
+            ComplexErrorKind::ExprError => "invalid or unsupported complex expression"
         }
     }
 }
