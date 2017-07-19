@@ -22,10 +22,12 @@ extern crate rustc_serialize;
 #[cfg(feature = "serde")]
 extern crate serde;
 
+use std::error::Error;
 use std::fmt;
 #[cfg(test)]
 use std::hash;
 use std::ops::{Add, Div, Mul, Neg, Sub};
+use std::str::FromStr;
 
 use traits::{Zero, One, Num, Float};
 
@@ -178,7 +180,7 @@ impl<T: Clone + Float> Complex<T> {
         let (r, theta) = self.to_polar();
         Complex::from_polar(&(r.sqrt()), &(theta/two))
     }
-    
+
     /// Raises `self` to a floating point power.
     #[inline]
     pub fn powf(&self, exp: T) -> Complex<T> {
@@ -187,25 +189,25 @@ impl<T: Clone + Float> Complex<T> {
         let (r, theta) = self.to_polar();
         Complex::from_polar(&r.powf(exp), &(theta*exp))
     }
-    
+
     /// Returns the logarithm of `self` with respect to an arbitrary base.
     #[inline]
     pub fn log(&self, base: T) -> Complex<T> {
-        // formula: log_y(x) = log_y(ρ e^(i θ)) 
-        // = log_y(ρ) + log_y(e^(i θ)) = log_y(ρ) + ln(e^(i θ)) / ln(y) 
-        // = log_y(ρ) + i θ / ln(y) 
+        // formula: log_y(x) = log_y(ρ e^(i θ))
+        // = log_y(ρ) + log_y(e^(i θ)) = log_y(ρ) + ln(e^(i θ)) / ln(y)
+        // = log_y(ρ) + i θ / ln(y)
         let (r, theta) = self.to_polar();
         Complex::new(r.log(base), theta / base.ln())
     }
-    
+
     /// Raises `self` to a complex power.
     #[inline]
     pub fn powc(&self, exp: Complex<T>) -> Complex<T> {
         // formula: x^y = (a + i b)^(c + i d)
-        // = (ρ e^(i θ))^c (ρ e^(i θ))^(i d) 
+        // = (ρ e^(i θ))^c (ρ e^(i θ))^(i d)
         //    where ρ=|x| and θ=arg(x)
         // = ρ^c e^(−d θ) e^(i c θ) ρ^(i d)
-        // = p^c e^(−d θ) (cos(c θ) 
+        // = p^c e^(−d θ) (cos(c θ)
         //   + i sin(c θ)) (cos(d ln(ρ)) + i sin(d ln(ρ)))
         // = p^c e^(−d θ) (
         //   cos(c θ) cos(d ln(ρ)) − sin(c θ) sin(d ln(ρ))
@@ -214,14 +216,14 @@ impl<T: Clone + Float> Complex<T> {
         // = from_polar(p^c e^(−d θ), c θ + d ln(ρ))
         let (r, theta) = self.to_polar();
         Complex::from_polar(
-            &(r.powf(exp.re) * (-exp.im * theta).exp()), 
+            &(r.powf(exp.re) * (-exp.im * theta).exp()),
             &(exp.re * theta + exp.im * r.ln()))
     }
-    
+
     /// Raises a floating point number to the complex power `self`.
     #[inline]
     pub fn expf(&self, base: T) -> Complex<T> {
-        // formula: x^(a+bi) = x^a x^bi = x^a e^(b ln(x) i) 
+        // formula: x^(a+bi) = x^a x^bi = x^a e^(b ln(x) i)
         // = from_polar(x^a, b ln(x))
         Complex::from_polar(&base.powf(self.re), &(self.im * base.ln()))
     }
@@ -877,6 +879,97 @@ impl<T> fmt::Binary for Complex<T> where
     }
 }
 
+impl<T> FromStr for Complex<T> where
+    T: FromStr + Num + Clone
+{
+    type Err = ParseComplexError<T::Err>;
+
+    /// Parses `a +/- bi`; `ai +/- b`; `a`; or `bi` where `a` and `b` are of type `T`
+    fn from_str(s: &str) -> Result<Self, Self::Err>
+    {
+        let imag = match s.rfind('j') {
+            None => 'i',
+            _ => 'j'
+        };
+
+        let mut b = String::with_capacity(s.len());
+        let mut first = true;
+
+        let char_indices = s.char_indices();
+        let mut pc = ' ';
+        let mut split_index = s.len();
+
+        for (i, cc) in char_indices {
+            if cc == '+' && pc != 'e' && pc != 'E' && i > 0 {
+                // ignore '+' if part of an exponent
+                if first {
+                    split_index = i;
+                    first = false;
+                }
+                // don't carry '+' over into b
+                pc = ' ';
+                continue;
+            } else if cc == '-' && pc != 'e' && pc != 'E' && i > 0 {
+                // ignore '-' if part of an exponent or begins the string
+                if first {
+                    split_index = i;
+                    first = false;
+                }
+                // DO carry '-' over into b
+            }
+
+            if pc == '-' && cc == ' ' && !first {
+                // ignore whitespace between minus sign and next number
+                continue;
+            }
+
+            if !first {
+                b.push(cc);
+            }
+            pc = cc;
+        }
+
+        // split off real and imaginary parts, trim whitespace
+        let (a, _) = s.split_at(split_index);
+        let a = a.trim_right();
+        let mut b = b.trim_left();
+        // input was either pure real or pure imaginary
+        if b.is_empty() {
+            b = match a.ends_with(imag) {
+                false => "0i",
+                true => "0"
+            };
+        }
+
+        let re;
+        let im;
+        if a.ends_with(imag) {
+            im = a; re = b;
+        } else if b.ends_with(imag) {
+            re = a; im = b;
+        } else {
+            return Err(ParseComplexError::new());
+        }
+
+        // parse re
+        let re = try!(T::from_str(re).map_err(ParseComplexError::from_error));
+
+        // pop imaginary unit off
+        let mut im = &im[..im.len()-1];
+        // handle im == "i" or im == "-i"
+        if im.is_empty() || im == "+" {
+            im = "1";
+        } else if im == "-" {
+            im = "-1";
+        }
+
+        // parse im
+        let im = try!(T::from_str(im).map_err(ParseComplexError::from_error));
+
+        Ok(Complex::new(re, im))
+    }
+}
+
 #[cfg(feature = "serde")]
 impl<T> serde::Serialize for Complex<T>
     where T: serde::Serialize
@@ -900,6 +993,51 @@ impl<T> serde::Deserialize for Complex<T> where
     }
 }
 
+#[derive(Debug, PartialEq)]
+pub struct ParseComplexError<E>
+{
+    kind: ComplexErrorKind<E>,
+}
+
+#[derive(Debug, PartialEq)]
+enum ComplexErrorKind<E>
+{
+    ParseError(E),
+    ExprError
+}
+
+impl<E> ParseComplexError<E>
+{
+   fn new() -> Self {
+      ParseComplexError {
+         kind: ComplexErrorKind::ExprError,
+      }
+   }
+
+   fn from_error(error: E) -> Self {
+      ParseComplexError {
+         kind: ComplexErrorKind::ParseError(error),
+      }
+   }
+}
+
+impl<E: Error> Error for ParseComplexError<E>
+{
+    fn description(&self) -> &str {
+        match self.kind {
+            ComplexErrorKind::ParseError(ref e) => e.description(),
+            ComplexErrorKind::ExprError => "invalid or unsupported complex expression"
+        }
+    }
+}
+
+impl<E: Error> fmt::Display for ParseComplexError<E>
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.description().fmt(f)
+    }
+}
+
 #[cfg(test)]
 fn hash<T: hash::Hash>(x: &T) -> u64 {
     use std::hash::{BuildHasher, Hasher};
@@ -915,6 +1053,7 @@ mod test {
 
     use super::{Complex64, Complex};
     use std::f64;
+    use std::str::FromStr;
 
     use traits::{Zero, One, Float};
 
@@ -1018,7 +1157,7 @@ mod test {
     fn close(a: Complex64, b: Complex64) -> bool {
         close_to_tol(a, b, 1e-10)
     }
-    
+
     fn close_to_tol(a: Complex64, b: Complex64, tol: f64) -> bool {
         // returns true if a and b are reasonably close
         (a == b) || (a-b).norm() < tol
@@ -1052,7 +1191,7 @@ mod test {
             assert!(-f64::consts::PI <= c.ln().arg() && c.ln().arg() <= f64::consts::PI);
         }
     }
-    
+
     #[test]
     fn test_powc()
     {
@@ -1063,7 +1202,7 @@ mod test {
         let c = Complex::new(1.0 / 3.0, 0.1);
         assert!(close_to_tol(a.powc(c), Complex::new(1.65826, -0.33502), 1e-5));
     }
-    
+
     #[test]
     fn test_powf()
     {
@@ -1071,7 +1210,7 @@ mod test {
         let r = c.powf(3.5);
         assert!(close_to_tol(r, Complex::new(-0.8684746, -16.695934), 1e-5));
     }
-    
+
     #[test]
     fn test_log()
     {
@@ -1079,18 +1218,18 @@ mod test {
         let r = c.log(10.0);
         assert!(close_to_tol(r, Complex::new(0.349485, -0.20135958), 1e-5));
     }
-    
+
     #[test]
     fn test_some_expf_cases()
     {
         let c = Complex::new(2.0, -1.0);
         let r = c.expf(10.0);
         assert!(close_to_tol(r, Complex::new(-66.82015, -74.39803), 1e-5));
-        
+
         let c = Complex::new(5.0, -2.0);
         let r = c.expf(3.4);
         assert!(close_to_tol(r, Complex::new(-349.25, -290.63), 1e-2));
-        
+
         let c = Complex::new(-1.5, 2.0 / 3.0);
         let r = c.expf(1.0 / 3.0);
         assert!(close_to_tol(r, Complex::new(3.8637, -3.4745), 1e-2));
@@ -1565,5 +1704,81 @@ mod test {
         assert!(!a.is_normal());
         assert!(!b.is_normal());
         assert!(_1_1i.is_normal());
+    }
+
+    #[test]
+    fn test_from_str() {
+        fn test(z: Complex64, s: &str) {
+            assert_eq!(FromStr::from_str(s), Ok(z));
+        }
+        test(_0_0i, "0 + 0i");
+        test(_0_0i, "0+0j");
+        test(_0_0i, "0 - 0j");
+        test(_0_0i, "0-0i");
+        test(_0_0i, "0i + 0");
+        test(_0_0i, "0");
+        test(_0_0i, "-0");
+        test(_0_0i, "0i");
+        test(_0_0i, "0j");
+        test(_0_0i, "+0j");
+        test(_0_0i, "-0i");
+
+        test(_1_0i, "1 + 0i");
+        test(_1_0i, "1+0j");
+        test(_1_0i, "1 - 0j");
+        test(_1_0i, "+1-0i");
+        test(_1_0i, "-0j+1");
+        test(_1_0i, "1");
+
+        test(_1_1i, "1 + i");
+        test(_1_1i, "1+j");
+        test(_1_1i, "1 + 1j");
+        test(_1_1i, "1+1i");
+        test(_1_1i, "i + 1");
+        test(_1_1i, "1i+1");
+        test(_1_1i, "+j+1");
+
+        test(_0_1i, "0 + i");
+        test(_0_1i, "0+j");
+        test(_0_1i, "-0 + j");
+        test(_0_1i, "-0+i");
+        test(_0_1i, "0 + 1i");
+        test(_0_1i, "0+1j");
+        test(_0_1i, "-0 + 1j");
+        test(_0_1i, "-0+1i");
+        test(_0_1i, "j + 0");
+        test(_0_1i, "i");
+        test(_0_1i, "j");
+        test(_0_1i, "1j");
+
+        test(_neg1_1i, "-1 + i");
+        test(_neg1_1i, "-1+j");
+        test(_neg1_1i, "-1 + 1j");
+        test(_neg1_1i, "-1+1i");
+        test(_neg1_1i, "1i-1");
+        test(_neg1_1i, "j + -1");
+
+        test(_05_05i, "0.5 + 0.5i");
+        test(_05_05i, "0.5+0.5j");
+        test(_05_05i, "5e-1+0.5j");
+        test(_05_05i, "5E-1 + 0.5j");
+        test(_05_05i, "5E-1i + 0.5");
+        test(_05_05i, "0.05e+1j + 50E-2");
+    }
+
+    #[test]
+    fn test_from_str_fail() {
+        fn test(s: &str) {
+            let complex: Result<Complex64, _> = FromStr::from_str(s);
+            assert!(complex.is_err());
+        }
+        test("foo");
+        test("6E");
+        test("0 + 2.718");
+        test("1 - -2i");
+        test("314e-2ij");
+        test("4.3j - i");
+        test("1i - 2i");
+        test("+ 1 - 3.0i");
     }
 }
