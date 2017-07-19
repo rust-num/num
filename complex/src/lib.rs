@@ -743,7 +743,7 @@ impl<T> fmt::Binary for Complex<T> where
 }
 
 impl<T> FromStr for Complex<T> where
-    T: FromStr + Num + PartialOrd + Clone, T::Err: Error
+    T: FromStr + Num + Clone
 {
     type Err = ParseComplexError<T::Err>;
 
@@ -861,15 +861,13 @@ impl<T> serde::Deserialize for Complex<T> where
 }
 
 #[derive(Debug, PartialEq)]
-pub struct ParseComplexError<E> where
-    E: Error
+pub struct ParseComplexError<E>
 {
     kind: ComplexErrorKind<E>,
 }
 
 #[derive(Debug, PartialEq)]
-enum ComplexErrorKind<E> where
-    E: Error
+enum ComplexErrorKind<E>
 {
     ParseError(E),
     ExprError
