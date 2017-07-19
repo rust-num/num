@@ -811,27 +811,23 @@ impl<T> FromStr for Complex<T> where
         } else if b.ends_with(imag) {
             re = a; im = b;
         } else {
-            return Err(ParseComplexError { kind: ComplexErrorKind::ExprError });
+            return Err(ParseComplexError::new());
         }
 
         // parse re
-        let re = try!(T::from_str(re)
-            .map_err(|e| ParseComplexError { kind: ComplexErrorKind::ParseError(e) }));
+        let re = try!(T::from_str(re).map_err(ParseComplexError::from_error));
 
         // pop imaginary unit off
         let mut im = &im[..im.len()-1];
         // handle im == "i" or im == "-i"
-        if im.is_empty() {
+        if im.is_empty() || im == "+" {
             im = "1";
         } else if im == "-" {
             im = "-1";
-        } else if im == "+" {
-            im = "1";
         }
 
         // parse im
-        let im = try!(T::from_str(im)
-            .map_err(|e| ParseComplexError { kind: ComplexErrorKind::ParseError(e) }));
+        let im = try!(T::from_str(im).map_err(ParseComplexError::from_error));
 
         Ok(Complex::new(re, im))
     }
@@ -873,30 +869,35 @@ enum ComplexErrorKind<E>
     ExprError
 }
 
-impl<E> Error for ParseComplexError<E> where
-    E: Error
+impl<E> ParseComplexError<E>
 {
-    fn description(&self) -> &str {
-        self.kind.description()
-    }
+   fn new() -> Self {
+      ParseComplexError {
+         kind: ComplexErrorKind::ExprError,
+      }
+   }
+
+   fn from_error(error: E) -> Self {
+      ParseComplexError {
+         kind: ComplexErrorKind::ParseError(error),
+      }
+   }
 }
 
-impl<E> fmt::Display for ParseComplexError<E> where
-    E: Error
-{
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.description().fmt(f)
-    }
-}
-
-impl<E> ComplexErrorKind<E> where
-    E: Error
+impl<E: Error> Error for ParseComplexError<E>
 {
     fn description(&self) -> &str {
-        match *self {
+        match self.kind {
             ComplexErrorKind::ParseError(ref e) => e.description(),
             ComplexErrorKind::ExprError => "invalid or unsupported complex expression"
         }
+    }
+}
+
+impl<E: Error> fmt::Display for ParseComplexError<E>
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.description().fmt(f)
     }
 }
 
