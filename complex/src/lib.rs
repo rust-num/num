@@ -748,7 +748,7 @@ impl<T> FromStr for Complex<T> where
     type Err = ParseComplexError<T::Err>;
 
     /// Parses `a +/- bi`; `ai +/- b`; `a`; or `bi` where `a` and `b` are of type `T`
-    fn from_str(s: &str) -> Result<Complex<T>, ParseComplexError<T::Err>>
+    fn from_str(s: &str) -> Result<Self, Self::Err>
     {
         let imag = match s.rfind('j') {
             None => 'i',
