@@ -743,12 +743,12 @@ impl<T> fmt::Binary for Complex<T> where
 }
 
 impl<T> FromStr for Complex<T> where
-    T: FromStr + Num + PartialOrd + Clone + std::fmt::Debug, T::Err: Error + PartialEq
+    T: FromStr + Num + PartialOrd + Clone, T::Err: Error
 {
-    type Err = ParseComplexError<T>;
+    type Err = ParseComplexError<T::Err>;
 
     /// Parses `a +/- bi`; `ai +/- b`; `a`; or `bi` where `a` and `b` are of type `T`
-    fn from_str(s: &str) -> Result<Complex<T>, ParseComplexError<T>>
+    fn from_str(s: &str) -> Result<Complex<T>, ParseComplexError<T::Err>>
     {
         let imag = match s.rfind('j') {
             None => 'i',
@@ -758,46 +758,38 @@ impl<T> FromStr for Complex<T> where
         let mut b = String::with_capacity(s.len());
         let mut first = true;
 
-        let mut char_indices = s.char_indices();
+        let char_indices = s.char_indices();
         let mut pc = ' ';
         let mut split_index = s.len();
 
-        loop {
-            match char_indices.next() {
-                Some(t) => {
-                    let i = t.0;
-                    let cc = t.1;
-
-                    if cc == '+' && pc != 'e' && pc != 'E' {
-                        // ignore '+' if part of an exponent
-                        if first {
-                            split_index = i;
-                            first = false;
-                        }
-                        // don't carry '+' over into b
-                        pc = ' ';
-                        continue;
-                    } else if cc == '-' && pc != 'e' && pc != 'E' && i > 0 {
-                        // ignore '-' if part of an exponent or begins the string
-                        if first {
-                            split_index = i;
-                            first = false;
-                        }
-                        // DO carry '-' over into b
-                    }
-
-                    if pc == '-' && cc == ' ' && !first {
-                        // ignore whitespace between minus sign and next number
-                        continue;
-                    }
-
-                    if !first {
-                        b.push(cc);
-                    }
-                    pc = cc;
-                },
-                None => break,
+        for (i, cc) in char_indices {
+            if cc == '+' && pc != 'e' && pc != 'E' && i > 0 {
+                // ignore '+' if part of an exponent
+                if first {
+                    split_index = i;
+                    first = false;
+                }
+                // don't carry '+' over into b
+                pc = ' ';
+                continue;
+            } else if cc == '-' && pc != 'e' && pc != 'E' && i > 0 {
+                // ignore '-' if part of an exponent or begins the string
+                if first {
+                    split_index = i;
+                    first = false;
+                }
+                // DO carry '-' over into b
             }
+
+            if pc == '-' && cc == ' ' && !first {
+                // ignore whitespace between minus sign and next number
+                continue;
+            }
+
+            if !first {
+                b.push(cc);
+            }
+            pc = cc;
         }
 
         // split off real and imaginary parts, trim whitespace
@@ -833,6 +825,8 @@ impl<T> FromStr for Complex<T> where
             im = "1";
         } else if im == "-" {
             im = "-1";
+        } else if im == "+" {
+            im = "1";
         }
 
         // parse im
@@ -867,38 +861,38 @@ impl<T> serde::Deserialize for Complex<T> where
 }
 
 #[derive(Debug, PartialEq)]
-pub struct ParseComplexError<T> where
-    T: FromStr + std::fmt::Debug + PartialEq, T::Err: Error + PartialEq
+pub struct ParseComplexError<E> where
+    E: Error
 {
-    kind: ComplexErrorKind<T>,
+    kind: ComplexErrorKind<E>,
 }
 
 #[derive(Debug, PartialEq)]
-enum ComplexErrorKind<T> where
-    T: FromStr + std::fmt::Debug + PartialEq, T::Err: Error + PartialEq
+enum ComplexErrorKind<E> where
+    E: Error
 {
-    ParseError(T::Err),
+    ParseError(E),
     ExprError
 }
 
-impl<T> Error for ParseComplexError<T> where
-    T: FromStr + std::fmt::Debug + PartialEq, T::Err: Error + PartialEq
+impl<E> Error for ParseComplexError<E> where
+    E: Error
 {
     fn description(&self) -> &str {
         self.kind.description()
     }
 }
 
-impl<T> fmt::Display for ParseComplexError<T> where
-    T: FromStr + std::fmt::Debug + PartialEq, T::Err: Error + PartialEq
+impl<E> fmt::Display for ParseComplexError<E> where
+    E: Error
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.description().fmt(f)
     }
 }
 
-impl<T> ComplexErrorKind<T> where
-    T: FromStr + std::fmt::Debug + PartialEq, T::Err: Error + PartialEq
+impl<E> ComplexErrorKind<E> where
+    E: Error
 {
     fn description(&self) -> &str {
         match *self {
@@ -1560,12 +1554,13 @@ mod test {
         test(_0_0i, "-0");
         test(_0_0i, "0i");
         test(_0_0i, "0j");
+        test(_0_0i, "+0j");
         test(_0_0i, "-0i");
 
         test(_1_0i, "1 + 0i");
         test(_1_0i, "1+0j");
         test(_1_0i, "1 - 0j");
-        test(_1_0i, "1-0i");
+        test(_1_0i, "+1-0i");
         test(_1_0i, "-0j+1");
         test(_1_0i, "1");
 
@@ -1575,7 +1570,7 @@ mod test {
         test(_1_1i, "1+1i");
         test(_1_1i, "i + 1");
         test(_1_1i, "1i+1");
-        test(_1_1i, "j+1");
+        test(_1_1i, "+j+1");
 
         test(_0_1i, "0 + i");
         test(_0_1i, "0+j");
@@ -1618,5 +1613,6 @@ mod test {
         test("314e-2ij");
         test("4.3j - i");
         test("1i - 2i");
+        test("+ 1 - 3.0i");
     }
 }
