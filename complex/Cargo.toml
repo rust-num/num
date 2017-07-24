@@ -8,14 +8,14 @@ categories = [ "algorithms", "data-structures", "science" ]
 license = "MIT/Apache-2.0"
 name = "num-complex"
 repository = "https://github.com/rust-num/num"
-version = "0.1.39"
+version = "0.1.40"
 
 [dependencies]
 
 [dependencies.num-traits]
 optional = false
 path = "../traits"
-version = "0.1.32"
+version = "0.1.39"
 
 [dependencies.rustc-serialize]
 optional = true
