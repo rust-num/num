@@ -1,5 +1,7 @@
 # num
 
+[![](https://travis-ci.org/rust-num/num.svg)](https://travis-ci.org/rust-num/num)
+
 A collection of numeric types and traits for Rust.
 
 This includes new types for big integers, rationals, and complex numbers,
