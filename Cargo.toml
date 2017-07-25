@@ -10,6 +10,9 @@ repository = "https://github.com/rust-num/num"
 name = "num"
 version = "0.1.40"
 
+[badges]
+travis-ci = { repository = "rust-num/num" }
+
 [[bench]]
 name = "bigint"
 
