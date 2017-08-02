@@ -1192,7 +1192,7 @@ impl BigUint {
     #[inline]
     pub fn assign_from_slice(&mut self, slice: &[BigDigit]) {
         self.data.resize(slice.len(), 0);
-        self.data.copy_from_slice(slice);
+        self.data.clone_from_slice(slice);
         self.normalize();
     }
 
