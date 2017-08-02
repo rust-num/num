@@ -449,7 +449,7 @@ impl<'a> Sub<&'a BigUint> for BigUint {
 
     fn sub(mut self, other: &BigUint) -> BigUint {
         sub2(&mut self.data[..], &other.data[..]);
-        self.normalize()
+        self.normalized()
     }
 }
 
@@ -463,7 +463,7 @@ impl<'a> Sub<BigUint> for &'a BigUint {
         }
 
         sub2rev(&self.data[..], &mut other.data[..]);
-        other.normalize()
+        other.normalized()
     }
 }
 
@@ -477,7 +477,7 @@ impl Sub<BigDigit> for BigUint {
     #[inline]
     fn sub(mut self, other: BigDigit) -> BigUint {
         sub2(&mut self.data[..], &[other]);
-        self.normalize()
+        self.normalized()
     }
 }
 
@@ -491,7 +491,7 @@ impl Sub<BigUint> for BigDigit {
         }
 
         sub2rev(&[self], &mut other.data[..]);
-        other.normalize()
+        other.normalized()
     }
 }
 
@@ -502,7 +502,7 @@ impl Sub<DoubleBigDigit> for BigUint {
     fn sub(mut self, other: DoubleBigDigit) -> BigUint {
         let (hi, lo) = big_digit::from_doublebigdigit(other);
         sub2(&mut self.data[..], &[lo, hi]);
-        self.normalize()
+        self.normalized()
     }
 }
 
@@ -517,7 +517,7 @@ impl Sub<BigUint> for DoubleBigDigit {
 
         let (hi, lo) = big_digit::from_doublebigdigit(self);
         sub2rev(&[lo, hi], &mut other.data[..]);
-        other.normalize()
+        other.normalized()
     }
 }
 
@@ -1175,7 +1175,7 @@ impl BigUint {
     /// The digits are in little-endian base 2^32.
     #[inline]
     pub fn new(digits: Vec<BigDigit>) -> BigUint {
-        BigUint { data: digits }.normalize()
+        BigUint { data: digits }.normalized()
     }
 
     /// Creates and initializes a `BigUint`.
@@ -1184,6 +1184,16 @@ impl BigUint {
     #[inline]
     pub fn from_slice(slice: &[BigDigit]) -> BigUint {
         BigUint::new(slice.to_vec())
+    }
+
+    /// Assign a value to a `BigUint`.
+    ///
+    /// The digits are in little-endian base 2^32.
+    #[inline]
+    pub fn assign_from_slice(&mut self, slice: &[BigDigit]) {
+        self.data.resize(slice.len(), 0);
+        self.data.copy_from_slice(slice);
+        self.normalize();
     }
 
     /// Creates and initializes a `BigUint`.
@@ -1436,10 +1446,16 @@ impl BigUint {
     /// Strips off trailing zero bigdigits - comparisons require the last element in the vector to
     /// be nonzero.
     #[inline]
-    fn normalize(mut self) -> BigUint {
+    fn normalize(&mut self) {
         while let Some(&0) = self.data.last() {
             self.data.pop();
         }
+    }
+
+    /// Returns a normalized `BigUint`.
+    #[inline]
+    fn normalized(mut self) -> BigUint {
+        self.normalize();
         self
     }
 }

@@ -1395,6 +1395,21 @@ impl BigInt {
         BigInt::from_biguint(sign, BigUint::from_slice(slice))
     }
 
+    /// Reinitializes a `BigInt`.
+    #[inline]
+    pub fn assign_from_slice(&mut self, sign: Sign, slice: &[BigDigit]) {
+        // Normalize:
+        let slice = &slice[..slice.iter().rposition(|&x| x != 0).map_or(0, |i| i + 1)];
+        
+        if sign == NoSign || slice.len() == 0 {
+            self.sign = NoSign;
+            self.data = Zero::zero();
+        } else {
+            self.sign = sign;
+            self.data.assign_from_slice(slice);
+        }
+    }
+
     /// Creates and initializes a `BigInt`.
     ///
     /// The bytes are in big-endian byte order.
