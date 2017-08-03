@@ -60,6 +60,39 @@ fn test_from_biguint() {
 }
 
 #[test]
+fn test_from_slice() {
+    fn check(inp_s: Sign, inp_n: u32, ans_s: Sign, ans_n: u32) {
+        let inp = BigInt::from_slice(inp_s, &[inp_n]);
+        let ans = BigInt {
+            sign: ans_s,
+            data: FromPrimitive::from_u32(ans_n).unwrap(),
+        };
+        assert_eq!(inp, ans);
+    }
+    check(Plus, 1, Plus, 1);
+    check(Plus, 0, NoSign, 0);
+    check(Minus, 1, Minus, 1);
+    check(NoSign, 1, NoSign, 0);
+}
+
+#[test]
+fn test_assign_from_slice() {
+    fn check(inp_s: Sign, inp_n: u32, ans_s: Sign, ans_n: u32) {
+        let mut inp = BigInt::from_slice(Minus, &[2627_u32, 0_u32, 9182_u32, 42_u32]);
+        inp.assign_from_slice(inp_s, &[inp_n]);
+        let ans = BigInt {
+            sign: ans_s,
+            data: FromPrimitive::from_u32(ans_n).unwrap(),
+        };
+        assert_eq!(inp, ans);
+    }
+    check(Plus, 1, Plus, 1);
+    check(Plus, 0, NoSign, 0);
+    check(Minus, 1, Minus, 1);
+    check(NoSign, 1, NoSign, 0);
+}
+
+#[test]
 fn test_from_bytes_be() {
     fn check(s: &str, result: &str) {
         assert_eq!(BigInt::from_bytes_be(Plus, s.as_bytes()),

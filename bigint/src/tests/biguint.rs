@@ -57,6 +57,21 @@ fn test_from_slice() {
 }
 
 #[test]
+fn test_assign_from_slice() {
+    fn check(slice: &[BigDigit], data: &[BigDigit]) {
+        let mut p = BigUint::from_slice(&[2627_u32, 0_u32, 9182_u32, 42_u32]);
+        p.assign_from_slice(slice);
+        assert!(p.data == data);
+    }
+    check(&[1], &[1]);
+    check(&[0, 0, 0], &[]);
+    check(&[1, 2, 0, 0], &[1, 2]);
+    check(&[0, 0, 1, 2], &[0, 0, 1, 2]);
+    check(&[0, 0, 1, 2, 0, 0], &[0, 0, 1, 2]);
+    check(&[-1i32 as BigDigit], &[-1i32 as BigDigit]);
+}
+
+#[test]
 fn test_from_bytes_be() {
     fn check(s: &str, result: &str) {
         assert_eq!(BigUint::from_bytes_be(s.as_bytes()),

@@ -1376,13 +1376,13 @@ impl BigInt {
     ///
     /// The digits are in little-endian base 2^32.
     #[inline]
-    pub fn from_biguint(sign: Sign, data: BigUint) -> BigInt {
-        if sign == NoSign || data.is_zero() {
-            return BigInt {
-                sign: NoSign,
-                data: Zero::zero(),
-            };
+    pub fn from_biguint(mut sign: Sign, mut data: BigUint) -> BigInt {
+        if sign == NoSign {
+            data.assign_from_slice(&[]);
+        } else if data.is_zero() {
+            sign = NoSign;
         }
+
         BigInt {
             sign: sign,
             data: data,
@@ -1393,6 +1393,21 @@ impl BigInt {
     #[inline]
     pub fn from_slice(sign: Sign, slice: &[BigDigit]) -> BigInt {
         BigInt::from_biguint(sign, BigUint::from_slice(slice))
+    }
+
+    /// Reinitializes a `BigInt`.
+    #[inline]
+    pub fn assign_from_slice(&mut self, sign: Sign, slice: &[BigDigit]) {
+        if sign == NoSign {
+            self.data.assign_from_slice(&[]);
+            self.sign = NoSign;
+        } else {
+            self.data.assign_from_slice(slice);
+            self.sign = match self.data.is_zero() {
+                true => NoSign,
+                false => sign,
+            }
+        }
     }
 
     /// Creates and initializes a `BigInt`.
