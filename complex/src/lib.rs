@@ -522,7 +522,7 @@ forward_all_binop!(impl Rem, rem, PartialOrd);
 
 // Attempts to identify the gaussian integer whose product with `modulus`
 // is closest to `self`.
-impl<T: Clone + Num + PartialOrd> Rem<Complex<T>> for Complex<T> where {
+impl<T: Clone + Num + PartialOrd> Rem<Complex<T>> for Complex<T> {
     type Output = Complex<T>;
 
     #[inline]
@@ -1054,8 +1054,7 @@ impl<T> FromStr for Complex<T> where
     }
 }
 
-impl<T: Num + Clone + PartialOrd> Num for Complex<T> where
-{
+impl<T: Num + Clone + PartialOrd> Num for Complex<T> {
     type FromStrRadixErr = ParseComplexError<T::FromStrRadixErr>;
 
     /// Parses `a +/- bi`; `ai +/- b`; `a`; or `bi` where `a` and `b` are of type `T`
