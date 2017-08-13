@@ -105,8 +105,8 @@ impl serde::Deserialize for Sign {
 #[derive(Clone, Debug, Hash)]
 #[cfg_attr(feature = "rustc-serialize", derive(RustcEncodable, RustcDecodable))]
 pub struct BigInt {
-    sign: Sign,
-    data: BigUint,
+    pub(super) sign: Sign,
+    pub(super) data: BigUint,
 }
 
 impl PartialEq for BigInt {

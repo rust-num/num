@@ -8,6 +8,7 @@ use traits::{Zero, One};
 
 use biguint::BigUint;
 
+use bigint::BigInt;
 use bigint::Sign;
 use bigint::Sign::{Minus, NoSign, Plus};
 
@@ -256,7 +257,7 @@ fn mac3(acc: &mut [BigDigit], b: &[BigDigit], c: &[BigDigit]) {
         for (i, xi) in x.iter().enumerate() {
             mac_digit(&mut acc[i..], y, *xi);
         }
-    } else {
+    } else if y.len() <= 0 {
         /*
          * Karatsuba multiplication:
          *
@@ -375,6 +376,225 @@ fn mac3(acc: &mut [BigDigit], b: &[BigDigit], c: &[BigDigit]) {
             },
             NoSign  => (),
         }
+
+    } else {
+        let i = y.len()/3 + 1;
+
+        let x0_len = cmp::min(x.len(), i);
+        let x1_len = cmp::min(x.len() - x0_len, i);
+
+        let y0_len = i;
+        let y1_len = cmp::min(y.len() - y0_len, i);
+
+        let x0 = BigInt::from_slice(Plus, &x[..x0_len]);
+        let x1 = BigInt::from_slice(Plus, &x[x0_len..x0_len + x1_len]);
+        let x2 = BigInt::from_slice(Plus, &x[x0_len + x1_len..]);
+
+        let y0 = BigInt::from_slice(Plus, &y[..y0_len]);
+        let y1 = BigInt::from_slice(Plus, &y[y0_len..y0_len + y1_len]);
+        let y2 = BigInt::from_slice(Plus, &y[y0_len + y1_len..]);
+
+        let r0 = &x0 * &y0;
+        let r1 = (&x0 + &x1 + &x2) * (&y0 + &y1 + &y2);
+        let r2 = (&x0 - &x1 + &x2) * (&y0 - &y1 + &y2);
+        let r3 = (&x0 - &x1*2 + &x2*4) * (&y0 - &y1*2 + &y2*4);
+        let r4 = &x2 * &y2;
+
+        let comp0: BigInt = r0.clone();
+        let comp4: BigInt = r4.clone();
+        let mut comp3: BigInt = (&r3 - &r1) / 3;
+        let mut comp1: BigInt = (&r1 - &r2) / 2;
+        let mut comp2: BigInt = &r2 - &r0;
+        comp3 = (&comp2 - &comp3)/2 + &r4*2;
+        comp2 = comp2 + &comp1 - &comp4;
+        comp1 = comp1 - &comp3;
+
+        let result = comp0 + (comp1 << 32*i) + (comp2 << 2*32*i) + (comp3 << 3*32*i) + (comp4 << 4*32*i);
+        assert!(result.sign != Minus);
+        add2(&mut acc[..], &result.data.data);
+
+        // add2(&mut acc[..], &comp0.data.data);
+        // add2(&mut acc[4*i..], &comp4.data.data);
+        //
+        // match (comp1.sign, comp2.sign, comp3.sign) {
+        //     (Minus, Minus, Minus) => {
+        //         for _ in 0..i {
+        //             comp1.data.data.insert(0, 0);
+        //         }
+        //         sub2(&mut acc[..], &comp1.data.data);
+        //
+        //         for _ in 0..2*i {
+        //             comp2.data.data.insert(0, 0);
+        //         }
+        //         sub2(&mut acc[..], &comp2.data.data);
+        //
+        //         for _ in 0..3*i {
+        //             comp3.data.data.insert(0, 0);
+        //         }
+        //         sub2(&mut acc[..], &comp3.data.data);
+        //     },
+        //
+        //     (Minus, Minus, _) => {
+        //         add2(&mut acc[3*i..], &comp3.data.data);
+        //         for _ in 0..i {
+        //             comp1.data.data.insert(0, 0);
+        //         }
+        //         sub2(&mut acc[..], &comp1.data.data);
+        //         for _ in 0..2*i {
+        //             comp2.data.data.insert(0, 0);
+        //         }
+        //         sub2(&mut acc[..], &comp2.data.data);
+        //     },
+        //
+        //     (Minus, _, Minus) => {
+        //         add2(&mut acc[2*i..], &comp2.data.data);
+        //         for _ in 0..i {
+        //             comp1.data.data.insert(0, 0);
+        //         }
+        //         sub2(&mut acc[..], &comp1.data.data);
+        //         for _ in 0..3*i {
+        //             comp3.data.data.insert(0, 0);
+        //         }
+        //         sub2(&mut acc[..], &comp3.data.data);
+        //     },
+        //
+        //     (_, Minus, Minus) => {
+        //         add2(&mut acc[i..], &comp1.data.data);
+        //         for _ in 0..2*i {
+        //             comp2.data.data.insert(0, 0);
+        //         }
+        //         sub2(&mut acc[..], &comp2.data.data);
+        //         for _ in 0..3*i {
+        //             comp3.data.data.insert(0, 0);
+        //         }
+        //         sub2(&mut acc[..], &comp3.data.data);
+        //     },
+        //
+        //     (Minus, _, _) => {
+        //         add2(&mut acc[2*i..], &comp2.data.data);
+        //         add2(&mut acc[3*i..], &comp3.data.data);
+        //         for _ in 0..i {
+        //             comp1.data.data.insert(0, 0);
+        //         }
+        //         sub2(&mut acc[..], &comp1.data.data);
+        //     },
+        //
+        //     (_, Minus, _) => {
+        //         add2(&mut acc[i..], &comp1.data.data);
+        //         add2(&mut acc[3*i..], &comp3.data.data);
+        //         for _ in 0..2*i {
+        //             comp2.data.data.insert(0, 0);
+        //         }
+        //         sub2(&mut acc[..], &comp2.data.data);
+        //     },
+        //
+        //     (_, _, Minus) => {
+        //         add2(&mut acc[i..], &comp1.data.data);
+        //         add2(&mut acc[2*i..], &comp2.data.data);
+        //         for _ in 0..3*i {
+        //             comp3.data.data.insert(0, 0);
+        //         }
+        //         sub2(&mut acc[..], &comp3.data.data);
+        //     },
+        //
+        //     _ => {
+        //         add2(&mut acc[i..], &comp1.data.data);
+        //         add2(&mut acc[2*i..], &comp2.data.data);
+        //         add2(&mut acc[3*i..], &comp3.data.data);
+        //     }
+        // }
+
+        // let mut r0 = BigUint{ data: vec![0; 2*i + 1] };
+        // mac3(&mut r0.data, &x0, &y0);
+        // r0.normalize();
+        //
+        // let mut r1 = BigUint{ data: vec![0; 2*(i+2) + 1] };
+        // p.data.assign_from_slice(&x0);
+        // p.data.data.extend_from_slice(&[0, 0]);
+        // add2(&mut p.data.data, &x1);
+        // add2(&mut p.data.data, &x2);
+        // q.data.assign_from_slice(&y0);
+        // q.data.data.extend_from_slice(&[0, 0]);
+        // add2(&mut q.data.data, &y1);
+        // add2(&mut q.data.data, &y2);
+        // mac3(&mut r1.data, &p.data.data, &q.data.data);
+        // r1.normalize();
+        //
+        // let mut r2 = BigUint{ data: vec![0; 2*(i+1) + 1] };
+        // p.data.assign_from_slice(&x0);
+        // p.data.data.extend_from_slice(&[0, 0]);
+        // add2(&mut p.data, &x2);
+        // p = p - BigInt::from_biguint(Plus, BigUint::from_slice(&x1));
+        // q.data.assign_from_slice(&y0);
+        // q.data.data.extend_from_slice(&[0, 0]);
+        // add2(&mut q.data, &y2);
+        // q = q - BigInt::from_biguint(Plus, BigUint::from_slice(&y1));
+        // mac3(&mut r2.data, &p.data, &q.data);
+        // r2.normalize();
+        // let r2_sign = p_sign * q_sign;
+        //
+        // let mut r3 = BigUint{ data: vec![0; 2*(i+2) + 1] };
+        // p.assign_from_slice(&x0);
+        // p.data.extend_from_slice(&[0, 0]);
+        // let mut temp = BigUint { data: Vec::with_capacity(i + 1) };
+        // temp.assign_from_slice(&x2);
+        // temp = temp * 4_u32;
+        // add2(&mut p.data, &temp.data);
+        // temp.assign_from_slice(&x1);
+        // temp = temp * 2_u32;
+        // if p.data[i] == 0 && p.data[..i].iter().rev().lt(temp.data.iter().rev()) {
+        //     p_sign = Minus;
+        //     let p_temp = p.clone();
+        //     p.assign_from_slice(&temp.data);
+        //     sub2(&mut p.data, &p_temp.data);
+        // } else {
+        //     p_sign = Plus;
+        //     sub2(&mut p.data, &temp.data);
+        // }
+        // q.assign_from_slice(&y0);
+        // q.data.extend_from_slice(&[0, 0]);
+        // temp.assign_from_slice(&y2);
+        // temp = temp * 4_u32;
+        // add2(&mut q.data, &temp.data);
+        // temp.assign_from_slice(&y1);
+        // temp = temp * 2_u32;
+        // if q.data[i] == 0 && q.data[..i].iter().rev().lt(temp.data.iter().rev()) {
+        //     q_sign = Minus;
+        //     let q_temp = q.clone();
+        //     q.assign_from_slice(&temp.data);
+        //     sub2(&mut q.data, &q_temp.data);
+        // } else {
+        //     q_sign = Plus;
+        //     sub2(&mut q.data, &temp.data);
+        // }
+        // mac3(&mut r3.data, &p.data, &q.data);
+        // r3.normalize();
+        // let r3_sign = p_sign * q_sign;
+        //
+        // let mut r4 = BigUint{ data: vec![0; 2*i + 1] };
+        // mac3(&mut r4.data, &x2, &y2);
+        // r4.normalize();
+        //
+        // let signed_r0 = BigInt::from_biguint(Plus, r0);
+        // let signed_r1 = BigInt::from_biguint(Plus, r1);
+        // let signed_r2 = BigInt::from_biguint(r2_sign, r2);
+        // let signed_r3 = BigInt::from_biguint(r3_sign, r3);
+        // let signed_r4 = BigInt::from_biguint(Plus, r4);
+        //
+        // let comp0 = signed_r0.clone();
+        // let comp4 = signed_r4.clone();
+        // let mut comp3: BigInt = (&signed_r3 - &signed_r1) / 3;
+        // let mut comp1: BigInt = (&signed_r1 - &signed_r2) / 2;
+        // let mut comp2 = &signed_r2 - &signed_r0;
+        // comp3 = ((&comp2 - &comp3) / 2) + (&signed_r4 * 2);
+        // comp2 = comp2 + &comp1 - &comp4;
+        // comp1 = comp1 - &comp3;
+        //
+        // add2(&mut acc[..], &comp0.data.data);
+        // add2(&mut acc[i..], &comp1.data.data);
+        // add2(&mut acc[2*i..], &comp2.data.data);
+        // add2(&mut acc[3*i..], &comp3.data.data);
+        // add2(&mut acc[4*i..], &comp4.data.data);
     }
 }
 
