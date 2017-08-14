@@ -408,8 +408,8 @@ fn mac3(acc: &mut [BigDigit], b: &[BigDigit], c: &[BigDigit]) {
         comp1 = comp1 - &comp3;
 
         let result = r0 + (comp1 << 32*i) + (comp2 << 2*32*i) + (comp3 << 3*32*i) + (r4 << 4*32*i);
-        assert!(result.sign != Minus);
-        add2(&mut acc[..], &result.data.data);
+        let result_pos = result.to_biguint().unwrap();
+        add2(&mut acc[..], &result_pos.data);
     }
 }
 
