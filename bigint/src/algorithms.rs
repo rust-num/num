@@ -394,11 +394,17 @@ fn mac3(acc: &mut [BigDigit], b: &[BigDigit], c: &[BigDigit]) {
         let y1 = BigInt::from_slice(Plus, &y[y0_len..y0_len + y1_len]);
         let y2 = BigInt::from_slice(Plus, &y[y0_len + y1_len..]);
 
+        let p = &x0 + &x2;
+        let q = &y0 + &y2;
+
+        let p2 = &p - &x1;
+        let q2 = &q - &y1;
+
         let r0 = &x0 * &y0;
         let r4 = &x2 * &y2;
-        let r1 = (&x0 + &x1 + &x2) * (&y0 + &y1 + &y2);
-        let r2 = (&x0 - &x1 + &x2) * (&y0 - &y1 + &y2);
-        let r3 = (x0 - x1*2 + x2*4) * (y0 - y1*2 + y2*4);
+        let r1 = (&p + &x1) * (&q + &y1);
+        let r2 = &p2 * &q2;
+        let r3 = ((p2 + x2)*2 - x0) * ((q2 + y2)*2 - y0);
 
         let mut comp3: BigInt = (&r3 - &r1) / 3;
         let mut comp1: BigInt = (&r1 - &r2) / 2;
