@@ -226,20 +226,18 @@ fn mac_digit(acc: &mut [BigDigit], b: &[BigDigit], c: BigDigit) {
         return;
     }
 
-    let mut b_iter = b.iter();
     let mut carry = 0;
 
-    for ai in acc.iter_mut() {
-        if let Some(bi) = b_iter.next() {
-            *ai = mac_with_carry(*ai, *bi, c, &mut carry);
-        } else if carry != 0 {
-            *ai = mac_with_carry(*ai, 0, c, &mut carry);
-        } else {
-            break;
-        }
+    for (i, bi) in b.iter().enumerate() {
+        acc[i] = mac_with_carry(acc[i], *bi, c, &mut carry);
     }
 
-    assert!(carry == 0);
+    let mut i = b.len();
+
+    while carry != 0 {
+        acc[i] = adc(acc[i], 0, &mut carry);
+        i += 1;
+    }
 }
 
 /// Three argument multiply accumulate:
