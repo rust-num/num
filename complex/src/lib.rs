@@ -963,6 +963,91 @@ impl<T> fmt::Binary for Complex<T> where
     }
 }
 
+fn from_str_generic<T, E, F>(s: &str, from: F) -> Result<Complex<T>, ParseComplexError<E>>
+    where F: Fn(&str) -> Result<T, E>, T: Clone + Num
+{
+    let imag = match s.rfind('j') {
+        None => 'i',
+        _ => 'j'
+    };
+
+    let mut b = String::with_capacity(s.len());
+    let mut first = true;
+
+    let char_indices = s.char_indices();
+    let mut pc = ' ';
+    let mut split_index = s.len();
+
+    for (i, cc) in char_indices {
+        if cc == '+' && pc != 'e' && pc != 'E' && i > 0 {
+            // ignore '+' if part of an exponent
+            if first {
+                split_index = i;
+                first = false;
+            }
+            // don't carry '+' over into b
+            pc = ' ';
+            continue;
+        } else if cc == '-' && pc != 'e' && pc != 'E' && i > 0 {
+            // ignore '-' if part of an exponent or begins the string
+            if first {
+                split_index = i;
+                first = false;
+            }
+            // DO carry '-' over into b
+        }
+
+        if pc == '-' && cc == ' ' && !first {
+            // ignore whitespace between minus sign and next number
+            continue;
+        }
+
+        if !first {
+            b.push(cc);
+        }
+        pc = cc;
+    }
+
+    // split off real and imaginary parts, trim whitespace
+    let (a, _) = s.split_at(split_index);
+    let a = a.trim_right();
+    let mut b = b.trim_left();
+    // input was either pure real or pure imaginary
+    if b.is_empty() {
+        b = match a.ends_with(imag) {
+            false => "0i",
+            true => "0"
+        };
+    }
+
+    let re;
+    let im;
+    if a.ends_with(imag) {
+        im = a; re = b;
+    } else if b.ends_with(imag) {
+        re = a; im = b;
+    } else {
+        return Err(ParseComplexError::new());
+    }
+
+    // parse re
+    let re = try!(from(re).map_err(ParseComplexError::from_error));
+
+    // pop imaginary unit off
+    let mut im = &im[..im.len()-1];
+    // handle im == "i" or im == "-i"
+    if im.is_empty() || im == "+" {
+        im = "1";
+    } else if im == "-" {
+        im = "-1";
+    }
+
+    // parse im
+    let im = try!(from(im).map_err(ParseComplexError::from_error));
+
+    Ok(Complex::new(re, im))
+}
+
 impl<T> FromStr for Complex<T> where
     T: FromStr + Num + Clone
 {
@@ -971,86 +1056,7 @@ impl<T> FromStr for Complex<T> where
     /// Parses `a +/- bi`; `ai +/- b`; `a`; or `bi` where `a` and `b` are of type `T`
     fn from_str(s: &str) -> Result<Self, Self::Err>
     {
-        let imag = match s.rfind('j') {
-            None => 'i',
-            _ => 'j'
-        };
-
-        let mut b = String::with_capacity(s.len());
-        let mut first = true;
-
-        let char_indices = s.char_indices();
-        let mut pc = ' ';
-        let mut split_index = s.len();
-
-        for (i, cc) in char_indices {
-            if cc == '+' && pc != 'e' && pc != 'E' && i > 0 {
-                // ignore '+' if part of an exponent
-                if first {
-                    split_index = i;
-                    first = false;
-                }
-                // don't carry '+' over into b
-                pc = ' ';
-                continue;
-            } else if cc == '-' && pc != 'e' && pc != 'E' && i > 0 {
-                // ignore '-' if part of an exponent or begins the string
-                if first {
-                    split_index = i;
-                    first = false;
-                }
-                // DO carry '-' over into b
-            }
-
-            if pc == '-' && cc == ' ' && !first {
-                // ignore whitespace between minus sign and next number
-                continue;
-            }
-
-            if !first {
-                b.push(cc);
-            }
-            pc = cc;
-        }
-
-        // split off real and imaginary parts, trim whitespace
-        let (a, _) = s.split_at(split_index);
-        let a = a.trim_right();
-        let mut b = b.trim_left();
-        // input was either pure real or pure imaginary
-        if b.is_empty() {
-            b = match a.ends_with(imag) {
-                false => "0i",
-                true => "0"
-            };
-        }
-
-        let re;
-        let im;
-        if a.ends_with(imag) {
-            im = a; re = b;
-        } else if b.ends_with(imag) {
-            re = a; im = b;
-        } else {
-            return Err(ParseComplexError::new());
-        }
-
-        // parse re
-        let re = try!(T::from_str(re).map_err(ParseComplexError::from_error));
-
-        // pop imaginary unit off
-        let mut im = &im[..im.len()-1];
-        // handle im == "i" or im == "-i"
-        if im.is_empty() || im == "+" {
-            im = "1";
-        } else if im == "-" {
-            im = "-1";
-        }
-
-        // parse im
-        let im = try!(T::from_str(im).map_err(ParseComplexError::from_error));
-
-        Ok(Complex::new(re, im))
+        from_str_generic(s, T::from_str)
     }
 }
 
@@ -1060,86 +1066,8 @@ impl<T: Num + Clone + PartialOrd> Num for Complex<T> {
     /// Parses `a +/- bi`; `ai +/- b`; `a`; or `bi` where `a` and `b` are of type `T`
     fn from_str_radix(s: &str, radix: u32) -> Result<Self, Self::FromStrRadixErr>
     {
-        let imag = match s.rfind('j') {
-            None => 'i',
-            _ => 'j'
-        };
-
-        let mut b = String::with_capacity(s.len());
-        let mut first = true;
-
-        let char_indices = s.char_indices();
-        let mut pc = ' ';
-        let mut split_index = s.len();
-
-        for (i, cc) in char_indices {
-            if cc == '+' && pc != 'e' && pc != 'E' && i > 0 {
-                // ignore '+' if part of an exponent
-                if first {
-                    split_index = i;
-                    first = false;
-                }
-                // don't carry '+' over into b
-                pc = ' ';
-                continue;
-            } else if cc == '-' && pc != 'e' && pc != 'E' && i > 0 {
-                // ignore '-' if part of an exponent or begins the string
-                if first {
-                    split_index = i;
-                    first = false;
-                }
-                // DO carry '-' over into b
-            }
-
-            if pc == '-' && cc == ' ' && !first {
-                // ignore whitespace between minus sign and next number
-                continue;
-            }
-
-            if !first {
-                b.push(cc);
-            }
-            pc = cc;
-        }
-
-        // split off real and imaginary parts, trim whitespace
-        let (a, _) = s.split_at(split_index);
-        let a = a.trim_right();
-        let mut b = b.trim_left();
-        // input was either pure real or pure imaginary
-        if b.is_empty() {
-            b = match a.ends_with(imag) {
-                false => "0i",
-                true => "0"
-            };
-        }
-
-        let re;
-        let im;
-        if a.ends_with(imag) {
-            im = a; re = b;
-        } else if b.ends_with(imag) {
-            re = a; im = b;
-        } else {
-            return Err(ParseComplexError::new());
-        }
-
-        // parse re
-        let re = try!(T::from_str_radix(re, radix).map_err(ParseComplexError::from_error));
-
-        // pop imaginary unit off
-        let mut im = &im[..im.len()-1];
-        // handle im == "i" or im == "-i"
-        if im.is_empty() || im == "+" {
-            im = "1";
-        } else if im == "-" {
-            im = "-1";
-        }
-
-        // parse im
-        let im = try!(T::from_str_radix(im, radix).map_err(ParseComplexError::from_error));
-
-        Ok(Complex::new(re, im))
+        from_str_generic(s, |x| -> Result<T, T::FromStrRadixErr> {
+                                T::from_str_radix(x, radix) })
     }
 }
 
@@ -1228,7 +1156,7 @@ mod test {
     use std::f64;
     use std::str::FromStr;
 
-    use traits::{Zero, One, Float};
+    use traits::{Zero, One, Float, Num};
 
     pub const _0_0i : Complex64 = Complex { re: 0.0, im: 0.0 };
     pub const _1_0i : Complex64 = Complex { re: 1.0, im: 0.0 };
@@ -1958,6 +1886,20 @@ mod test {
         test(_05_05i, "5E-1 + 0.5j");
         test(_05_05i, "5E-1i + 0.5");
         test(_05_05i, "0.05e+1j + 50E-2");
+    }
+
+    #[test]
+    fn test_from_str_radix() {
+        fn test(z: Complex64, s: &str, radix: u32) {
+            let res: Result<Complex64, <Complex64 as Num>::FromStrRadixErr>
+                = Num::from_str_radix(s, radix);
+            assert_eq!(res.unwrap(), z)
+        }
+        test(_4_2i, "4+2i", 10);
+        test(Complex::new(15.0, 32.0), "F+20i", 16);
+        test(Complex::new(15.0, 32.0), "1111+100000i", 2);
+        test(Complex::new(-15.0, -32.0), "-F-20i", 16);
+        test(Complex::new(-15.0, -32.0), "-1111-100000i", 2);
     }
 
     #[test]
