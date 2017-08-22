@@ -531,30 +531,7 @@ impl<T: Clone + Num + PartialOrd> Rem<Complex<T>> for Complex<T> {
         // This is the gaussian integer corresponding to the true ratio
         // rounded towards zero.
         let (re0, im0) = (re.clone() - re % T::one(), im.clone() - im % T::one());
-
-        let zero = T::zero();
-        let one  = T::one();
-        let neg  = zero.clone() - one.clone();
-        // Traverse the 3x3 square of gaussian integers surrounding our
-        // current approximation, and select the one whose product with
-        // `modulus` is closest to `self`.
-        let mut bestrem = self.clone() - modulus.clone() *
-                          Complex::new(re0.clone(), im0.clone());
-        let mut bestnorm = bestrem.norm_sqr();
-        for &(dr, di) in
-            vec![(&one, &zero), (&one, &one), (&zero, &one), (&neg, &one),
-                 (&neg, &zero), (&neg, &neg), (&zero, &neg), (&one, &neg)]
-                            .iter() {
-            let newrem = self.clone() - modulus.clone() *
-                         Complex::new(re0.clone() + dr.clone(),
-                                      im0.clone() + di.clone());
-            let newnorm = newrem.norm_sqr();
-            if newnorm < bestnorm {
-                bestrem = newrem;
-                bestnorm = newnorm;
-            }
-        }
-        bestrem
+        self - modulus * Complex::new(re0, im0)
     }
 }
 
@@ -1702,7 +1679,7 @@ mod test {
 
     mod real_arithmetic {
         use super::super::Complex;
-        use super::_4_2i;
+        use super::{_4_2i, _neg1_1i};
 
         #[test]
         fn test_add() {
@@ -1731,8 +1708,10 @@ mod test {
         #[test]
         fn test_rem() {
             assert_eq!(_4_2i % 2.0, Complex::new(0.0, 0.0));
-            assert_eq!(_4_2i % 3.0, Complex::new(1.0, -1.0));
-            assert_eq!(3.0 % _4_2i, Complex::new(-1.0, -2.0));
+            assert_eq!(_4_2i % 3.0, Complex::new(1.0, 2.0));
+            assert_eq!(3.0 % _4_2i, Complex::new(3.0, 0.0));
+			assert_eq!(_neg1_1i % 2.0, _neg1_1i);
+			assert_eq!(-_4_2i % 3.0, Complex::new(-1.0, -2.0));
         }
     }
 
