@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 use std::default::Default;
 use std::iter::repeat;
-use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Rem, Shl, Shr, Sub};
+use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Rem, Shl, Shr, Sub, AddAssign};
 use std::str::{self, FromStr};
 use std::fmt;
 use std::cmp;
@@ -382,6 +382,14 @@ impl<'a> Add<&'a BigUint> for BigUint {
     type Output = BigUint;
 
     fn add(mut self, other: &BigUint) -> BigUint {
+        self += other;
+        self
+    }
+}
+
+impl<'a> AddAssign<&'a BigUint> for BigUint {
+    #[inline]
+    fn add_assign(&mut self, other: &BigUint) {
         if self.data.len() < other.data.len() {
             let extra = other.data.len() - self.data.len();
             self.data.extend(repeat(0).take(extra));
@@ -391,8 +399,6 @@ impl<'a> Add<&'a BigUint> for BigUint {
         if carry != 0 {
             self.data.push(carry);
         }
-
-        self
     }
 }
 
@@ -405,6 +411,13 @@ impl Add<BigDigit> for BigUint {
 
     #[inline]
     fn add(mut self, other: BigDigit) -> BigUint {
+        self += other;
+        self
+    }
+}
+impl AddAssign<BigDigit> for BigUint {
+    #[inline]
+    fn add_assign(&mut self, other: BigDigit) {
         if other != 0 {
             if self.data.len() == 0 {
                 self.data.push(0);
@@ -415,7 +428,6 @@ impl Add<BigDigit> for BigUint {
                 self.data.push(carry);
             }
         }
-        self
     }
 }
 
@@ -424,9 +436,16 @@ impl Add<DoubleBigDigit> for BigUint {
 
     #[inline]
     fn add(mut self, other: DoubleBigDigit) -> BigUint {
+        self += other;
+        self
+    }
+}
+impl AddAssign<DoubleBigDigit> for BigUint {
+    #[inline]
+    fn add_assign(&mut self, other: DoubleBigDigit) {
         let (hi, lo) = big_digit::from_doublebigdigit(other);
         if hi == 0 {
-            self + lo
+            *self += lo;
         } else {
             while self.data.len() < 2 {
                 self.data.push(0);
@@ -436,7 +455,6 @@ impl Add<DoubleBigDigit> for BigUint {
             if carry != 0 {
                 self.data.push(carry);
             }
-            self
         }
     }
 }
