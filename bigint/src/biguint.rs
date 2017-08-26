@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 use std::default::Default;
 use std::iter::repeat;
-use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Rem, Shl, Shr, Sub, AddAssign, MulAssign};
+use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Rem, Shl, Shr, Sub, AddAssign, SubAssign, MulAssign};
 use std::str::{self, FromStr};
 use std::fmt;
 use std::cmp;
@@ -466,8 +466,14 @@ impl<'a> Sub<&'a BigUint> for BigUint {
     type Output = BigUint;
 
     fn sub(mut self, other: &BigUint) -> BigUint {
+        self -= other;
+        self
+    }
+}
+impl<'a> SubAssign<&'a BigUint> for BigUint {
+    fn sub_assign(&mut self, other: &'a BigUint) {
         sub2(&mut self.data[..], &other.data[..]);
-        self.normalized()
+        self.normalize();
     }
 }
 
@@ -494,8 +500,14 @@ impl Sub<BigDigit> for BigUint {
 
     #[inline]
     fn sub(mut self, other: BigDigit) -> BigUint {
+        self -= other;
+        self
+    }
+}
+impl SubAssign<BigDigit> for BigUint {
+    fn sub_assign(&mut self, other: BigDigit) {
         sub2(&mut self.data[..], &[other]);
-        self.normalized()
+        self.normalize();
     }
 }
 
@@ -518,9 +530,15 @@ impl Sub<DoubleBigDigit> for BigUint {
 
     #[inline]
     fn sub(mut self, other: DoubleBigDigit) -> BigUint {
+        self -= other;
+        self
+    }
+}
+impl SubAssign<DoubleBigDigit> for BigUint {
+    fn sub_assign(&mut self, other: DoubleBigDigit) {
         let (hi, lo) = big_digit::from_doublebigdigit(other);
         sub2(&mut self.data[..], &[lo, hi]);
-        self.normalized()
+        self.normalize();
     }
 }
 
