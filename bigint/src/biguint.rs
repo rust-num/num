@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 use std::default::Default;
 use std::iter::repeat;
-use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Rem, Shl, Shr, Sub, AddAssign, SubAssign, MulAssign};
+use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Rem, Shl, Shr, Sub, AddAssign, SubAssign, MulAssign, DivAssign};
 use std::str::{self, FromStr};
 use std::fmt;
 use std::cmp;
@@ -635,6 +635,12 @@ impl<'a, 'b> Div<&'b BigUint> for &'a BigUint {
         q
     }
 }
+impl<'a> DivAssign<&'a BigUint> for BigUint {
+    #[inline]
+    fn div_assign(&mut self, other: &'a BigUint) {
+        *self = &*self / other;
+    }
+}
 
 promote_unsigned_scalars!(impl Div for BigUint, div);
 forward_all_scalar_binop_to_val_val!(impl Div<BigDigit> for BigUint, div);
@@ -647,6 +653,12 @@ impl Div<BigDigit> for BigUint {
     fn div(self, other: BigDigit) -> BigUint {
         let (q, _) = div_rem_digit(self, other);
         q
+    }
+}
+impl DivAssign<BigDigit> for BigUint {
+    #[inline]
+    fn div_assign(&mut self, other: BigDigit) {
+        *self = &*self / other;
     }
 }
 
@@ -670,6 +682,12 @@ impl Div<DoubleBigDigit> for BigUint {
     fn div(self, other: DoubleBigDigit) -> BigUint {
         let (q, _) = self.div_rem(&From::from(other));
         q
+    }
+}
+impl DivAssign<DoubleBigDigit> for BigUint {
+    #[inline]
+    fn div_assign(&mut self, other: DoubleBigDigit) {
+        *self = &*self / other;
     }
 }
 
