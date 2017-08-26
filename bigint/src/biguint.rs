@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 use std::default::Default;
 use std::iter::repeat;
-use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Rem, Shl, Shr, Sub, AddAssign};
+use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Rem, Shl, Shr, Sub, AddAssign, MulAssign};
 use std::str::{self, FromStr};
 use std::fmt;
 use std::cmp;
@@ -549,6 +549,12 @@ impl<'a, 'b> Mul<&'b BigUint> for &'a BigUint {
         mul3(&self.data[..], &other.data[..])
     }
 }
+impl<'a> MulAssign<&'a BigUint> for BigUint {
+    #[inline]
+    fn mul_assign(&mut self, other: &'a BigUint) {
+        *self = &*self * other
+    }
+}
 
 promote_unsigned_scalars!(impl Mul for BigUint, mul);
 forward_all_scalar_binop_to_val_val_commutative!(impl Mul<BigDigit> for BigUint, mul);
@@ -559,6 +565,13 @@ impl Mul<BigDigit> for BigUint {
 
     #[inline]
     fn mul(mut self, other: BigDigit) -> BigUint {
+        self *= other;
+        self
+    }
+}
+impl MulAssign<BigDigit> for BigUint {
+    #[inline]
+    fn mul_assign(&mut self, other: BigDigit) {
         if other == 0 {
             self.data.clear();
         } else {
@@ -567,7 +580,6 @@ impl Mul<BigDigit> for BigUint {
                 self.data.push(carry);
             }
         }
-        self
     }
 }
 
@@ -576,14 +588,20 @@ impl Mul<DoubleBigDigit> for BigUint {
 
     #[inline]
     fn mul(mut self, other: DoubleBigDigit) -> BigUint {
+        self *= other;
+        self
+    }
+}
+impl MulAssign<DoubleBigDigit> for BigUint {
+    #[inline]
+    fn mul_assign(&mut self, other: DoubleBigDigit) {
         if other == 0 {
             self.data.clear();
-            self
         } else if other <= BigDigit::max_value() as DoubleBigDigit {
-            self * other as BigDigit
+            *self *= other as BigDigit
         } else {
             let (hi, lo) = big_digit::from_doublebigdigit(other);
-            mul3(&self.data[..], &[lo, hi])
+            *self = mul3(&self.data[..], &[lo, hi])
         }
     }
 }
