@@ -101,6 +101,17 @@ impl serde::Deserialize for Sign {
     }
 }
 
+impl fmt::Display for Sign {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		use Sign::*;
+		match *self {
+			Plus => f.pad("+"),
+			NoSign => f.pad(""),
+			Minus => f.pad("-")
+		}
+	}
+}
+
 /// A big signed integer type.
 #[derive(Clone, Debug, Hash)]
 #[cfg_attr(feature = "rustc-serialize", derive(RustcEncodable, RustcDecodable))]

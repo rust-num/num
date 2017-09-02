@@ -1192,3 +1192,10 @@ fn test_negative_rand_range() {
     // Switching u and l should fail:
     let _n: BigInt = rng.gen_bigint_range(&u, &l);
 }
+
+#[test]
+fn fmt_sign() {
+	assert_eq!(format!("{}", Sign::Plus), "+");
+	assert_eq!(format!("{}", Sign::NoSign), "");
+	assert_eq!(format!("{}", Sign::Minus), "-");
+}
