@@ -377,6 +377,7 @@ impl One for BigUint {
 impl Unsigned for BigUint {}
 
 forward_all_binop_to_val_ref_commutative!(impl Add for BigUint, add);
+forward_val_assign!(impl AddAssign for BigUint, add_assign);
 
 impl<'a> Add<&'a BigUint> for BigUint {
     type Output = BigUint;
@@ -386,7 +387,6 @@ impl<'a> Add<&'a BigUint> for BigUint {
         self
     }
 }
-
 impl<'a> AddAssign<&'a BigUint> for BigUint {
     #[inline]
     fn add_assign(&mut self, other: &BigUint) {
@@ -403,6 +403,7 @@ impl<'a> AddAssign<&'a BigUint> for BigUint {
 }
 
 promote_unsigned_scalars!(impl Add for BigUint, add);
+promote_unsigned_scalars_assign!(impl AddAssign for BigUint, add_assign);
 forward_all_scalar_binop_to_val_val_commutative!(impl Add<BigDigit> for BigUint, add);
 forward_all_scalar_binop_to_val_val_commutative!(impl Add<DoubleBigDigit> for BigUint, add);
 
@@ -461,6 +462,7 @@ impl AddAssign<DoubleBigDigit> for BigUint {
 
 forward_val_val_binop!(impl Sub for BigUint, sub);
 forward_ref_ref_binop!(impl Sub for BigUint, sub);
+forward_val_assign!(impl SubAssign for BigUint, sub_assign);
 
 impl<'a> Sub<&'a BigUint> for BigUint {
     type Output = BigUint;
@@ -492,6 +494,7 @@ impl<'a> Sub<BigUint> for &'a BigUint {
 }
 
 promote_unsigned_scalars!(impl Sub for BigUint, sub);
+promote_unsigned_scalars_assign!(impl SubAssign for BigUint, sub_assign);
 forward_all_scalar_binop_to_val_val!(impl Sub<BigDigit> for BigUint, sub);
 forward_all_scalar_binop_to_val_val!(impl Sub<DoubleBigDigit> for BigUint, sub);
 
@@ -558,6 +561,7 @@ impl Sub<BigUint> for DoubleBigDigit {
 }
 
 forward_all_binop_to_ref_ref!(impl Mul for BigUint, mul);
+forward_val_assign!(impl MulAssign for BigUint, mul_assign);
 
 impl<'a, 'b> Mul<&'b BigUint> for &'a BigUint {
     type Output = BigUint;
@@ -575,6 +579,7 @@ impl<'a> MulAssign<&'a BigUint> for BigUint {
 }
 
 promote_unsigned_scalars!(impl Mul for BigUint, mul);
+promote_unsigned_scalars_assign!(impl MulAssign for BigUint, mul_assign);
 forward_all_scalar_binop_to_val_val_commutative!(impl Mul<BigDigit> for BigUint, mul);
 forward_all_scalar_binop_to_val_val_commutative!(impl Mul<DoubleBigDigit> for BigUint, mul);
 
@@ -625,6 +630,7 @@ impl MulAssign<DoubleBigDigit> for BigUint {
 }
 
 forward_all_binop_to_ref_ref!(impl Div for BigUint, div);
+forward_val_assign!(impl DivAssign for BigUint, div_assign);
 
 impl<'a, 'b> Div<&'b BigUint> for &'a BigUint {
     type Output = BigUint;
@@ -643,6 +649,7 @@ impl<'a> DivAssign<&'a BigUint> for BigUint {
 }
 
 promote_unsigned_scalars!(impl Div for BigUint, div);
+promote_unsigned_scalars_assign!(impl DivAssign for BigUint, div_assign);
 forward_all_scalar_binop_to_val_val!(impl Div<BigDigit> for BigUint, div);
 forward_all_scalar_binop_to_val_val!(impl Div<DoubleBigDigit> for BigUint, div);
 

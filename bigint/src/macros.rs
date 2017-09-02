@@ -105,6 +105,17 @@ macro_rules! forward_ref_ref_binop_commutative {
     }
 }
 
+macro_rules! forward_val_assign {
+    (impl $imp:ident for $res:ty, $method:ident) => {
+        impl<'a> $imp<$res> for $res {
+            #[inline]
+            fn $method(&mut self, other: $res) {
+                self.$method(&other);
+            }
+        }
+    }
+}
+
 macro_rules! forward_scalar_val_val_binop_commutative {
     (impl $imp:ident<$scalar:ty> for $res:ty, $method: ident) => {
         impl $imp<$res> for $scalar {
@@ -209,11 +220,30 @@ macro_rules! promote_scalars {
         )*
     }
 }
+macro_rules! promote_scalars_assign {
+    (impl $imp:ident<$promo:ty> for $res:ty, $method:ident, $( $scalar:ty ),*) => {
+        $(
+            impl $imp<$scalar> for $res {
+                #[inline]
+                fn $method(&mut self, other: $scalar) {
+                    self.$method(other as $promo);
+                }
+            }
+        )*
+    }
+}
 
 macro_rules! promote_unsigned_scalars {
     (impl $imp:ident for $res:ty, $method:ident) => {
         promote_scalars!(impl $imp<u32> for $res, $method, u8, u16);
         promote_scalars!(impl $imp<UsizePromotion> for $res, $method, usize);
+    }
+}
+
+macro_rules! promote_unsigned_scalars_assign {
+    (impl $imp:ident for $res:ty, $method:ident) => {
+        promote_scalars_assign!(impl $imp<u32> for $res, $method, u8, u16);
+        promote_scalars_assign!(impl $imp<UsizePromotion> for $res, $method, usize);
     }
 }
 
