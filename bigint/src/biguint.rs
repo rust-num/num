@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 use std::default::Default;
 use std::iter::repeat;
-use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Rem, Shl, Shr, Sub, AddAssign, SubAssign, MulAssign, DivAssign, RemAssign};
+use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Rem, Shl, Shr, Sub, AddAssign, SubAssign, MulAssign, DivAssign, RemAssign, BitAndAssign, BitOrAssign};
 use std::str::{self, FromStr};
 use std::fmt;
 use std::cmp;
@@ -268,36 +268,48 @@ impl Num for BigUint {
 }
 
 forward_all_binop_to_val_ref_commutative!(impl BitAnd for BigUint, bitand);
+forward_val_assign!(impl BitAndAssign for BigUint, bitand_assign);
 
 impl<'a> BitAnd<&'a BigUint> for BigUint {
     type Output = BigUint;
 
     #[inline]
-    fn bitand(self, other: &BigUint) -> BigUint {
-        let mut data = self.data;
-        for (ai, &bi) in data.iter_mut().zip(other.data.iter()) {
+    fn bitand(mut self, other: &BigUint) -> BigUint {
+        self &= other;
+        self
+    }
+}
+impl<'a> BitAndAssign<&'a BigUint> for BigUint {
+    #[inline]
+    fn bitand_assign(&mut self, other: &BigUint) {
+        for (ai, &bi) in self.data.iter_mut().zip(other.data.iter()) {
             *ai &= bi;
         }
-        data.truncate(other.data.len());
-        BigUint::new(data)
+        self.data.truncate(other.data.len());
     }
 }
 
 forward_all_binop_to_val_ref_commutative!(impl BitOr for BigUint, bitor);
+forward_val_assign!(impl BitOrAssign for BigUint, bitor_assign);
 
 impl<'a> BitOr<&'a BigUint> for BigUint {
     type Output = BigUint;
 
-    fn bitor(self, other: &BigUint) -> BigUint {
-        let mut data = self.data;
-        for (ai, &bi) in data.iter_mut().zip(other.data.iter()) {
+    fn bitor(mut self, other: &BigUint) -> BigUint {
+        self |= other;
+        self
+    }
+}
+impl<'a> BitOrAssign<&'a BigUint> for BigUint {
+    #[inline]
+    fn bitor_assign(&mut self, other: &BigUint) {
+        for (ai, &bi) in self.data.iter_mut().zip(other.data.iter()) {
             *ai |= bi;
         }
-        if other.data.len() > data.len() {
-            let extra = &other.data[data.len()..];
-            data.extend(extra.iter().cloned());
+        if other.data.len() > self.data.len() {
+            let extra = &other.data[self.data.len()..];
+            self.data.extend(extra.iter().cloned());
         }
-        BigUint::new(data)
     }
 }
 
