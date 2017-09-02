@@ -115,6 +115,16 @@ macro_rules! forward_val_assign {
         }
     }
 }
+macro_rules! forward_val_assign_scalar {
+    (impl $imp:ident for $res:ty, $scalar:ty, $method:ident) => {
+        impl<'a> $imp<$res> for $scalar {
+            #[inline]
+            fn $method(&mut self, other: $res) {
+                self.$method(&other);
+            }
+        }
+    }
+}
 
 macro_rules! forward_scalar_val_val_binop_commutative {
     (impl $imp:ident<$scalar:ty> for $res:ty, $method: ident) => {

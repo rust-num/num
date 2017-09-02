@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 use std::default::Default;
 use std::iter::repeat;
-use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Rem, Shl, Shr, Sub, AddAssign, SubAssign, MulAssign, DivAssign};
+use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Rem, Shl, Shr, Sub, AddAssign, SubAssign, MulAssign, DivAssign, RemAssign};
 use std::str::{self, FromStr};
 use std::fmt;
 use std::cmp;
@@ -713,6 +713,7 @@ impl Div<BigUint> for DoubleBigDigit {
 }
 
 forward_all_binop_to_ref_ref!(impl Rem for BigUint, rem);
+forward_val_assign!(impl RemAssign for BigUint, rem_assign);
 
 impl<'a, 'b> Rem<&'b BigUint> for &'a BigUint {
     type Output = BigUint;
@@ -723,8 +724,15 @@ impl<'a, 'b> Rem<&'b BigUint> for &'a BigUint {
         r
     }
 }
+impl<'a> RemAssign<&'a BigUint> for BigUint {
+    #[inline]
+    fn rem_assign(&mut self, other: &BigUint) {
+        *self = &*self % other;
+    }
+}
 
 promote_unsigned_scalars!(impl Rem for BigUint, rem);
+promote_unsigned_scalars_assign!(impl RemAssign for BigUint, rem_assign);
 forward_all_scalar_binop_to_val_val!(impl Rem<BigDigit> for BigUint, rem);
 forward_all_scalar_binop_to_val_val!(impl Rem<DoubleBigDigit> for BigUint, rem);
 
@@ -737,19 +745,49 @@ impl Rem<BigDigit> for BigUint {
         From::from(r)
     }
 }
+impl RemAssign<BigDigit> for BigUint {
+    #[inline]
+    fn rem_assign(&mut self, other: BigDigit) {
+        *self = &*self % other;
+    }
+}
 
 impl Rem<BigUint> for BigDigit {
     type Output = BigUint;
 
     #[inline]
-    fn rem(self, other: BigUint) -> BigUint {
-        match other.data.len() {
-            0 => panic!(),
-            1 => From::from(self % other.data[0]),
-            _ => From::from(self)
+    fn rem(mut self, other: BigUint) -> BigUint {
+        self %= other;
+        From::from(self)
+    }
+}
+
+macro_rules! impl_rem_assign_scalar {
+    ($scalar:ty, $to_scalar:tt) => {
+        forward_val_assign_scalar!(impl RemAssign for BigUint, $scalar, rem_assign);
+        impl<'a> RemAssign<&'a BigUint> for $scalar {
+            #[inline]
+            fn rem_assign(&mut self, other: &BigUint) {
+                *self = match other.$to_scalar() {
+                    None => *self,
+                    Some(0) => panic!(),
+                    Some(v) => *self % v
+                };
+            }
         }
     }
 }
+// we can scalar %= BigUint for any scalar, including signed types
+impl_rem_assign_scalar!(usize, to_usize);
+impl_rem_assign_scalar!(u64, to_u64);
+impl_rem_assign_scalar!(u32, to_u32);
+impl_rem_assign_scalar!(u16, to_u16);
+impl_rem_assign_scalar!(u8, to_u8);
+impl_rem_assign_scalar!(isize, to_isize);
+impl_rem_assign_scalar!(i64, to_i64);
+impl_rem_assign_scalar!(i32, to_i32);
+impl_rem_assign_scalar!(i16, to_i16);
+impl_rem_assign_scalar!(i8, to_i8);
 
 impl Rem<DoubleBigDigit> for BigUint {
     type Output = BigUint;
@@ -760,18 +798,20 @@ impl Rem<DoubleBigDigit> for BigUint {
         r
     }
 }
+impl RemAssign<DoubleBigDigit> for BigUint {
+    #[inline]
+    fn rem_assign(&mut self, other: DoubleBigDigit) {
+        *self = &*self % other;
+    }
+}
 
 impl Rem<BigUint> for DoubleBigDigit {
     type Output = BigUint;
 
     #[inline]
-    fn rem(self, other: BigUint) -> BigUint {
-        match other.data.len() {
-            0 => panic!(),
-            1 => From::from(self % other.data[0] as u64),
-            2 => From::from(self % big_digit::to_doublebigdigit(other.data[0], other.data[1])),
-            _ => From::from(self),
-        }
+    fn rem(mut self, other: BigUint) -> BigUint {
+        self %= other;
+        From::from(self)
     }
 }
 
