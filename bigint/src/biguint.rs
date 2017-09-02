@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 use std::default::Default;
 use std::iter::repeat;
-use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Rem, Shl, Shr, Sub, AddAssign, SubAssign, MulAssign, DivAssign, RemAssign, BitAndAssign, BitOrAssign};
+use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Rem, Shl, Shr, Sub, AddAssign, SubAssign, MulAssign, DivAssign, RemAssign, BitAndAssign, BitOrAssign, BitXorAssign};
 use std::str::{self, FromStr};
 use std::fmt;
 use std::cmp;
@@ -314,20 +314,27 @@ impl<'a> BitOrAssign<&'a BigUint> for BigUint {
 }
 
 forward_all_binop_to_val_ref_commutative!(impl BitXor for BigUint, bitxor);
+forward_val_assign!(impl BitXorAssign for BigUint, bitxor_assign);
 
 impl<'a> BitXor<&'a BigUint> for BigUint {
     type Output = BigUint;
 
-    fn bitxor(self, other: &BigUint) -> BigUint {
-        let mut data = self.data;
-        for (ai, &bi) in data.iter_mut().zip(other.data.iter()) {
+    fn bitxor(mut self, other: &BigUint) -> BigUint {
+        self ^= other;
+        self
+    }
+}
+impl<'a> BitXorAssign<&'a BigUint> for BigUint {
+    #[inline]
+    fn bitxor_assign(&mut self, other: &BigUint) {
+        for (ai, &bi) in self.data.iter_mut().zip(other.data.iter()) {
             *ai ^= bi;
         }
-        if other.data.len() > data.len() {
-            let extra = &other.data[data.len()..];
-            data.extend(extra.iter().cloned());
+        if other.data.len() > self.data.len() {
+            let extra = &other.data[self.data.len()..];
+            self.data.extend(extra.iter().cloned());
         }
-        BigUint::new(data)
+        self.normalize();
     }
 }
 
