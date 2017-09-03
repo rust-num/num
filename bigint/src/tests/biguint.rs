@@ -24,6 +24,19 @@ macro_rules! assert_op {
         assert_eq!($left.clone() $op $right.clone(), $expected);
     };
 }
+/// Assert that an assign-op works for all val/ref combinations
+macro_rules! assert_assign_op {
+    ($left:ident $op:tt $right:ident == $expected:expr) => {
+        {
+            let mut tmp12384 = $left.clone();
+            tmp12384 $op &$right;
+            assert_eq!(tmp12384, $expected);
+            tmp12384 = $left.clone();
+            tmp12384 $op $right.clone();
+            assert_eq!(tmp12384, $expected);
+        }
+    };
+}
 
 /// Assert that an op works for scalar left or right
 macro_rules! assert_scalar_op {
@@ -207,6 +220,8 @@ fn test_bitand() {
 
         assert_op!(a & b == c);
         assert_op!(b & a == c);
+        assert_assign_op!(a &= b == c);
+        assert_assign_op!(b &= a == c);
     }
 }
 
@@ -220,6 +235,8 @@ fn test_bitor() {
 
         assert_op!(a | b == c);
         assert_op!(b | a == c);
+        assert_assign_op!(a |= b == c);
+        assert_assign_op!(b |= a == c);
     }
 }
 
@@ -237,6 +254,12 @@ fn test_bitxor() {
         assert_op!(c ^ a == b);
         assert_op!(b ^ c == a);
         assert_op!(c ^ b == a);
+        assert_assign_op!(a ^= b == c);
+        assert_assign_op!(b ^= a == c);
+        assert_assign_op!(a ^= c == b);
+        assert_assign_op!(c ^= a == b);
+        assert_assign_op!(b ^= c == a);
+        assert_assign_op!(c ^= b == a);
     }
 }
 
@@ -244,8 +267,11 @@ fn test_bitxor() {
 fn test_shl() {
     fn check(s: &str, shift: usize, ans: &str) {
         let opt_biguint = BigUint::from_str_radix(s, 16).ok();
-        let bu = (opt_biguint.unwrap() << shift).to_str_radix(16);
+        let mut bu_assign = opt_biguint.unwrap();
+        let bu = (bu_assign.clone() << shift).to_str_radix(16);
         assert_eq!(bu, ans);
+        bu_assign <<= shift;
+        assert_eq!(bu_assign.to_str_radix(16), ans);
     }
 
     check("0", 3, "0");
@@ -366,8 +392,11 @@ fn test_shl() {
 fn test_shr() {
     fn check(s: &str, shift: usize, ans: &str) {
         let opt_biguint = BigUint::from_str_radix(s, 16).ok();
-        let bu = (opt_biguint.unwrap() >> shift).to_str_radix(16);
+        let mut bu_assign = opt_biguint.unwrap();
+        let bu = (bu_assign.clone() >> shift).to_str_radix(16);
         assert_eq!(bu, ans);
+        bu_assign >>= shift;
+        assert_eq!(bu_assign.to_str_radix(16), ans);
     }
 
     check("0", 3, "0");
@@ -720,6 +749,8 @@ fn test_add() {
 
         assert_op!(a + b == c);
         assert_op!(b + a == c);
+        assert_assign_op!(a += b == c);
+        assert_assign_op!(b += a == c);
     }
 }
 
@@ -746,6 +777,8 @@ fn test_sub() {
 
         assert_op!(c - a == b);
         assert_op!(c - b == a);
+        assert_assign_op!(c -= a == b);
+        assert_assign_op!(c -= b == a);
     }
 }
 
@@ -816,6 +849,8 @@ fn test_mul() {
 
         assert_op!(a * b == c);
         assert_op!(b * a == c);
+        assert_assign_op!(a *= b == c);
+        assert_assign_op!(b *= a == c);
     }
 
     for elm in DIV_REM_QUADRUPLES.iter() {
@@ -854,11 +889,15 @@ fn test_div_rem() {
         if !a.is_zero() {
             assert_op!(c / a == b);
             assert_op!(c % a == Zero::zero());
+            assert_assign_op!(c /= a == b);
+            assert_assign_op!(c %= a == Zero::zero());
             assert_eq!(c.div_rem(&a), (b.clone(), Zero::zero()));
         }
         if !b.is_zero() {
             assert_op!(c / b == a);
             assert_op!(c % b == Zero::zero());
+            assert_assign_op!(c /= b == a);
+            assert_assign_op!(c %= b == Zero::zero());
             assert_eq!(c.div_rem(&b), (a.clone(), Zero::zero()));
         }
     }
@@ -873,6 +912,8 @@ fn test_div_rem() {
         if !b.is_zero() {
             assert_op!(a / b == c);
             assert_op!(a % b == d);
+            assert_assign_op!(a /= b == c);
+            assert_assign_op!(a %= b == d);
             assert!(a.div_rem(&b) == (c, d));
         }
     }
