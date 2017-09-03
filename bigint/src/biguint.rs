@@ -1,7 +1,9 @@
 use std::borrow::Cow;
 use std::default::Default;
 use std::iter::repeat;
-use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Rem, Shl, Shr, Sub, AddAssign, SubAssign, MulAssign, DivAssign, RemAssign, BitAndAssign, BitOrAssign, BitXorAssign};
+use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Rem, Shl, Shr, Sub,
+               AddAssign, BitAndAssign, BitOrAssign, BitXorAssign, DivAssign,
+               MulAssign, RemAssign, ShlAssign, ShrAssign, SubAssign};
 use std::str::{self, FromStr};
 use std::fmt;
 use std::cmp;
@@ -346,13 +348,19 @@ impl Shl<usize> for BigUint {
         biguint_shl(Cow::Owned(self), rhs)
     }
 }
-
 impl<'a> Shl<usize> for &'a BigUint {
     type Output = BigUint;
 
     #[inline]
     fn shl(self, rhs: usize) -> BigUint {
         biguint_shl(Cow::Borrowed(self), rhs)
+    }
+}
+
+impl ShlAssign<usize> for BigUint {
+    #[inline]
+    fn shl_assign(&mut self, rhs: usize) {
+        *self = biguint_shl(Cow::Borrowed(&*self), rhs);
     }
 }
 
@@ -364,13 +372,19 @@ impl Shr<usize> for BigUint {
         biguint_shr(Cow::Owned(self), rhs)
     }
 }
-
 impl<'a> Shr<usize> for &'a BigUint {
     type Output = BigUint;
 
     #[inline]
     fn shr(self, rhs: usize) -> BigUint {
         biguint_shr(Cow::Borrowed(self), rhs)
+    }
+}
+
+impl ShrAssign<usize> for BigUint {
+    #[inline]
+    fn shr_assign(&mut self, rhs: usize) {
+        *self = biguint_shr(Cow::Borrowed(&*self), rhs);
     }
 }
 
