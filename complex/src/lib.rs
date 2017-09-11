@@ -417,8 +417,8 @@ impl<'a, T: Clone + Num> From<&'a T> for Complex<T> {
 }
 
 macro_rules! forward_ref_ref_binop {
-    (impl $imp:ident, $method:ident, $($dep:ident),*) => {
-        impl<'a, 'b, T: Clone + Num $(+ $dep)*> $imp<&'b Complex<T>> for &'a Complex<T> {
+    (impl $imp:ident, $method:ident) => {
+        impl<'a, 'b, T: Clone + Num> $imp<&'b Complex<T>> for &'a Complex<T> {
             type Output = Complex<T>;
 
             #[inline]
@@ -430,8 +430,8 @@ macro_rules! forward_ref_ref_binop {
 }
 
 macro_rules! forward_ref_val_binop {
-    (impl $imp:ident, $method:ident, $($dep:ident),*) => {
-        impl<'a, T: Clone + Num $(+ $dep)*> $imp<Complex<T>> for &'a Complex<T> {
+    (impl $imp:ident, $method:ident) => {
+        impl<'a, T: Clone + Num> $imp<Complex<T>> for &'a Complex<T> {
             type Output = Complex<T>;
 
             #[inline]
@@ -443,8 +443,8 @@ macro_rules! forward_ref_val_binop {
 }
 
 macro_rules! forward_val_ref_binop {
-    (impl $imp:ident, $method:ident, $($dep:ident),*) => {
-        impl<'a, T: Clone + Num $(+ $dep)*> $imp<&'a Complex<T>> for Complex<T> {
+    (impl $imp:ident, $method:ident) => {
+        impl<'a, T: Clone + Num> $imp<&'a Complex<T>> for Complex<T> {
             type Output = Complex<T>;
 
             #[inline]
@@ -456,15 +456,15 @@ macro_rules! forward_val_ref_binop {
 }
 
 macro_rules! forward_all_binop {
-    (impl $imp:ident, $method:ident, $($dep:ident),*) => {
-        forward_ref_ref_binop!(impl $imp, $method, $($dep),*);
-        forward_ref_val_binop!(impl $imp, $method, $($dep),*);
-        forward_val_ref_binop!(impl $imp, $method, $($dep),*);
+    (impl $imp:ident, $method:ident) => {
+        forward_ref_ref_binop!(impl $imp, $method);
+        forward_ref_val_binop!(impl $imp, $method);
+        forward_val_ref_binop!(impl $imp, $method);
     };
 }
 
 /* arithmetic */
-forward_all_binop!(impl Add, add, );
+forward_all_binop!(impl Add, add);
 
 // (a + i b) + (c + i d) == (a + c) + i (b + d)
 impl<T: Clone + Num> Add<Complex<T>> for Complex<T> {
@@ -476,7 +476,7 @@ impl<T: Clone + Num> Add<Complex<T>> for Complex<T> {
     }
 }
 
-forward_all_binop!(impl Sub, sub, );
+forward_all_binop!(impl Sub, sub);
 
 // (a + i b) - (c + i d) == (a - c) + i (b - d)
 impl<T: Clone + Num> Sub<Complex<T>> for Complex<T> {
@@ -488,7 +488,7 @@ impl<T: Clone + Num> Sub<Complex<T>> for Complex<T> {
     }
 }
 
-forward_all_binop!(impl Mul, mul, );
+forward_all_binop!(impl Mul, mul);
 
 // (a + i b) * (c + i d) == (a*c - b*d) + i (a*d + b*c)
 impl<T: Clone + Num> Mul<Complex<T>> for Complex<T> {
@@ -502,7 +502,7 @@ impl<T: Clone + Num> Mul<Complex<T>> for Complex<T> {
     }
 }
 
-forward_all_binop!(impl Div, div, );
+forward_all_binop!(impl Div, div);
 
 // (a + i b) / (c + i d) == [(a + i b) * (c - i d)] / (c*c + d*d)
 //   == [(a*c + b*d) / (c*c + d*d)] + i [(b*c - a*d) / (c*c + d*d)]
@@ -518,11 +518,11 @@ impl<T: Clone + Num> Div<Complex<T>> for Complex<T> {
     }
 }
 
-forward_all_binop!(impl Rem, rem, PartialOrd);
+forward_all_binop!(impl Rem, rem);
 
 // Attempts to identify the gaussian integer whose product with `modulus`
 // is closest to `self`.
-impl<T: Clone + Num + PartialOrd> Rem<Complex<T>> for Complex<T> {
+impl<T: Clone + Num> Rem<Complex<T>> for Complex<T> {
     type Output = Complex<T>;
 
     #[inline]
@@ -570,7 +570,7 @@ mod opassign {
         }
     }
 
-    impl<T: Clone + NumAssign + PartialOrd> RemAssign for Complex<T> {
+    impl<T: Clone + NumAssign> RemAssign for Complex<T> {
         fn rem_assign(&mut self, other: Complex<T>) {
             *self = self.clone() % other;
         }
@@ -602,7 +602,7 @@ mod opassign {
         }
     }
 
-    impl<T: Clone + NumAssign + PartialOrd> RemAssign<T> for Complex<T> {
+    impl<T: Clone + NumAssign> RemAssign<T> for Complex<T> {
         fn rem_assign(&mut self, other: T) {
             *self = self.clone() % other;
         }
@@ -630,13 +630,13 @@ mod opassign {
     forward_op_assign!(impl MulAssign, mul_assign);
     forward_op_assign!(impl DivAssign, div_assign);
 
-    impl<'a, T: Clone + NumAssign + PartialOrd> RemAssign<&'a Complex<T>> for Complex<T> {
+    impl<'a, T: Clone + NumAssign> RemAssign<&'a Complex<T>> for Complex<T> {
         #[inline]
         fn rem_assign(&mut self, other: &Complex<T>) {
             self.rem_assign(other.clone())
         }
     }
-    impl<'a, T: Clone + NumAssign + PartialOrd> RemAssign<&'a T> for Complex<T> {
+    impl<'a, T: Clone + NumAssign> RemAssign<&'a T> for Complex<T> {
         #[inline]
         fn rem_assign(&mut self, other: &T) {
             self.rem_assign(other.clone())
@@ -663,8 +663,8 @@ impl<'a, T: Clone + Num + Neg<Output = T>> Neg for &'a Complex<T> {
 }
 
 macro_rules! real_arithmetic {
-    (@forward $imp:ident::$method:ident for $($real:ident),*:  $($dep:ident),*) => (
-        impl<'a, T: Clone + Num $(+ $dep)*> $imp<&'a T> for Complex<T> {
+    (@forward $imp:ident::$method:ident for $($real:ident),*) => (
+        impl<'a, T: Clone + Num> $imp<&'a T> for Complex<T> {
             type Output = Complex<T>;
 
             #[inline]
@@ -672,7 +672,7 @@ macro_rules! real_arithmetic {
                 self.$method(other.clone())
             }
         }
-        impl<'a, T: Clone + Num $(+ $dep)*> $imp<T> for &'a Complex<T> {
+        impl<'a, T: Clone + Num> $imp<T> for &'a Complex<T> {
             type Output = Complex<T>;
 
             #[inline]
@@ -680,7 +680,7 @@ macro_rules! real_arithmetic {
                 self.clone().$method(other)
             }
         }
-        impl<'a, 'b, T: Clone + Num $(+ $dep)*> $imp<&'a T> for &'b Complex<T> {
+        impl<'a, 'b, T: Clone + Num> $imp<&'a T> for &'b Complex<T> {
             type Output = Complex<T>;
 
             #[inline]
@@ -716,11 +716,11 @@ macro_rules! real_arithmetic {
         )*
     );
     ($($real:ident),*) => (
-        real_arithmetic!(@forward Add::add for $($real),*: );
-        real_arithmetic!(@forward Sub::sub for $($real),*: );
-        real_arithmetic!(@forward Mul::mul for $($real),*: );
-        real_arithmetic!(@forward Div::div for $($real),*: );
-        real_arithmetic!(@forward Rem::rem for $($real),*: PartialOrd);
+        real_arithmetic!(@forward Add::add for $($real),*);
+        real_arithmetic!(@forward Sub::sub for $($real),*);
+        real_arithmetic!(@forward Mul::mul for $($real),*);
+        real_arithmetic!(@forward Div::div for $($real),*);
+        real_arithmetic!(@forward Rem::rem for $($real),*);
 
         $(
             impl Add<Complex<$real>> for $real {
@@ -810,7 +810,7 @@ impl<T: Clone + Num> Div<T> for Complex<T> {
     }
 }
 
-impl<T: Clone + Num + PartialOrd> Rem<T> for Complex<T> {
+impl<T: Clone + Num> Rem<T> for Complex<T> {
     type Output = Complex<T>;
 
     #[inline]
@@ -1037,7 +1037,7 @@ impl<T> FromStr for Complex<T> where
     }
 }
 
-impl<T: Num + Clone + PartialOrd> Num for Complex<T> {
+impl<T: Num + Clone> Num for Complex<T> {
     type FromStrRadixErr = ParseComplexError<T::FromStrRadixErr>;
 
     /// Parses `a +/- bi`; `ai +/- b`; `a`; or `bi` where `a` and `b` are of type `T`
