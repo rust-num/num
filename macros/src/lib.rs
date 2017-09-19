@@ -159,6 +159,7 @@ fn cs_from(name: &str, cx: &mut ExtCtxt, trait_span: Span, substr: &Substructure
                             pats: vec!(cx.pat_wild(span)),
                             guard: Some(guard),
                             body: body,
+                            beginning_vert: None,
                         };
 
                         arms.push(arm);
@@ -186,6 +187,7 @@ fn cs_from(name: &str, cx: &mut ExtCtxt, trait_span: Span, substr: &Substructure
                 pats: vec!(cx.pat_wild(trait_span)),
                 guard: None,
                 body: cx.expr_none(trait_span),
+                beginning_vert: None,
             };
             arms.push(arm);
 
