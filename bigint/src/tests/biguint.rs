@@ -29,11 +29,10 @@ macro_rules! assert_assign_op {
     ($left:ident $op:tt $right:ident == $expected:expr) => {
         {
             let mut tmp12384 = $left.clone();
-            tmp12384 $op &$right;
-            assert_eq!(tmp12384, $expected);
-            tmp12384 = $left.clone();
-            tmp12384 $op $right.clone();
-            assert_eq!(tmp12384, $expected);
+            assert_eq!({ tmp12384 $op &$right; tmp12384}, $expected);
+
+            let mut tmp12384 = $left.clone();
+            assert_eq!({ tmp12384 $op $right.clone(); tmp12384}, $expected);
         }
     };
 }
