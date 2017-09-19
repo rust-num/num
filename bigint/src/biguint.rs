@@ -796,7 +796,7 @@ impl Rem<BigUint> for BigDigit {
 }
 
 macro_rules! impl_rem_assign_scalar {
-    ($scalar:ty, $to_scalar:tt) => {
+    ($scalar:ty, $to_scalar:ident) => {
         forward_val_assign_scalar!(impl RemAssign for BigUint, $scalar, rem_assign);
         impl<'a> RemAssign<&'a BigUint> for $scalar {
             #[inline]
