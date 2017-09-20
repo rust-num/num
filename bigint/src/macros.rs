@@ -107,7 +107,7 @@ macro_rules! forward_ref_ref_binop_commutative {
 
 macro_rules! forward_val_assign {
     (impl $imp:ident for $res:ty, $method:ident) => {
-        impl<'a> $imp<$res> for $res {
+        impl $imp<$res> for $res {
             #[inline]
             fn $method(&mut self, other: $res) {
                 self.$method(&other);
@@ -117,7 +117,7 @@ macro_rules! forward_val_assign {
 }
 macro_rules! forward_val_assign_scalar {
     (impl $imp:ident for $res:ty, $scalar:ty, $method:ident) => {
-        impl<'a> $imp<$res> for $scalar {
+        impl $imp<$res> for $scalar {
             #[inline]
             fn $method(&mut self, other: $res) {
                 self.$method(&other);
