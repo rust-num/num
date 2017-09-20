@@ -1,7 +1,9 @@
 use std::borrow::Cow;
 use std::default::Default;
 use std::iter::repeat;
-use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Rem, Shl, Shr, Sub};
+use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Rem, Shl, Shr, Sub,
+               AddAssign, BitAndAssign, BitOrAssign, BitXorAssign, DivAssign,
+               MulAssign, RemAssign, ShlAssign, ShrAssign, SubAssign};
 use std::str::{self, FromStr};
 use std::fmt;
 use std::cmp;
@@ -268,54 +270,74 @@ impl Num for BigUint {
 }
 
 forward_all_binop_to_val_ref_commutative!(impl BitAnd for BigUint, bitand);
+forward_val_assign!(impl BitAndAssign for BigUint, bitand_assign);
 
 impl<'a> BitAnd<&'a BigUint> for BigUint {
     type Output = BigUint;
 
     #[inline]
-    fn bitand(self, other: &BigUint) -> BigUint {
-        let mut data = self.data;
-        for (ai, &bi) in data.iter_mut().zip(other.data.iter()) {
+    fn bitand(mut self, other: &BigUint) -> BigUint {
+        self &= other;
+        self
+    }
+}
+impl<'a> BitAndAssign<&'a BigUint> for BigUint {
+    #[inline]
+    fn bitand_assign(&mut self, other: &BigUint) {
+        for (ai, &bi) in self.data.iter_mut().zip(other.data.iter()) {
             *ai &= bi;
         }
-        data.truncate(other.data.len());
-        BigUint::new(data)
+        self.data.truncate(other.data.len());
+        self.normalize();
     }
 }
 
 forward_all_binop_to_val_ref_commutative!(impl BitOr for BigUint, bitor);
+forward_val_assign!(impl BitOrAssign for BigUint, bitor_assign);
 
 impl<'a> BitOr<&'a BigUint> for BigUint {
     type Output = BigUint;
 
-    fn bitor(self, other: &BigUint) -> BigUint {
-        let mut data = self.data;
-        for (ai, &bi) in data.iter_mut().zip(other.data.iter()) {
+    fn bitor(mut self, other: &BigUint) -> BigUint {
+        self |= other;
+        self
+    }
+}
+impl<'a> BitOrAssign<&'a BigUint> for BigUint {
+    #[inline]
+    fn bitor_assign(&mut self, other: &BigUint) {
+        for (ai, &bi) in self.data.iter_mut().zip(other.data.iter()) {
             *ai |= bi;
         }
-        if other.data.len() > data.len() {
-            let extra = &other.data[data.len()..];
-            data.extend(extra.iter().cloned());
+        if other.data.len() > self.data.len() {
+            let extra = &other.data[self.data.len()..];
+            self.data.extend(extra.iter().cloned());
         }
-        BigUint::new(data)
     }
 }
 
 forward_all_binop_to_val_ref_commutative!(impl BitXor for BigUint, bitxor);
+forward_val_assign!(impl BitXorAssign for BigUint, bitxor_assign);
 
 impl<'a> BitXor<&'a BigUint> for BigUint {
     type Output = BigUint;
 
-    fn bitxor(self, other: &BigUint) -> BigUint {
-        let mut data = self.data;
-        for (ai, &bi) in data.iter_mut().zip(other.data.iter()) {
+    fn bitxor(mut self, other: &BigUint) -> BigUint {
+        self ^= other;
+        self
+    }
+}
+impl<'a> BitXorAssign<&'a BigUint> for BigUint {
+    #[inline]
+    fn bitxor_assign(&mut self, other: &BigUint) {
+        for (ai, &bi) in self.data.iter_mut().zip(other.data.iter()) {
             *ai ^= bi;
         }
-        if other.data.len() > data.len() {
-            let extra = &other.data[data.len()..];
-            data.extend(extra.iter().cloned());
+        if other.data.len() > self.data.len() {
+            let extra = &other.data[self.data.len()..];
+            self.data.extend(extra.iter().cloned());
         }
-        BigUint::new(data)
+        self.normalize();
     }
 }
 
@@ -327,13 +349,19 @@ impl Shl<usize> for BigUint {
         biguint_shl(Cow::Owned(self), rhs)
     }
 }
-
 impl<'a> Shl<usize> for &'a BigUint {
     type Output = BigUint;
 
     #[inline]
     fn shl(self, rhs: usize) -> BigUint {
         biguint_shl(Cow::Borrowed(self), rhs)
+    }
+}
+
+impl ShlAssign<usize> for BigUint {
+    #[inline]
+    fn shl_assign(&mut self, rhs: usize) {
+        *self = biguint_shl(Cow::Borrowed(&*self), rhs);
     }
 }
 
@@ -345,13 +373,19 @@ impl Shr<usize> for BigUint {
         biguint_shr(Cow::Owned(self), rhs)
     }
 }
-
 impl<'a> Shr<usize> for &'a BigUint {
     type Output = BigUint;
 
     #[inline]
     fn shr(self, rhs: usize) -> BigUint {
         biguint_shr(Cow::Borrowed(self), rhs)
+    }
+}
+
+impl ShrAssign<usize> for BigUint {
+    #[inline]
+    fn shr_assign(&mut self, rhs: usize) {
+        *self = biguint_shr(Cow::Borrowed(&*self), rhs);
     }
 }
 
@@ -377,11 +411,19 @@ impl One for BigUint {
 impl Unsigned for BigUint {}
 
 forward_all_binop_to_val_ref_commutative!(impl Add for BigUint, add);
+forward_val_assign!(impl AddAssign for BigUint, add_assign);
 
 impl<'a> Add<&'a BigUint> for BigUint {
     type Output = BigUint;
 
     fn add(mut self, other: &BigUint) -> BigUint {
+        self += other;
+        self
+    }
+}
+impl<'a> AddAssign<&'a BigUint> for BigUint {
+    #[inline]
+    fn add_assign(&mut self, other: &BigUint) {
         if self.data.len() < other.data.len() {
             let extra = other.data.len() - self.data.len();
             self.data.extend(repeat(0).take(extra));
@@ -391,12 +433,11 @@ impl<'a> Add<&'a BigUint> for BigUint {
         if carry != 0 {
             self.data.push(carry);
         }
-
-        self
     }
 }
 
 promote_unsigned_scalars!(impl Add for BigUint, add);
+promote_unsigned_scalars_assign!(impl AddAssign for BigUint, add_assign);
 forward_all_scalar_binop_to_val_val_commutative!(impl Add<BigDigit> for BigUint, add);
 forward_all_scalar_binop_to_val_val_commutative!(impl Add<DoubleBigDigit> for BigUint, add);
 
@@ -405,6 +446,13 @@ impl Add<BigDigit> for BigUint {
 
     #[inline]
     fn add(mut self, other: BigDigit) -> BigUint {
+        self += other;
+        self
+    }
+}
+impl AddAssign<BigDigit> for BigUint {
+    #[inline]
+    fn add_assign(&mut self, other: BigDigit) {
         if other != 0 {
             if self.data.len() == 0 {
                 self.data.push(0);
@@ -415,7 +463,6 @@ impl Add<BigDigit> for BigUint {
                 self.data.push(carry);
             }
         }
-        self
     }
 }
 
@@ -424,9 +471,16 @@ impl Add<DoubleBigDigit> for BigUint {
 
     #[inline]
     fn add(mut self, other: DoubleBigDigit) -> BigUint {
+        self += other;
+        self
+    }
+}
+impl AddAssign<DoubleBigDigit> for BigUint {
+    #[inline]
+    fn add_assign(&mut self, other: DoubleBigDigit) {
         let (hi, lo) = big_digit::from_doublebigdigit(other);
         if hi == 0 {
-            self + lo
+            *self += lo;
         } else {
             while self.data.len() < 2 {
                 self.data.push(0);
@@ -436,20 +490,26 @@ impl Add<DoubleBigDigit> for BigUint {
             if carry != 0 {
                 self.data.push(carry);
             }
-            self
         }
     }
 }
 
 forward_val_val_binop!(impl Sub for BigUint, sub);
 forward_ref_ref_binop!(impl Sub for BigUint, sub);
+forward_val_assign!(impl SubAssign for BigUint, sub_assign);
 
 impl<'a> Sub<&'a BigUint> for BigUint {
     type Output = BigUint;
 
     fn sub(mut self, other: &BigUint) -> BigUint {
+        self -= other;
+        self
+    }
+}
+impl<'a> SubAssign<&'a BigUint> for BigUint {
+    fn sub_assign(&mut self, other: &'a BigUint) {
         sub2(&mut self.data[..], &other.data[..]);
-        self.normalized()
+        self.normalize();
     }
 }
 
@@ -468,6 +528,7 @@ impl<'a> Sub<BigUint> for &'a BigUint {
 }
 
 promote_unsigned_scalars!(impl Sub for BigUint, sub);
+promote_unsigned_scalars_assign!(impl SubAssign for BigUint, sub_assign);
 forward_all_scalar_binop_to_val_val!(impl Sub<BigDigit> for BigUint, sub);
 forward_all_scalar_binop_to_val_val!(impl Sub<DoubleBigDigit> for BigUint, sub);
 
@@ -476,8 +537,14 @@ impl Sub<BigDigit> for BigUint {
 
     #[inline]
     fn sub(mut self, other: BigDigit) -> BigUint {
+        self -= other;
+        self
+    }
+}
+impl SubAssign<BigDigit> for BigUint {
+    fn sub_assign(&mut self, other: BigDigit) {
         sub2(&mut self.data[..], &[other]);
-        self.normalized()
+        self.normalize();
     }
 }
 
@@ -500,9 +567,15 @@ impl Sub<DoubleBigDigit> for BigUint {
 
     #[inline]
     fn sub(mut self, other: DoubleBigDigit) -> BigUint {
+        self -= other;
+        self
+    }
+}
+impl SubAssign<DoubleBigDigit> for BigUint {
+    fn sub_assign(&mut self, other: DoubleBigDigit) {
         let (hi, lo) = big_digit::from_doublebigdigit(other);
         sub2(&mut self.data[..], &[lo, hi]);
-        self.normalized()
+        self.normalize();
     }
 }
 
@@ -522,6 +595,7 @@ impl Sub<BigUint> for DoubleBigDigit {
 }
 
 forward_all_binop_to_ref_ref!(impl Mul for BigUint, mul);
+forward_val_assign!(impl MulAssign for BigUint, mul_assign);
 
 impl<'a, 'b> Mul<&'b BigUint> for &'a BigUint {
     type Output = BigUint;
@@ -531,8 +605,15 @@ impl<'a, 'b> Mul<&'b BigUint> for &'a BigUint {
         mul3(&self.data[..], &other.data[..])
     }
 }
+impl<'a> MulAssign<&'a BigUint> for BigUint {
+    #[inline]
+    fn mul_assign(&mut self, other: &'a BigUint) {
+        *self = &*self * other
+    }
+}
 
 promote_unsigned_scalars!(impl Mul for BigUint, mul);
+promote_unsigned_scalars_assign!(impl MulAssign for BigUint, mul_assign);
 forward_all_scalar_binop_to_val_val_commutative!(impl Mul<BigDigit> for BigUint, mul);
 forward_all_scalar_binop_to_val_val_commutative!(impl Mul<DoubleBigDigit> for BigUint, mul);
 
@@ -541,6 +622,13 @@ impl Mul<BigDigit> for BigUint {
 
     #[inline]
     fn mul(mut self, other: BigDigit) -> BigUint {
+        self *= other;
+        self
+    }
+}
+impl MulAssign<BigDigit> for BigUint {
+    #[inline]
+    fn mul_assign(&mut self, other: BigDigit) {
         if other == 0 {
             self.data.clear();
         } else {
@@ -549,7 +637,6 @@ impl Mul<BigDigit> for BigUint {
                 self.data.push(carry);
             }
         }
-        self
     }
 }
 
@@ -558,19 +645,26 @@ impl Mul<DoubleBigDigit> for BigUint {
 
     #[inline]
     fn mul(mut self, other: DoubleBigDigit) -> BigUint {
+        self *= other;
+        self
+    }
+}
+impl MulAssign<DoubleBigDigit> for BigUint {
+    #[inline]
+    fn mul_assign(&mut self, other: DoubleBigDigit) {
         if other == 0 {
             self.data.clear();
-            self
         } else if other <= BigDigit::max_value() as DoubleBigDigit {
-            self * other as BigDigit
+            *self *= other as BigDigit
         } else {
             let (hi, lo) = big_digit::from_doublebigdigit(other);
-            mul3(&self.data[..], &[lo, hi])
+            *self = mul3(&self.data[..], &[lo, hi])
         }
     }
 }
 
 forward_all_binop_to_ref_ref!(impl Div for BigUint, div);
+forward_val_assign!(impl DivAssign for BigUint, div_assign);
 
 impl<'a, 'b> Div<&'b BigUint> for &'a BigUint {
     type Output = BigUint;
@@ -581,8 +675,15 @@ impl<'a, 'b> Div<&'b BigUint> for &'a BigUint {
         q
     }
 }
+impl<'a> DivAssign<&'a BigUint> for BigUint {
+    #[inline]
+    fn div_assign(&mut self, other: &'a BigUint) {
+        *self = &*self / other;
+    }
+}
 
 promote_unsigned_scalars!(impl Div for BigUint, div);
+promote_unsigned_scalars_assign!(impl DivAssign for BigUint, div_assign);
 forward_all_scalar_binop_to_val_val!(impl Div<BigDigit> for BigUint, div);
 forward_all_scalar_binop_to_val_val!(impl Div<DoubleBigDigit> for BigUint, div);
 
@@ -593,6 +694,12 @@ impl Div<BigDigit> for BigUint {
     fn div(self, other: BigDigit) -> BigUint {
         let (q, _) = div_rem_digit(self, other);
         q
+    }
+}
+impl DivAssign<BigDigit> for BigUint {
+    #[inline]
+    fn div_assign(&mut self, other: BigDigit) {
+        *self = &*self / other;
     }
 }
 
@@ -618,6 +725,12 @@ impl Div<DoubleBigDigit> for BigUint {
         q
     }
 }
+impl DivAssign<DoubleBigDigit> for BigUint {
+    #[inline]
+    fn div_assign(&mut self, other: DoubleBigDigit) {
+        *self = &*self / other;
+    }
+}
 
 impl Div<BigUint> for DoubleBigDigit {
     type Output = BigUint;
@@ -634,6 +747,7 @@ impl Div<BigUint> for DoubleBigDigit {
 }
 
 forward_all_binop_to_ref_ref!(impl Rem for BigUint, rem);
+forward_val_assign!(impl RemAssign for BigUint, rem_assign);
 
 impl<'a, 'b> Rem<&'b BigUint> for &'a BigUint {
     type Output = BigUint;
@@ -644,8 +758,15 @@ impl<'a, 'b> Rem<&'b BigUint> for &'a BigUint {
         r
     }
 }
+impl<'a> RemAssign<&'a BigUint> for BigUint {
+    #[inline]
+    fn rem_assign(&mut self, other: &BigUint) {
+        *self = &*self % other;
+    }
+}
 
 promote_unsigned_scalars!(impl Rem for BigUint, rem);
+promote_unsigned_scalars_assign!(impl RemAssign for BigUint, rem_assign);
 forward_all_scalar_binop_to_val_val!(impl Rem<BigDigit> for BigUint, rem);
 forward_all_scalar_binop_to_val_val!(impl Rem<DoubleBigDigit> for BigUint, rem);
 
@@ -658,19 +779,49 @@ impl Rem<BigDigit> for BigUint {
         From::from(r)
     }
 }
+impl RemAssign<BigDigit> for BigUint {
+    #[inline]
+    fn rem_assign(&mut self, other: BigDigit) {
+        *self = &*self % other;
+    }
+}
 
 impl Rem<BigUint> for BigDigit {
     type Output = BigUint;
 
     #[inline]
-    fn rem(self, other: BigUint) -> BigUint {
-        match other.data.len() {
-            0 => panic!(),
-            1 => From::from(self % other.data[0]),
-            _ => From::from(self)
+    fn rem(mut self, other: BigUint) -> BigUint {
+        self %= other;
+        From::from(self)
+    }
+}
+
+macro_rules! impl_rem_assign_scalar {
+    ($scalar:ty, $to_scalar:ident) => {
+        forward_val_assign_scalar!(impl RemAssign for BigUint, $scalar, rem_assign);
+        impl<'a> RemAssign<&'a BigUint> for $scalar {
+            #[inline]
+            fn rem_assign(&mut self, other: &BigUint) {
+                *self = match other.$to_scalar() {
+                    None => *self,
+                    Some(0) => panic!(),
+                    Some(v) => *self % v
+                };
+            }
         }
     }
 }
+// we can scalar %= BigUint for any scalar, including signed types
+impl_rem_assign_scalar!(usize, to_usize);
+impl_rem_assign_scalar!(u64, to_u64);
+impl_rem_assign_scalar!(u32, to_u32);
+impl_rem_assign_scalar!(u16, to_u16);
+impl_rem_assign_scalar!(u8, to_u8);
+impl_rem_assign_scalar!(isize, to_isize);
+impl_rem_assign_scalar!(i64, to_i64);
+impl_rem_assign_scalar!(i32, to_i32);
+impl_rem_assign_scalar!(i16, to_i16);
+impl_rem_assign_scalar!(i8, to_i8);
 
 impl Rem<DoubleBigDigit> for BigUint {
     type Output = BigUint;
@@ -681,18 +832,20 @@ impl Rem<DoubleBigDigit> for BigUint {
         r
     }
 }
+impl RemAssign<DoubleBigDigit> for BigUint {
+    #[inline]
+    fn rem_assign(&mut self, other: DoubleBigDigit) {
+        *self = &*self % other;
+    }
+}
 
 impl Rem<BigUint> for DoubleBigDigit {
     type Output = BigUint;
 
     #[inline]
-    fn rem(self, other: BigUint) -> BigUint {
-        match other.data.len() {
-            0 => panic!(),
-            1 => From::from(self % other.data[0] as u64),
-            2 => From::from(self % big_digit::to_doublebigdigit(other.data[0], other.data[1])),
-            _ => From::from(self),
-        }
+    fn rem(mut self, other: BigUint) -> BigUint {
+        self %= other;
+        From::from(self)
     }
 }
 
