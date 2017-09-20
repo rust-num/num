@@ -227,16 +227,16 @@ fn mac_digit(acc: &mut [BigDigit], b: &[BigDigit], c: BigDigit) {
     }
 
     let mut carry = 0;
+    let (a_lo, a_hi) = acc.split_at_mut(b.len());
 
-    for (i, bi) in b.iter().enumerate() {
-        acc[i] = mac_with_carry(acc[i], *bi, c, &mut carry);
+    for (a, &b) in a_lo.iter_mut().zip(b) {
+        *a = mac_with_carry(*a, b, c, &mut carry);
     }
 
-    let mut i = b.len();
-
+    let mut a = a_hi.iter_mut();
     while carry != 0 {
-        acc[i] = adc(acc[i], 0, &mut carry);
-        i += 1;
+        let a = a.next().expect("carry overflow during multiplication!");
+        *a = adc(*a, 0, &mut carry);
     }
 }
 
