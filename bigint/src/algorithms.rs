@@ -260,12 +260,12 @@ fn mac3(acc: &mut [BigDigit], b: &[BigDigit], c: &[BigDigit]) {
     // The thresholds are somewhat arbitrary, chosen by evaluating the results
     // of `cargo bench --bench bigint multiply`.
 
-    if x.len() <= 16 {
+    if x.len() <= 32 {
         // Long multiplication:
         for (i, xi) in x.iter().enumerate() {
             mac_digit(&mut acc[i..], y, *xi);
         }
-    } else if x.len() <= 300 {
+    } else if x.len() <= 256 {
         /*
          * Karatsuba multiplication:
          *
