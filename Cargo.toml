@@ -11,6 +11,9 @@ name = "num"
 version = "0.2.0-git"
 publish = false
 
+[badges]
+travis-ci = { repository = "rust-num/num" }
+
 [[bench]]
 name = "bigint"
 

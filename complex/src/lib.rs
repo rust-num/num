@@ -19,10 +19,12 @@ extern crate num_traits as traits;
 #[cfg(feature = "serde")]
 extern crate serde;
 
+use std::error::Error;
 use std::fmt;
 #[cfg(test)]
 use std::hash;
-use std::ops::{Add, Div, Mul, Neg, Sub};
+use std::ops::{Add, Div, Mul, Neg, Sub, Rem};
+use std::str::FromStr;
 
 use traits::{Zero, One, Num, Float};
 
@@ -174,7 +176,7 @@ impl<T: Clone + Float> Complex<T> {
         let (r, theta) = self.to_polar();
         Complex::from_polar(&(r.sqrt()), &(theta/two))
     }
-    
+
     /// Raises `self` to a floating point power.
     #[inline]
     pub fn powf(&self, exp: T) -> Complex<T> {
@@ -183,25 +185,25 @@ impl<T: Clone + Float> Complex<T> {
         let (r, theta) = self.to_polar();
         Complex::from_polar(&r.powf(exp), &(theta*exp))
     }
-    
+
     /// Returns the logarithm of `self` with respect to an arbitrary base.
     #[inline]
     pub fn log(&self, base: T) -> Complex<T> {
-        // formula: log_y(x) = log_y(ρ e^(i θ)) 
-        // = log_y(ρ) + log_y(e^(i θ)) = log_y(ρ) + ln(e^(i θ)) / ln(y) 
-        // = log_y(ρ) + i θ / ln(y) 
+        // formula: log_y(x) = log_y(ρ e^(i θ))
+        // = log_y(ρ) + log_y(e^(i θ)) = log_y(ρ) + ln(e^(i θ)) / ln(y)
+        // = log_y(ρ) + i θ / ln(y)
         let (r, theta) = self.to_polar();
         Complex::new(r.log(base), theta / base.ln())
     }
-    
+
     /// Raises `self` to a complex power.
     #[inline]
     pub fn powc(&self, exp: Complex<T>) -> Complex<T> {
         // formula: x^y = (a + i b)^(c + i d)
-        // = (ρ e^(i θ))^c (ρ e^(i θ))^(i d) 
+        // = (ρ e^(i θ))^c (ρ e^(i θ))^(i d)
         //    where ρ=|x| and θ=arg(x)
         // = ρ^c e^(−d θ) e^(i c θ) ρ^(i d)
-        // = p^c e^(−d θ) (cos(c θ) 
+        // = p^c e^(−d θ) (cos(c θ)
         //   + i sin(c θ)) (cos(d ln(ρ)) + i sin(d ln(ρ)))
         // = p^c e^(−d θ) (
         //   cos(c θ) cos(d ln(ρ)) − sin(c θ) sin(d ln(ρ))
@@ -210,14 +212,14 @@ impl<T: Clone + Float> Complex<T> {
         // = from_polar(p^c e^(−d θ), c θ + d ln(ρ))
         let (r, theta) = self.to_polar();
         Complex::from_polar(
-            &(r.powf(exp.re) * (-exp.im * theta).exp()), 
+            &(r.powf(exp.re) * (-exp.im * theta).exp()),
             &(exp.re * theta + exp.im * r.ln()))
     }
-    
+
     /// Raises a floating point number to the complex power `self`.
     #[inline]
     pub fn expf(&self, base: T) -> Complex<T> {
-        // formula: x^(a+bi) = x^a x^bi = x^a e^(b ln(x) i) 
+        // formula: x^(a+bi) = x^a x^bi = x^a e^(b ln(x) i)
         // = from_polar(x^a, b ln(x))
         Complex::from_polar(&base.powf(self.re), &(self.im * base.ln()))
     }
@@ -255,8 +257,8 @@ impl<T: Clone + Float> Complex<T> {
     #[inline]
     pub fn asin(&self) -> Complex<T> {
         // formula: arcsin(z) = -i ln(sqrt(1-z^2) + iz)
-        let i = Complex::i();
-        -i*((Complex::one() - self*self).sqrt() + i*self).ln()
+        let i = Complex::<T>::i();
+        -i*((Complex::<T>::one() - self*self).sqrt() + i*self).ln()
     }
 
     /// Computes the principal value of the inverse cosine of `self`.
@@ -270,8 +272,8 @@ impl<T: Clone + Float> Complex<T> {
     #[inline]
     pub fn acos(&self) -> Complex<T> {
         // formula: arccos(z) = -i ln(i sqrt(1-z^2) + z)
-        let i = Complex::i();
-        -i*(i*(Complex::one() - self*self).sqrt() + self).ln()
+        let i = Complex::<T>::i();
+        -i*(i*(Complex::<T>::one() - self*self).sqrt() + self).ln()
     }
 
     /// Computes the principal value of the inverse tangent of `self`.
@@ -285,8 +287,8 @@ impl<T: Clone + Float> Complex<T> {
     #[inline]
     pub fn atan(&self) -> Complex<T> {
         // formula: arctan(z) = (ln(1+iz) - ln(1-iz))/(2i)
-        let i = Complex::i();
-        let one = Complex::one();
+        let i = Complex::<T>::i();
+        let one = Complex::<T>::one();
         let two = one + one;
         if *self == i {
             return Complex::new(T::zero(), T::infinity());
@@ -330,7 +332,7 @@ impl<T: Clone + Float> Complex<T> {
     #[inline]
     pub fn asinh(&self) -> Complex<T> {
         // formula: arcsinh(z) = ln(z + sqrt(1+z^2))
-        let one = Complex::one();
+        let one = Complex::<T>::one();
         (self + (one + self * self).sqrt()).ln()
     }
 
@@ -512,6 +514,132 @@ impl<T: Clone + Num> Div<Complex<T>> for Complex<T> {
     }
 }
 
+forward_all_binop!(impl Rem, rem);
+
+// Attempts to identify the gaussian integer whose product with `modulus`
+// is closest to `self`.
+impl<T: Clone + Num> Rem<Complex<T>> for Complex<T> {
+    type Output = Complex<T>;
+
+    #[inline]
+    fn rem(self, modulus: Complex<T>) -> Self {
+        let Complex { re, im } = self.clone() / modulus.clone();
+        // This is the gaussian integer corresponding to the true ratio
+        // rounded towards zero.
+        let (re0, im0) = (re.clone() - re % T::one(), im.clone() - im % T::one());
+        self - modulus * Complex::new(re0, im0)
+    }
+}
+
+// Op Assign
+
+mod opassign {
+    use std::ops::{AddAssign, SubAssign, MulAssign, DivAssign, RemAssign};
+
+    use traits::NumAssign;
+
+    use Complex;
+
+    impl<T: Clone + NumAssign> AddAssign for Complex<T> {
+        fn add_assign(&mut self, other: Complex<T>) {
+            self.re += other.re;
+            self.im += other.im;
+        }
+    }
+
+    impl<T: Clone + NumAssign> SubAssign for Complex<T> {
+        fn sub_assign(&mut self, other: Complex<T>) {
+            self.re -= other.re;
+            self.im -= other.im;
+        }
+    }
+
+    impl<T: Clone + NumAssign> MulAssign for Complex<T> {
+        fn mul_assign(&mut self, other: Complex<T>) {
+            *self = self.clone() * other;
+        }
+    }
+
+    impl<T: Clone + NumAssign> DivAssign for Complex<T> {
+        fn div_assign(&mut self, other: Complex<T>) {
+            *self = self.clone() / other;
+        }
+    }
+
+    impl<T: Clone + NumAssign> RemAssign for Complex<T> {
+        fn rem_assign(&mut self, other: Complex<T>) {
+            *self = self.clone() % other;
+        }
+    }
+
+    impl<T: Clone + NumAssign> AddAssign<T> for Complex<T> {
+        fn add_assign(&mut self, other: T) {
+            self.re += other;
+        }
+    }
+
+    impl<T: Clone + NumAssign> SubAssign<T> for Complex<T> {
+        fn sub_assign(&mut self, other: T) {
+            self.re -= other;
+        }
+    }
+
+    impl<T: Clone + NumAssign> MulAssign<T> for Complex<T> {
+        fn mul_assign(&mut self, other: T) {
+            self.re *= other.clone();
+            self.im *= other;
+        }
+    }
+
+    impl<T: Clone + NumAssign> DivAssign<T> for Complex<T> {
+        fn div_assign(&mut self, other: T) {
+            self.re /= other.clone();
+            self.im /= other;
+        }
+    }
+
+    impl<T: Clone + NumAssign> RemAssign<T> for Complex<T> {
+        fn rem_assign(&mut self, other: T) {
+            *self = self.clone() % other;
+        }
+    }
+
+    macro_rules! forward_op_assign {
+        (impl $imp:ident, $method:ident) => {
+            impl<'a, T: Clone + NumAssign> $imp<&'a Complex<T>> for Complex<T> {
+                #[inline]
+                fn $method(&mut self, other: &Complex<T>) {
+                    self.$method(other.clone())
+                }
+            }
+            impl<'a, T: Clone + NumAssign> $imp<&'a T> for Complex<T> {
+                #[inline]
+                fn $method(&mut self, other: &T) {
+                    self.$method(other.clone())
+                }
+            }
+        }
+    }
+
+    forward_op_assign!(impl AddAssign, add_assign);
+    forward_op_assign!(impl SubAssign, sub_assign);
+    forward_op_assign!(impl MulAssign, mul_assign);
+    forward_op_assign!(impl DivAssign, div_assign);
+
+    impl<'a, T: Clone + NumAssign> RemAssign<&'a Complex<T>> for Complex<T> {
+        #[inline]
+        fn rem_assign(&mut self, other: &Complex<T>) {
+            self.rem_assign(other.clone())
+        }
+    }
+    impl<'a, T: Clone + NumAssign> RemAssign<&'a T> for Complex<T> {
+        #[inline]
+        fn rem_assign(&mut self, other: &T) {
+            self.rem_assign(other.clone())
+        }
+    }
+}
+
 impl<T: Clone + Num + Neg<Output = T>> Neg for Complex<T> {
     type Output = Complex<T>;
 
@@ -583,36 +711,108 @@ macro_rules! real_arithmetic {
             }
         )*
     );
-    (@implement $imp:ident::$method:ident for $($real:ident),*) => (
-        impl<T: Clone + Num> $imp<T> for Complex<T> {
-            type Output = Complex<T>;
-
-            #[inline]
-            fn $method(self, other: T) -> Complex<T> {
-                self.$method(Complex::from(other))
-            }
-        }
-        $(
-            impl $imp<Complex<$real>> for $real {
-                type Output = Complex<$real>;
-
-                #[inline]
-                fn $method(self, other: Complex<$real>) -> Complex<$real> {
-                    Complex::from(self).$method(other)
-                }
-            }
-        )*
-    );
     ($($real:ident),*) => (
         real_arithmetic!(@forward Add::add for $($real),*);
         real_arithmetic!(@forward Sub::sub for $($real),*);
         real_arithmetic!(@forward Mul::mul for $($real),*);
         real_arithmetic!(@forward Div::div for $($real),*);
-        real_arithmetic!(@implement Add::add for $($real),*);
-        real_arithmetic!(@implement Sub::sub for $($real),*);
-        real_arithmetic!(@implement Mul::mul for $($real),*);
-        real_arithmetic!(@implement Div::div for $($real),*);
+        real_arithmetic!(@forward Rem::rem for $($real),*);
+
+        $(
+            impl Add<Complex<$real>> for $real {
+                type Output = Complex<$real>;
+
+                #[inline]
+                fn add(self, other: Complex<$real>) -> Complex<$real> {
+                    Complex::new(self + other.re, other.im)
+                }
+            }
+
+            impl Sub<Complex<$real>> for $real {
+                type Output = Complex<$real>;
+
+                #[inline]
+                fn sub(self, other: Complex<$real>) -> Complex<$real> {
+                    Complex::new(self - other.re, $real::zero() - other.im)
+                }
+            }
+
+            impl Mul<Complex<$real>> for $real {
+                type Output = Complex<$real>;
+
+                #[inline]
+                fn mul(self, other: Complex<$real>) -> Complex<$real> {
+                    Complex::new(self * other.re, self * other.im)
+                }
+            }
+
+            impl Div<Complex<$real>> for $real {
+                type Output = Complex<$real>;
+
+                #[inline]
+                fn div(self, other: Complex<$real>) -> Complex<$real> {
+                    // a / (c + i d) == [a * (c - i d)] / (c*c + d*d)
+                    let norm_sqr = other.norm_sqr();
+                    Complex::new(self * other.re / norm_sqr.clone(),
+                                 $real::zero() - self * other.im / norm_sqr)
+                }
+            }
+
+            impl Rem<Complex<$real>> for $real {
+                type Output = Complex<$real>;
+
+                #[inline]
+                fn rem(self, other: Complex<$real>) -> Complex<$real> {
+                    Complex::new(self, Self::zero()) % other
+                }
+            }
+        )*
     );
+}
+
+impl<T: Clone + Num> Add<T> for Complex<T> {
+    type Output = Complex<T>;
+
+    #[inline]
+    fn add(self, other: T) -> Complex<T> {
+        Complex::new(self.re + other, self.im)
+    }
+}
+
+impl<T: Clone + Num> Sub<T> for Complex<T> {
+    type Output = Complex<T>;
+
+    #[inline]
+    fn sub(self, other: T) -> Complex<T> {
+        Complex::new(self.re - other, self.im)
+    }
+}
+
+impl<T: Clone + Num> Mul<T> for Complex<T> {
+    type Output = Complex<T>;
+
+    #[inline]
+    fn mul(self, other: T) -> Complex<T> {
+        Complex::new(self.re * other.clone(), self.im * other)
+    }
+}
+
+impl<T: Clone + Num> Div<T> for Complex<T> {
+    type Output = Complex<T>;
+
+    #[inline]
+    fn div(self, other: T) -> Complex<T> {
+        Complex::new(self.re / other.clone(), self.im / other)
+    }
+}
+
+impl<T: Clone + Num> Rem<T> for Complex<T> {
+    type Output = Complex<T>;
+
+    #[inline]
+    fn rem(self, other: T) -> Complex<T> {
+        self % Complex::new(other, T::zero())
+    }
 }
 
 real_arithmetic!(usize, u8, u16, u32, u64, isize, i8, i16, i32, i64, f32, f64);
@@ -736,6 +936,114 @@ impl<T> fmt::Binary for Complex<T> where
     }
 }
 
+fn from_str_generic<T, E, F>(s: &str, from: F) -> Result<Complex<T>, ParseComplexError<E>>
+    where F: Fn(&str) -> Result<T, E>, T: Clone + Num
+{
+    let imag = match s.rfind('j') {
+        None => 'i',
+        _ => 'j'
+    };
+
+    let mut b = String::with_capacity(s.len());
+    let mut first = true;
+
+    let char_indices = s.char_indices();
+    let mut pc = ' ';
+    let mut split_index = s.len();
+
+    for (i, cc) in char_indices {
+        if cc == '+' && pc != 'e' && pc != 'E' && i > 0 {
+            // ignore '+' if part of an exponent
+            if first {
+                split_index = i;
+                first = false;
+            }
+            // don't carry '+' over into b
+            pc = ' ';
+            continue;
+        } else if cc == '-' && pc != 'e' && pc != 'E' && i > 0 {
+            // ignore '-' if part of an exponent or begins the string
+            if first {
+                split_index = i;
+                first = false;
+            }
+            // DO carry '-' over into b
+        }
+
+        if pc == '-' && cc == ' ' && !first {
+            // ignore whitespace between minus sign and next number
+            continue;
+        }
+
+        if !first {
+            b.push(cc);
+        }
+        pc = cc;
+    }
+
+    // split off real and imaginary parts, trim whitespace
+    let (a, _) = s.split_at(split_index);
+    let a = a.trim_right();
+    let mut b = b.trim_left();
+    // input was either pure real or pure imaginary
+    if b.is_empty() {
+        b = match a.ends_with(imag) {
+            false => "0i",
+            true => "0"
+        };
+    }
+
+    let re;
+    let im;
+    if a.ends_with(imag) {
+        im = a; re = b;
+    } else if b.ends_with(imag) {
+        re = a; im = b;
+    } else {
+        return Err(ParseComplexError::new());
+    }
+
+    // parse re
+    let re = try!(from(re).map_err(ParseComplexError::from_error));
+
+    // pop imaginary unit off
+    let mut im = &im[..im.len()-1];
+    // handle im == "i" or im == "-i"
+    if im.is_empty() || im == "+" {
+        im = "1";
+    } else if im == "-" {
+        im = "-1";
+    }
+
+    // parse im
+    let im = try!(from(im).map_err(ParseComplexError::from_error));
+
+    Ok(Complex::new(re, im))
+}
+
+impl<T> FromStr for Complex<T> where
+    T: FromStr + Num + Clone
+{
+    type Err = ParseComplexError<T::Err>;
+
+    /// Parses `a +/- bi`; `ai +/- b`; `a`; or `bi` where `a` and `b` are of type `T`
+    fn from_str(s: &str) -> Result<Self, Self::Err>
+    {
+        from_str_generic(s, T::from_str)
+    }
+}
+
+impl<T: Num + Clone> Num for Complex<T> {
+    type FromStrRadixErr = ParseComplexError<T::FromStrRadixErr>;
+
+    /// Parses `a +/- bi`; `ai +/- b`; `a`; or `bi` where `a` and `b` are of type `T`
+    fn from_str_radix(s: &str, radix: u32) -> Result<Self, Self::FromStrRadixErr>
+    {
+        from_str_generic(s, |x| -> Result<T, T::FromStrRadixErr> {
+                                T::from_str_radix(x, radix) })
+    }
+}
+
 #[cfg(feature = "serde")]
 impl<T> serde::Serialize for Complex<T>
     where T: serde::Serialize
@@ -759,6 +1067,51 @@ impl<'de, T> serde::Deserialize<'de> for Complex<T> where
     }
 }
 
+#[derive(Debug, PartialEq)]
+pub struct ParseComplexError<E>
+{
+    kind: ComplexErrorKind<E>,
+}
+
+#[derive(Debug, PartialEq)]
+enum ComplexErrorKind<E>
+{
+    ParseError(E),
+    ExprError
+}
+
+impl<E> ParseComplexError<E>
+{
+   fn new() -> Self {
+      ParseComplexError {
+         kind: ComplexErrorKind::ExprError,
+      }
+   }
+
+   fn from_error(error: E) -> Self {
+      ParseComplexError {
+         kind: ComplexErrorKind::ParseError(error),
+      }
+   }
+}
+
+impl<E: Error> Error for ParseComplexError<E>
+{
+    fn description(&self) -> &str {
+        match self.kind {
+            ComplexErrorKind::ParseError(ref e) => e.description(),
+            ComplexErrorKind::ExprError => "invalid or unsupported complex expression"
+        }
+    }
+}
+
+impl<E: Error> fmt::Display for ParseComplexError<E>
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.description().fmt(f)
+    }
+}
+
 #[cfg(test)]
 fn hash<T: hash::Hash>(x: &T) -> u64 {
     use std::hash::{BuildHasher, Hasher};
@@ -774,8 +1127,9 @@ mod test {
 
     use super::{Complex64, Complex};
     use std::f64;
+    use std::str::FromStr;
 
-    use traits::{Zero, One, Float};
+    use traits::{Zero, One, Float, Num};
 
     pub const _0_0i : Complex64 = Complex { re: 0.0, im: 0.0 };
     pub const _1_0i : Complex64 = Complex { re: 1.0, im: 0.0 };
@@ -784,6 +1138,7 @@ mod test {
     pub const _neg1_1i : Complex64 = Complex { re: -1.0, im: 1.0 };
     pub const _05_05i : Complex64 = Complex { re: 0.5, im: 0.5 };
     pub const all_consts : [Complex64; 5] = [_0_0i, _1_0i, _1_1i, _neg1_1i, _05_05i];
+    pub const _4_2i : Complex64 = Complex { re: 4.0, im: 2.0 };
 
     #[test]
     fn test_consts() {
@@ -876,7 +1231,7 @@ mod test {
     fn close(a: Complex64, b: Complex64) -> bool {
         close_to_tol(a, b, 1e-10)
     }
-    
+
     fn close_to_tol(a: Complex64, b: Complex64, tol: f64) -> bool {
         // returns true if a and b are reasonably close
         (a == b) || (a-b).norm() < tol
@@ -910,7 +1265,7 @@ mod test {
             assert!(-f64::consts::PI <= c.ln().arg() && c.ln().arg() <= f64::consts::PI);
         }
     }
-    
+
     #[test]
     fn test_powc()
     {
@@ -921,7 +1276,7 @@ mod test {
         let c = Complex::new(1.0 / 3.0, 0.1);
         assert!(close_to_tol(a.powc(c), Complex::new(1.65826, -0.33502), 1e-5));
     }
-    
+
     #[test]
     fn test_powf()
     {
@@ -929,7 +1284,7 @@ mod test {
         let r = c.powf(3.5);
         assert!(close_to_tol(r, Complex::new(-0.8684746, -16.695934), 1e-5));
     }
-    
+
     #[test]
     fn test_log()
     {
@@ -937,18 +1292,18 @@ mod test {
         let r = c.log(10.0);
         assert!(close_to_tol(r, Complex::new(0.349485, -0.20135958), 1e-5));
     }
-    
+
     #[test]
     fn test_some_expf_cases()
     {
         let c = Complex::new(2.0, -1.0);
         let r = c.expf(10.0);
         assert!(close_to_tol(r, Complex::new(-66.82015, -74.39803), 1e-5));
-        
+
         let c = Complex::new(5.0, -2.0);
         let r = c.expf(3.4);
         assert!(close_to_tol(r, Complex::new(-349.25, -290.63), 1e-2));
-        
+
         let c = Complex::new(-1.5, 2.0 / 3.0);
         let r = c.expf(1.0 / 3.0);
         assert!(close_to_tol(r, Complex::new(3.8637, -3.4745), 1e-2));
@@ -1213,57 +1568,99 @@ mod test {
         }
     }
 
+    // Test both a + b and a += b
+    macro_rules! test_a_op_b {
+        ($a:ident + $b:expr, $answer:expr) => {
+            assert_eq!($a + $b, $answer);
+            assert_eq!({ let mut x = $a; x += $b; x}, $answer);
+        };
+        ($a:ident - $b:expr, $answer:expr) => {
+            assert_eq!($a - $b, $answer);
+            assert_eq!({ let mut x = $a; x -= $b; x}, $answer);
+        };
+        ($a:ident * $b:expr, $answer:expr) => {
+            assert_eq!($a * $b, $answer);
+            assert_eq!({ let mut x = $a; x *= $b; x}, $answer);
+        };
+        ($a:ident / $b:expr, $answer:expr) => {
+            assert_eq!($a / $b, $answer);
+            assert_eq!({ let mut x = $a; x /= $b; x}, $answer);
+        };
+        ($a:ident % $b:expr, $answer:expr) => {
+            assert_eq!($a % $b, $answer);
+            assert_eq!({ let mut x = $a; x %= $b; x}, $answer);
+        }
+    }
+
+    // Test both a + b and a + &b
+    macro_rules! test_op {
+        ($a:ident $op:tt $b:expr, $answer:expr) => {
+            test_a_op_b!($a $op $b, $answer);
+            test_a_op_b!($a $op &$b, $answer);
+        }
+    }
+
     mod complex_arithmetic {
-        use super::{_0_0i, _1_0i, _1_1i, _0_1i, _neg1_1i, _05_05i, all_consts};
+        use super::{_0_0i, _1_0i, _1_1i, _0_1i, _neg1_1i, _05_05i, _4_2i, all_consts};
         use traits::Zero;
 
         #[test]
         fn test_add() {
-            assert_eq!(_05_05i + _05_05i, _1_1i);
-            assert_eq!(_0_1i + _1_0i, _1_1i);
-            assert_eq!(_1_0i + _neg1_1i, _0_1i);
+            test_op!(_05_05i + _05_05i, _1_1i);
+            test_op!(_0_1i + _1_0i, _1_1i);
+            test_op!(_1_0i + _neg1_1i, _0_1i);
 
             for &c in all_consts.iter() {
-                assert_eq!(_0_0i + c, c);
-                assert_eq!(c + _0_0i, c);
+                test_op!(_0_0i + c, c);
+                test_op!(c + _0_0i, c);
             }
         }
 
         #[test]
         fn test_sub() {
-            assert_eq!(_05_05i - _05_05i, _0_0i);
-            assert_eq!(_0_1i - _1_0i, _neg1_1i);
-            assert_eq!(_0_1i - _neg1_1i, _1_0i);
+            test_op!(_05_05i - _05_05i, _0_0i);
+            test_op!(_0_1i - _1_0i, _neg1_1i);
+            test_op!(_0_1i - _neg1_1i, _1_0i);
 
             for &c in all_consts.iter() {
-                assert_eq!(c - _0_0i, c);
-                assert_eq!(c - c, _0_0i);
+                test_op!(c - _0_0i, c);
+                test_op!(c - c, _0_0i);
             }
         }
 
         #[test]
         fn test_mul() {
-            assert_eq!(_05_05i * _05_05i, _0_1i.unscale(2.0));
-            assert_eq!(_1_1i * _0_1i, _neg1_1i);
+            test_op!(_05_05i * _05_05i, _0_1i.unscale(2.0));
+            test_op!(_1_1i * _0_1i, _neg1_1i);
 
             // i^2 & i^4
-            assert_eq!(_0_1i * _0_1i, -_1_0i);
+            test_op!(_0_1i * _0_1i, -_1_0i);
             assert_eq!(_0_1i * _0_1i * _0_1i * _0_1i, _1_0i);
 
             for &c in all_consts.iter() {
-                assert_eq!(c * _1_0i, c);
-                assert_eq!(_1_0i * c, c);
+                test_op!(c * _1_0i, c);
+                test_op!(_1_0i * c, c);
             }
         }
 
         #[test]
         fn test_div() {
-            assert_eq!(_neg1_1i / _0_1i, _1_1i);
+            test_op!(_neg1_1i / _0_1i, _1_1i);
             for &c in all_consts.iter() {
                 if c != Zero::zero() {
-                    assert_eq!(c / c, _1_0i);
+                    test_op!(c / c, _1_0i);
                 }
             }
+        }
+
+        #[test]
+        fn test_rem() {
+            test_op!(_neg1_1i % _0_1i, _0_0i);
+            test_op!(_4_2i % _0_1i, _0_0i);
+            test_op!(_05_05i % _0_1i, _05_05i);
+            test_op!(_05_05i % _1_1i, _05_05i);
+            assert_eq!((_4_2i + _05_05i) % _0_1i, _05_05i);
+            assert_eq!((_4_2i + _05_05i) % _1_1i, _05_05i);
         }
 
         #[test]
@@ -1278,29 +1675,39 @@ mod test {
 
     mod real_arithmetic {
         use super::super::Complex;
+        use super::{_4_2i, _neg1_1i};
 
         #[test]
         fn test_add() {
-            assert_eq!(Complex::new(4.0, 2.0) + 0.5, Complex::new(4.5, 2.0));
-            assert_eq!(0.5 + Complex::new(4.0, 2.0), Complex::new(4.5, 2.0));
+            test_op!(_4_2i + 0.5, Complex::new(4.5, 2.0));
+            assert_eq!(0.5 + _4_2i, Complex::new(4.5, 2.0));
         }
 
         #[test]
         fn test_sub() {
-            assert_eq!(Complex::new(4.0, 2.0) - 0.5, Complex::new(3.5, 2.0));
-            assert_eq!(0.5 - Complex::new(4.0, 2.0), Complex::new(-3.5, -2.0));
+            test_op!(_4_2i - 0.5, Complex::new(3.5, 2.0));
+            assert_eq!(0.5 - _4_2i, Complex::new(-3.5, -2.0));
         }
 
         #[test]
         fn test_mul() {
-            assert_eq!(Complex::new(4.0, 2.0) * 0.5, Complex::new(2.0, 1.0));
-            assert_eq!(0.5 * Complex::new(4.0, 2.0), Complex::new(2.0, 1.0));
+            assert_eq!(_4_2i * 0.5, Complex::new(2.0, 1.0));
+            assert_eq!(0.5 * _4_2i, Complex::new(2.0, 1.0));
         }
 
         #[test]
         fn test_div() {
-            assert_eq!(Complex::new(4.0, 2.0) / 0.5, Complex::new(8.0, 4.0));
-            assert_eq!(0.5 / Complex::new(4.0, 2.0), Complex::new(0.1, -0.05));
+            assert_eq!(_4_2i / 0.5, Complex::new(8.0, 4.0));
+            assert_eq!(0.5 / _4_2i, Complex::new(0.1, -0.05));
+        }
+
+        #[test]
+        fn test_rem() {
+            assert_eq!(_4_2i % 2.0, Complex::new(0.0, 0.0));
+            assert_eq!(_4_2i % 3.0, Complex::new(1.0, 2.0));
+            assert_eq!(3.0 % _4_2i, Complex::new(3.0, 0.0));
+			assert_eq!(_neg1_1i % 2.0, _neg1_1i);
+			assert_eq!(-_4_2i % 3.0, Complex::new(-1.0, -2.0));
         }
     }
 
@@ -1394,5 +1801,95 @@ mod test {
         assert!(!a.is_normal());
         assert!(!b.is_normal());
         assert!(_1_1i.is_normal());
+    }
+
+    #[test]
+    fn test_from_str() {
+        fn test(z: Complex64, s: &str) {
+            assert_eq!(FromStr::from_str(s), Ok(z));
+        }
+        test(_0_0i, "0 + 0i");
+        test(_0_0i, "0+0j");
+        test(_0_0i, "0 - 0j");
+        test(_0_0i, "0-0i");
+        test(_0_0i, "0i + 0");
+        test(_0_0i, "0");
+        test(_0_0i, "-0");
+        test(_0_0i, "0i");
+        test(_0_0i, "0j");
+        test(_0_0i, "+0j");
+        test(_0_0i, "-0i");
+
+        test(_1_0i, "1 + 0i");
+        test(_1_0i, "1+0j");
+        test(_1_0i, "1 - 0j");
+        test(_1_0i, "+1-0i");
+        test(_1_0i, "-0j+1");
+        test(_1_0i, "1");
+
+        test(_1_1i, "1 + i");
+        test(_1_1i, "1+j");
+        test(_1_1i, "1 + 1j");
+        test(_1_1i, "1+1i");
+        test(_1_1i, "i + 1");
+        test(_1_1i, "1i+1");
+        test(_1_1i, "+j+1");
+
+        test(_0_1i, "0 + i");
+        test(_0_1i, "0+j");
+        test(_0_1i, "-0 + j");
+        test(_0_1i, "-0+i");
+        test(_0_1i, "0 + 1i");
+        test(_0_1i, "0+1j");
+        test(_0_1i, "-0 + 1j");
+        test(_0_1i, "-0+1i");
+        test(_0_1i, "j + 0");
+        test(_0_1i, "i");
+        test(_0_1i, "j");
+        test(_0_1i, "1j");
+
+        test(_neg1_1i, "-1 + i");
+        test(_neg1_1i, "-1+j");
+        test(_neg1_1i, "-1 + 1j");
+        test(_neg1_1i, "-1+1i");
+        test(_neg1_1i, "1i-1");
+        test(_neg1_1i, "j + -1");
+
+        test(_05_05i, "0.5 + 0.5i");
+        test(_05_05i, "0.5+0.5j");
+        test(_05_05i, "5e-1+0.5j");
+        test(_05_05i, "5E-1 + 0.5j");
+        test(_05_05i, "5E-1i + 0.5");
+        test(_05_05i, "0.05e+1j + 50E-2");
+    }
+
+    #[test]
+    fn test_from_str_radix() {
+        fn test(z: Complex64, s: &str, radix: u32) {
+            let res: Result<Complex64, <Complex64 as Num>::FromStrRadixErr>
+                = Num::from_str_radix(s, radix);
+            assert_eq!(res.unwrap(), z)
+        }
+        test(_4_2i, "4+2i", 10);
+        test(Complex::new(15.0, 32.0), "F+20i", 16);
+        test(Complex::new(15.0, 32.0), "1111+100000i", 2);
+        test(Complex::new(-15.0, -32.0), "-F-20i", 16);
+        test(Complex::new(-15.0, -32.0), "-1111-100000i", 2);
+    }
+
+    #[test]
+    fn test_from_str_fail() {
+        fn test(s: &str) {
+            let complex: Result<Complex64, _> = FromStr::from_str(s);
+            assert!(complex.is_err());
+        }
+        test("foo");
+        test("6E");
+        test("0 + 2.718");
+        test("1 - -2i");
+        test("314e-2ij");
+        test("4.3j - i");
+        test("1i - 2i");
+        test("+ 1 - 3.0i");
     }
 }

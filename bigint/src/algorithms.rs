@@ -118,7 +118,7 @@ pub fn div_rem_digit(mut a: BigUint, b: BigDigit) -> (BigUint, BigDigit) {
         rem = r;
     }
 
-    (a.normalize(), rem)
+    (a.normalized(), rem)
 }
 
 // Only for the Add impl:
@@ -339,7 +339,7 @@ fn mac3(acc: &mut [BigDigit], b: &[BigDigit], c: &[BigDigit]) {
         mac3(&mut p.data[..], x1, y1);
 
         // Not required, but the adds go faster if we drop any unneeded 0s from the end:
-        p = p.normalize();
+        p.normalize();
 
         add2(&mut acc[b..],        &p.data[..]);
         add2(&mut acc[b * 2..],    &p.data[..]);
@@ -350,7 +350,7 @@ fn mac3(acc: &mut [BigDigit], b: &[BigDigit], c: &[BigDigit]) {
 
         // p0 = x0 * y0
         mac3(&mut p.data[..], x0, y0);
-        p = p.normalize();
+        p.normalize();
 
         add2(&mut acc[..],         &p.data[..]);
         add2(&mut acc[b..],        &p.data[..]);
@@ -366,7 +366,7 @@ fn mac3(acc: &mut [BigDigit], b: &[BigDigit], c: &[BigDigit]) {
                 p.data.extend(repeat(0).take(len));
 
                 mac3(&mut p.data[..], &j0.data[..], &j1.data[..]);
-                p = p.normalize();
+                p.normalize();
 
                 sub2(&mut acc[b..], &p.data[..]);
             },
@@ -383,7 +383,7 @@ pub fn mul3(x: &[BigDigit], y: &[BigDigit]) -> BigUint {
     let mut prod = BigUint { data: vec![0; len] };
 
     mac3(&mut prod.data[..], x, y);
-    prod.normalize()
+    prod.normalized()
 }
 
 pub fn scalar_mul(a: &mut [BigDigit], b: BigDigit) -> BigDigit {
@@ -480,14 +480,14 @@ pub fn div_rem(u: &BigUint, d: &BigUint) -> (BigUint, BigUint) {
 
         add2(&mut q.data[j..], &q0.data[..]);
         sub2(&mut a.data[j..], &prod.data[..]);
-        a = a.normalize();
+        a.normalize();
 
         tmp = q0;
     }
 
     debug_assert!(a < b);
 
-    (q.normalize(), a >> shift)
+    (q.normalized(), a >> shift)
 }
 
 /// Find last set bit
