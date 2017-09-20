@@ -288,6 +288,7 @@ impl<'a> BitAndAssign<&'a BigUint> for BigUint {
             *ai &= bi;
         }
         self.data.truncate(other.data.len());
+        self.normalize();
     }
 }
 
