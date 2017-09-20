@@ -249,9 +249,19 @@ fn mac3(acc: &mut [BigDigit], b: &[BigDigit], c: &[BigDigit]) {
         (c, b)
     };
 
-    // Karatsuba multiplication is slower than long multiplication for small x and y:
+    // We use three algorithms for different input sizes.
     //
+    // - For small inputs, long multiplication is fastest.
+    // - Next we use Karatsuba multiplication (Toom-2), which we have optimized
+    //   to avoid unnecessary allocations for intermediate values.
+    // - For the largest inputs we use Toom-3, which better optimizes the
+    //   number of operations, but uses more temporary allocations.
+    //
+    // The thresholds are somewhat arbitrary, chosen by evaluating the results
+    // of `cargo bench --bench bigint multiply`.
+
     if x.len() <= 16 {
+        // Long multiplication:
         for (i, xi) in x.iter().enumerate() {
             mac_digit(&mut acc[i..], y, *xi);
         }
@@ -376,6 +386,13 @@ fn mac3(acc: &mut [BigDigit], b: &[BigDigit], c: &[BigDigit]) {
         }
 
     } else {
+        // Toom-3 multiplication:
+        //
+        // Toom-3 is like Karatsuba above, but dividing the inputs into three parts.
+        // Both are instances of Toom-Cook, using `k=3` and `k=2` respectively.
+        //
+        // FIXME: It would be nice to have comments breaking down the operations below.
+
         let i = y.len()/3 + 1;
 
         let x0_len = cmp::min(x.len(), i);
