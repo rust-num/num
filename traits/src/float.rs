@@ -459,13 +459,33 @@ pub trait Float
     /// assert!(abs_difference < 1e-10);
     /// ```
     #[inline]
-    fn powi(mut self, mut exp: i32) -> Self {
-        if exp < 0 {
-            self = self.recip();
-            exp = -exp;
+    fn powi(self, mut exp: i32) -> Self {
+        let mut base = self;
+        if exp == 0 {
+            return Self::one();
+        } else if exp < 0 {
+            base = base.recip();
+            exp = exp.wrapping_neg();
         }
-        // It should always be possible to convert a positive `i32` to a `usize`.
-        super::pow(self, exp.to_usize().unwrap())
+        let mut exp = exp as u32;
+
+        // duplicated from `::pow`, but using `Mul` by value instead of by reference.
+
+        while exp & 1 == 0 {
+            base = base * base;
+            exp >>= 1;
+        }
+        if exp == 1 { return base; }
+
+        let mut acc = base;
+        while exp > 1 {
+            exp >>= 1;
+            base = base * base;
+            if exp & 1 == 1 {
+                acc = acc * base;
+            }
+        }
+        acc
     }
 
     /// Raise a number to a floating point power.
