@@ -401,7 +401,7 @@ pub fn div_rem(u: &BigUint, d: &BigUint) -> (BigUint, BigUint) {
     if u.is_zero() {
         return (Zero::zero(), Zero::zero());
     }
-    if *d == One::one() {
+    if d.is_one() {
         return (u.clone(), Zero::zero());
     }
 

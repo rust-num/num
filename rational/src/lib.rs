@@ -100,7 +100,7 @@ impl<T: Clone + Integer> Ratio<T> {
     /// Returns true if the rational number is an integer (denominator is 1).
     #[inline]
     pub fn is_integer(&self) -> bool {
-        self.denom == One::one()
+        self.denom.is_one()
     }
 
     /// Puts self into lowest terms, with denom > 0.
@@ -506,6 +506,11 @@ impl<T: Clone + Integer> One for Ratio<T> {
     fn one() -> Ratio<T> {
         Ratio::new_raw(One::one(), One::one())
     }
+
+    #[inline]
+    fn is_one(&self) -> bool {
+        self.numer == self.denom
+    }
 }
 
 impl<T: Clone + Integer> Num for Ratio<T> {
@@ -585,7 +590,7 @@ impl<T> fmt::Display for Ratio<T>
 {
     /// Renders as `numer/denom`. If denom=1, renders as numer.
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if self.denom == One::one() {
+        if self.denom.is_one() {
             write!(f, "{}", self.numer)
         } else {
             write!(f, "{}/{}", self.numer, self.denom)

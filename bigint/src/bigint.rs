@@ -262,6 +262,11 @@ impl One for BigInt {
     fn one() -> BigInt {
         BigInt::from_biguint(Plus, One::one())
     }
+
+    #[inline]
+    fn is_one(&self) -> bool {
+        self.sign == Plus && self.data.is_one()
+    }
 }
 
 impl Signed for BigInt {
