@@ -116,6 +116,10 @@ impl<T: One> One for Wrapping<T> where Wrapping<T>: Mul<Output=Wrapping<T>> {
     fn one() -> Self {
         Wrapping(T::one())
     }
+
+    fn is_one(&self) -> bool {
+        self.0.is_one()
+    }
 }
 
 // Some helper functions provided for backwards compatibility.
