@@ -1,3 +1,5 @@
+#![allow(unknown_lints)] // older rustc doesn't know `unused_macros`
+#![allow(unused_macros)]
 
 macro_rules! forward_val_val_binop {
     (impl $imp:ident for $res:ty, $method:ident) => {
