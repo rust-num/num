@@ -123,7 +123,6 @@ pub fn div_rem_digit(mut a: BigUint, b: BigDigit) -> (BigUint, BigDigit) {
 }
 
 // Only for the Add impl:
-#[must_use]
 #[inline]
 pub fn __add2(a: &mut [BigDigit], b: &[BigDigit]) -> BigDigit {
     debug_assert!(a.len() >= b.len());
