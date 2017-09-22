@@ -79,6 +79,11 @@ fn multiply_2(b: &mut Bencher) {
 }
 
 #[bench]
+fn multiply_3(b: &mut Bencher) {
+    multiply_bench(b, 1 << 16, 1 << 17);
+}
+
+#[bench]
 fn divide_0(b: &mut Bencher) {
     divide_bench(b, 1 << 8, 1 << 6);
 }

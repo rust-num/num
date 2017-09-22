@@ -8,6 +8,7 @@ use traits::{Zero, One};
 
 use biguint::BigUint;
 
+use bigint::BigInt;
 use bigint::Sign;
 use bigint::Sign::{Minus, NoSign, Plus};
 
@@ -122,7 +123,6 @@ pub fn div_rem_digit(mut a: BigUint, b: BigDigit) -> (BigUint, BigDigit) {
 }
 
 // Only for the Add impl:
-#[must_use]
 #[inline]
 pub fn __add2(a: &mut [BigDigit], b: &[BigDigit]) -> BigDigit {
     debug_assert!(a.len() >= b.len());
@@ -225,20 +225,18 @@ fn mac_digit(acc: &mut [BigDigit], b: &[BigDigit], c: BigDigit) {
         return;
     }
 
-    let mut b_iter = b.iter();
     let mut carry = 0;
+    let (a_lo, a_hi) = acc.split_at_mut(b.len());
 
-    for ai in acc.iter_mut() {
-        if let Some(bi) = b_iter.next() {
-            *ai = mac_with_carry(*ai, *bi, c, &mut carry);
-        } else if carry != 0 {
-            *ai = mac_with_carry(*ai, 0, c, &mut carry);
-        } else {
-            break;
-        }
+    for (a, &b) in a_lo.iter_mut().zip(b) {
+        *a = mac_with_carry(*a, b, c, &mut carry);
     }
 
-    assert!(carry == 0);
+    let mut a = a_hi.iter_mut();
+    while carry != 0 {
+        let a = a.next().expect("carry overflow during multiplication!");
+        *a = adc(*a, 0, &mut carry);
+    }
 }
 
 /// Three argument multiply accumulate:
@@ -250,13 +248,23 @@ fn mac3(acc: &mut [BigDigit], b: &[BigDigit], c: &[BigDigit]) {
         (c, b)
     };
 
-    // Karatsuba multiplication is slower than long multiplication for small x and y:
+    // We use three algorithms for different input sizes.
     //
-    if x.len() <= 4 {
+    // - For small inputs, long multiplication is fastest.
+    // - Next we use Karatsuba multiplication (Toom-2), which we have optimized
+    //   to avoid unnecessary allocations for intermediate values.
+    // - For the largest inputs we use Toom-3, which better optimizes the
+    //   number of operations, but uses more temporary allocations.
+    //
+    // The thresholds are somewhat arbitrary, chosen by evaluating the results
+    // of `cargo bench --bench bigint multiply`.
+
+    if x.len() <= 32 {
+        // Long multiplication:
         for (i, xi) in x.iter().enumerate() {
             mac_digit(&mut acc[i..], y, *xi);
         }
-    } else {
+    } else if x.len() <= 256 {
         /*
          * Karatsuba multiplication:
          *
@@ -375,6 +383,53 @@ fn mac3(acc: &mut [BigDigit], b: &[BigDigit], c: &[BigDigit]) {
             },
             NoSign  => (),
         }
+
+    } else {
+        // Toom-3 multiplication:
+        //
+        // Toom-3 is like Karatsuba above, but dividing the inputs into three parts.
+        // Both are instances of Toom-Cook, using `k=3` and `k=2` respectively.
+        //
+        // FIXME: It would be nice to have comments breaking down the operations below.
+
+        let i = y.len()/3 + 1;
+
+        let x0_len = cmp::min(x.len(), i);
+        let x1_len = cmp::min(x.len() - x0_len, i);
+
+        let y0_len = i;
+        let y1_len = cmp::min(y.len() - y0_len, i);
+
+        let x0 = BigInt::from_slice(Plus, &x[..x0_len]);
+        let x1 = BigInt::from_slice(Plus, &x[x0_len..x0_len + x1_len]);
+        let x2 = BigInt::from_slice(Plus, &x[x0_len + x1_len..]);
+
+        let y0 = BigInt::from_slice(Plus, &y[..y0_len]);
+        let y1 = BigInt::from_slice(Plus, &y[y0_len..y0_len + y1_len]);
+        let y2 = BigInt::from_slice(Plus, &y[y0_len + y1_len..]);
+
+        let p = &x0 + &x2;
+        let q = &y0 + &y2;
+
+        let p2 = &p - &x1;
+        let q2 = &q - &y1;
+
+        let r0 = &x0 * &y0;
+        let r4 = &x2 * &y2;
+        let r1 = (p + x1) * (q + y1);
+        let r2 = &p2 * &q2;
+        let r3 = ((p2 + x2)*2 - x0) * ((q2 + y2)*2 - y0);
+
+        let mut comp3: BigInt = (r3 - &r1) / 3;
+        let mut comp1: BigInt = (r1 - &r2) / 2;
+        let mut comp2: BigInt = r2 - &r0;
+        comp3 = (&comp2 - comp3)/2 + &r4*2;
+        comp2 = comp2 + &comp1 - &r4;
+        comp1 = comp1 - &comp3;
+
+        let result = r0 + (comp1 << 32*i) + (comp2 << 2*32*i) + (comp3 << 3*32*i) + (r4 << 4*32*i);
+        let result_pos = result.to_biguint().unwrap();
+        add2(&mut acc[..], &result_pos.data);
     }
 }
 
