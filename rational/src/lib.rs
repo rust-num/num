@@ -509,6 +509,11 @@ impl<T: Clone + Integer> One for Ratio<T> {
     fn one() -> Ratio<T> {
         Ratio::new_raw(One::one(), One::one())
     }
+    
+    #[inline]
+    fn is_one(&self) -> bool {
+        self.numer == self.denom
+    }
 }
 
 impl<T: Clone + Integer> Num for Ratio<T> {

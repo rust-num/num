@@ -406,6 +406,11 @@ impl One for BigUint {
     fn one() -> BigUint {
         BigUint::new(vec![1])
     }
+    
+    #[inline]
+    fn is_one(&self) -> bool {
+        self.data == [1]
+    }
 }
 
 impl Unsigned for BigUint {}

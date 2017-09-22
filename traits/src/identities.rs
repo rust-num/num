@@ -79,6 +79,10 @@ pub trait One: Sized + Mul<Self, Output = Self> {
     /// `static mut`s.
     // FIXME (#5527): This should be an associated constant
     fn one() -> Self;
+
+    /// Returns `true` if `self` is equal to the multiplicative identity.
+    #[inline]
+    fn is_one(&self) -> bool;
 }
 
 macro_rules! one_impl {
@@ -86,6 +90,9 @@ macro_rules! one_impl {
         impl One for $t {
             #[inline]
             fn one() -> $t { $v }
+
+            #[inline]
+            fn is_one(&self) -> bool { *self == $v }    
         }
     }
 }
