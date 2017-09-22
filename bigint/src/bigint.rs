@@ -1757,7 +1757,7 @@ fn twos_complement<'a, I>(digits: I)
     where I: IntoIterator<Item = &'a mut u8>
 {
     let mut carry = true;
-    for mut d in digits {
+    for d in digits {
         *d = d.not();
         if carry {
             *d = d.wrapping_add(1);
