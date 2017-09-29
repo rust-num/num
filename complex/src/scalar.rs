@@ -10,38 +10,60 @@ pub trait Scalar: Num + Copy + Neg<Output = Self> {
     /// Associated Complex type
     type Complex;
 
+    /// Take the square root of a number.
     fn sqrt(&self) -> Self;
+    /// Returns `e^(self)`, (the exponential function).
     fn exp(&self) -> Self;
+    /// Returns the natural logarithm of the number.
     fn ln(&self) -> Self;
+    /// Returns the square of the absolute value of the number
     fn abs_sqr(&self) -> Self::Real;
+    /// Returns the absolute value of the number
     fn abs(&self) -> Self::Real;
 
+    /// Raise a number to an integer power.
     fn powi(&self, exp: i32) -> Self;
+    /// Raise a number to a floating point power.
     fn powf(&self, exp: Self::Real) -> Self;
+    /// Raise a number to a complex power.
     fn powc(&self, exp: Self::Complex) -> Self::Complex;
 
+    /// Returns complex-conjugate number
     fn conj(&self) -> Self;
 
-    // trigonometric functions
+    /// Computes the sine of a number
     fn sin(&self) -> Self;
+    /// Computes the cosine of a number
     fn cos(&self) -> Self;
+    /// Computes the tangent of a number
     fn tan(&self) -> Self;
+    /// Computes the arcsine of a number
     fn asin(&self) -> Self;
+    /// Computes the arccosine of a number
     fn acos(&self) -> Self;
+    /// Computes the arctangent of a number
     fn atan(&self) -> Self;
 
-    // hyperbolic functions
+    /// Computes the hyperbolic-sine of a number
     fn sinh(&self) -> Self;
+    /// Computes the hyperbolic-cosine of a number
     fn cosh(&self) -> Self;
+    /// Computes the hyperbolic-tangent of a number
     fn tanh(&self) -> Self;
+    /// Computes the hyperbolic-arcsine of a number
     fn asinh(&self) -> Self;
+    /// Computes the hyperbolic-arccosine of a number
     fn acosh(&self) -> Self;
+    /// Computes the hyperbolic-arctangent of a number
     fn atanh(&self) -> Self;
 
-    // check normal
+    /// Checks if the given (real or imaginary part of complex) number is NaN
     fn is_nan(self) -> bool;
+    /// Checks if the given (real or imaginary part of complex) number is infinite
     fn is_infinite(self) -> bool;
+    /// Checks if the given number is finite
     fn is_finite(self) -> bool;
+    /// Checks if the given number is normal
     fn is_normal(self) -> bool;
 }
 
