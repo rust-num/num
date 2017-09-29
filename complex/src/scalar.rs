@@ -1,5 +1,5 @@
 
-use traits::{Num, Float};
+use traits::{Num, FromPrimitive, Float};
 use std::ops::Neg;
 
 use Complex;
@@ -15,6 +15,10 @@ pub trait Scalar: Num + Copy + Neg<Output = Self> {
     fn ln(&self) -> Self;
     fn abs_sqr(&self) -> Self::Real;
     fn abs(&self) -> Self::Real;
+
+    fn powi(&self, exp: i32) -> Self;
+    fn powf(&self, exp: Self::Real) -> Self;
+    fn powc(&self, exp: Self::Complex) -> Self::Complex;
 
     fn conj(&self) -> Self;
 
@@ -41,7 +45,7 @@ pub trait Scalar: Num + Copy + Neg<Output = Self> {
     fn is_normal(self) -> bool;
 }
 
-impl<T: Clone + Float> Scalar for Complex<T> {
+impl<T: Clone + Float + FromPrimitive> Scalar for Complex<T> {
     type Real = T;
     type Complex = Self;
 
@@ -59,6 +63,18 @@ impl<T: Clone + Float> Scalar for Complex<T> {
     }
     fn abs(&self) -> Self::Real {
         Complex::norm(self)
+    }
+
+    // powers
+    fn powi(&self, exp: i32) -> Self {
+        let exp = T::from_i32(exp).unwrap();
+        Complex::powf(self, exp)
+    }
+    fn powf(&self, exp: Self::Real) -> Self {
+        Complex::powf(self, exp)
+    }
+    fn powc(&self, exp: Self::Complex) -> Self::Complex {
+        Complex::powc(self, exp)
     }
 
     fn conj(&self) -> Self {
@@ -140,6 +156,18 @@ impl<T: Float> Scalar for T {
     }
     fn abs(&self) -> Self::Real {
         Float::abs(*self)
+    }
+
+    // powers
+    fn powi(&self, exp: i32) -> Self {
+        Float::powi(*self, exp)
+    }
+    fn powf(&self, exp: Self::Real) -> Self {
+        Float::powf(*self, exp)
+    }
+    fn powc(&self, exp: Self::Complex) -> Self::Complex {
+        let c = Complex::new(*self, T::zero());
+        c.powc(exp)
     }
 
     fn conj(&self) -> Self {
