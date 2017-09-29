@@ -119,3 +119,84 @@ impl<T: Clone + Float> Scalar for Complex<T> {
         Complex::is_normal(self)
     }
 }
+
+impl<T: Float> Scalar for T {
+    /// Associated Real type
+    type Real = T;
+    /// Associated Complex type
+    type Complex = Complex<T>;
+
+    fn sqrt(&self) -> Self {
+        Float::sqrt(*self)
+    }
+    fn exp(&self) -> Self {
+        Float::exp(*self)
+    }
+    fn ln(&self) -> Self {
+        Float::ln(*self)
+    }
+    fn abs_sqr(&self) -> Self::Real {
+        Float::abs(*self).powi(2)
+    }
+    fn abs(&self) -> Self::Real {
+        Float::abs(*self)
+    }
+
+    fn conj(&self) -> Self {
+        *self
+    }
+
+    // trigonometric functions
+    fn sin(&self) -> Self {
+        Float::sin(*self)
+    }
+    fn cos(&self) -> Self {
+        Float::cos(*self)
+    }
+    fn tan(&self) -> Self {
+        Float::tan(*self)
+    }
+    fn asin(&self) -> Self {
+        Float::asin(*self)
+    }
+    fn acos(&self) -> Self {
+        Float::acos(*self)
+    }
+    fn atan(&self) -> Self {
+        Float::atan(*self)
+    }
+
+    // hyperbolic functions
+    fn sinh(&self) -> Self {
+        Float::sinh(*self)
+    }
+    fn cosh(&self) -> Self {
+        Float::cosh(*self)
+    }
+    fn tanh(&self) -> Self {
+        Float::tanh(*self)
+    }
+    fn asinh(&self) -> Self {
+        Float::asinh(*self)
+    }
+    fn acosh(&self) -> Self {
+        Float::acosh(*self)
+    }
+    fn atanh(&self) -> Self {
+        Float::atanh(*self)
+    }
+
+    // check normal
+    fn is_nan(self) -> bool {
+        Float::is_nan(self)
+    }
+    fn is_infinite(self) -> bool {
+        Float::is_infinite(self)
+    }
+    fn is_finite(self) -> bool {
+        Float::is_finite(self)
+    }
+    fn is_normal(self) -> bool {
+        Float::is_normal(self)
+    }
+}
