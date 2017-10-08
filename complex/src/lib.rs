@@ -22,7 +22,8 @@ extern crate rustc_serialize;
 #[cfg(feature = "serde")]
 extern crate serde;
 
-pub mod scalar;
+mod scalar;
+pub use scalar::Scalar;
 
 use std::error::Error;
 use std::fmt;
