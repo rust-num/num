@@ -6,9 +6,7 @@ use Complex;
 
 pub trait Scalar: Num + Copy + Neg<Output = Self> {
     /// Associated Real type
-    type Real;
-    /// Associated Complex type
-    type Complex;
+    type Real: Scalar;
 
     /// Take the square root of a number.
     fn sqrt(&self) -> Self;
@@ -26,7 +24,7 @@ pub trait Scalar: Num + Copy + Neg<Output = Self> {
     /// Raise a number to a floating point power.
     fn powf(&self, exp: Self::Real) -> Self;
     /// Raise a number to a complex power.
-    fn powc(&self, exp: Self::Complex) -> Self::Complex;
+    fn powc(&self, exp: Complex<Self::Real>) -> Complex<Self::Real>;
 
     /// Returns complex-conjugate number
     fn conj(&self) -> Self;
@@ -69,7 +67,6 @@ pub trait Scalar: Num + Copy + Neg<Output = Self> {
 
 impl<T: Clone + Float + FromPrimitive> Scalar for Complex<T> {
     type Real = T;
-    type Complex = Self;
 
     fn sqrt(&self) -> Self {
         Complex::sqrt(self)
@@ -95,7 +92,7 @@ impl<T: Clone + Float + FromPrimitive> Scalar for Complex<T> {
     fn powf(&self, exp: Self::Real) -> Self {
         Complex::powf(self, exp)
     }
-    fn powc(&self, exp: Self::Complex) -> Self::Complex {
+    fn powc(&self, exp: Complex<Self::Real>) -> Complex<Self::Real> {
         Complex::powc(self, exp)
     }
 
@@ -159,10 +156,7 @@ impl<T: Clone + Float + FromPrimitive> Scalar for Complex<T> {
 }
 
 impl<T: Float> Scalar for T {
-    /// Associated Real type
     type Real = T;
-    /// Associated Complex type
-    type Complex = Complex<T>;
 
     fn sqrt(&self) -> Self {
         Float::sqrt(*self)
@@ -187,7 +181,7 @@ impl<T: Float> Scalar for T {
     fn powf(&self, exp: Self::Real) -> Self {
         Float::powf(*self, exp)
     }
-    fn powc(&self, exp: Self::Complex) -> Self::Complex {
+    fn powc(&self, exp: Complex<Self::Real>) -> Complex<Self::Real> {
         let c = Complex::new(*self, T::zero());
         c.powc(exp)
     }
