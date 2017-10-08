@@ -6,7 +6,7 @@ use Complex;
 
 pub trait Scalar: Num + Copy + Neg<Output = Self> {
     /// Associated Real type
-    type Real: Scalar;
+    type Real: Scalar<Real = Self::Real>;
 
     /// Take the square root of a number.
     fn sqrt(&self) -> Self;
@@ -205,7 +205,7 @@ impl<T: Float> Scalar for T {
     }
 
     fn abs_sqr(&self) -> Self::Real {
-        Float::abs(*self).powi(2)
+        *self * *self
     }
 
     fn abs(&self) -> Self::Real {
@@ -221,8 +221,7 @@ impl<T: Float> Scalar for T {
     }
 
     fn powc(&self, exp: Complex<Self::Real>) -> Complex<Self::Real> {
-        let c = Complex::new(*self, T::zero());
-        c.powc(exp)
+        exp.expf(*self)
     }
 
     fn conj(&self) -> Self {
