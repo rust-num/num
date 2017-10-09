@@ -243,6 +243,7 @@ impl Num for BigUint {
                 b'0'...b'9' => b - b'0',
                 b'a'...b'z' => b - b'a' + 10,
                 b'A'...b'Z' => b - b'A' + 10,
+                b'_' => continue,
                 _ => u8::MAX,
             };
             if d < radix as u8 {
