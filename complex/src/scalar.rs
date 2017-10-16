@@ -4,8 +4,11 @@ use std::ops::Neg;
 
 use Complex;
 
+/// Associated types for scalars
 pub trait Associated {
+    /// Real scalar type
     type Real: Scalar;
+    /// Complex scalar type
     type Complex: Scalar;
 }
 
@@ -18,7 +21,7 @@ where
 }
 
 pub trait Scalar: Num + Copy + Neg<Output = Self> + Associated {
-    /// Associated Repr type
+    /// Base floating-point representation of the scalar
     type Repr: Scalar<Repr = Self::Repr>;
 
     /// Take the square root of a number.
