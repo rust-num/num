@@ -73,27 +73,11 @@ fn monty_redc(a: BigUint, mr: &MontyReducer) -> BigUint {
 
     // 1: for i = 0 to (n-1)
     for i in 0..n_size {
-        // Carry storage
-        let mut carry = 0;
-
         // 2: q_i <- mu*c_i mod β
         let q_i = ((c[i] as u64) * mu) & beta_mask;
 
         // 3: C <- C + q_i * N * β^i
-        // When iterating over each word, this becomes:
-        for j in 0..n_size {
-            // c_(i+j) <- c_(i+j) + q_i * n_j
-            let x = (c[i+j] as u64) + q_i * (n[j] as u64) + carry;
-            c[i+j] = (x & beta_mask) as u32;
-            carry = x >> 32;
-        }
-
-        // Apply the remaining carry to the rest of the work space
-        for j in n_size..2*n_size-i+2 {
-            let x = (c[i+j] as u64) + carry;
-            c[i+j] = (x & beta_mask) as u32;
-            carry = x >> 32;
-        }
+        super::algorithms::mac_digit(&mut c[i..], n, q_i as u32);
     }
 
     // 4: R <- C * β^(-n)
