@@ -7,20 +7,19 @@ use biguint::BigUint;
 struct MontyReducer<'a> {
     p: &'a BigUint,
     n: Vec<u32>,
-    n0inv: u64
+    n0inv: u32
 }
 
 // Calculate the modular inverse of `num`, using Extended GCD.
 //
 // Reference:
 // Brent & Zimmermann, Modern Computer Arithmetic, v0.5.9, Algorithm 1.20
-fn inv_mod_u32(num: u32) -> u64 {
-    // num needs to be relatively prime to u32::max_value()
+fn inv_mod_u32(num: u32) -> u32 {
+    // num needs to be relatively prime to 2**32 -- i.e. it must be odd.
     assert!(num % 2 != 0);
 
     let mut a: i64 = num as i64;
     let mut b: i64 = (u32::max_value() as i64) + 1;
-    let mu = b;
 
     // ExtendedGcd
     // Input: positive integers a and b
@@ -43,12 +42,8 @@ fn inv_mod_u32(num: u32) -> u64 {
     }
 
     assert!(a == 1);
-    // Ensure returned value is in-range
-    if u < 0 {
-        (u + mu) as u64
-    } else {
-        u as u64
-    }
+    // Downcasting acts like a mod 2^32 too.
+    u as u32
 }
 
 impl<'a> MontyReducer<'a> {
@@ -77,7 +72,7 @@ fn monty_redc(a: BigUint, mr: &MontyReducer) -> BigUint {
     // equivalent to masking a to 32 bits.
     let beta_mask = u32::max_value() as u64;
     // mu <- -N^(-1) mod β
-    let mu = (beta_mask-mr.n0inv)+1;
+    let mu = (beta_mask-mr.n0inv as u64)+1;
 
     // 1: for i = 0 to (n-1)
     for i in 0..n_size {
