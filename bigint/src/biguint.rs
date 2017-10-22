@@ -1625,7 +1625,34 @@ impl BigUint {
 
     /// Returns `(self ^ exponent) % modulus`.
     pub fn modpow(&self, exponent: &Self, modulus: &Self) -> Self {
-        monty_modpow(self, exponent, modulus)
+        assert!(!modulus.is_zero(), "divide by zero!");
+
+        // For an odd modulus, we can use Montgomery multiplication in base 2^32.
+        if modulus.is_odd() {
+            return monty_modpow(self, exponent, modulus);
+        }
+
+        // Otherwise do basically the same as `num::pow`, but with a modulus.
+        let one = BigUint::one();
+        if exponent.is_zero() { return one; }
+
+        let mut base = self % modulus;
+        let mut exp = exponent.clone();
+        while exp.is_even() {
+            base = &base * &base % modulus;
+            exp >>= 1;
+        }
+        if exp == one { return base }
+
+        let mut acc = base.clone();
+        while exp > one {
+            exp >>= 1;
+            base = &base * &base % modulus;
+            if exp.is_odd() {
+                acc = acc * &base % modulus;
+            }
+        }
+        acc
     }
 }
 

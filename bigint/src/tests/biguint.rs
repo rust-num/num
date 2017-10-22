@@ -1098,6 +1098,11 @@ fn test_modpow() {
         let big_r = BigUint::from(r);
 
         assert_eq!(big_b.modpow(&big_e, &big_m), big_r);
+
+        let even_m = &big_m << 1;
+        let even_modpow = big_b.modpow(&big_e, &even_m);
+        assert!(even_modpow < even_m);
+        assert_eq!(even_modpow % big_m, big_r);
     }
 
     check(1, 0, 11, 1);
@@ -1160,6 +1165,11 @@ fn test_modpow_big() {
         109c4735_6e7db425_7b5d74c7_0b709508", 16).unwrap();
 
     assert_eq!(b.modpow(&e, &m), r);
+
+    let even_m = &m << 1;
+    let even_modpow = b.modpow(&e, &even_m);
+    assert!(even_modpow < even_m);
+    assert_eq!(even_modpow % m, r);
 }
 
 fn to_str_pairs() -> Vec<(BigUint, Vec<(u32, String)>)> {
