@@ -106,10 +106,9 @@ pub fn monty_modpow(a: &BigUint, exp: &BigUint, modulus: &BigUint) -> BigUint{
     let mr = MontyReducer::new(modulus);
 
     // Calculate the Montgomery parameter
-    let mut r : BigUint = One::one();
-    while &r < mr.p {
-        r = r << 32;
-    }
+    let mut v = vec![0; mr.p.data.len()];
+    v.push(1);
+    let r = BigUint::new(v);
 
     // Map the base to the Montgomery domain
     let mut apri = a * &r % mr.p;
