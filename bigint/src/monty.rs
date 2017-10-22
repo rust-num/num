@@ -4,8 +4,7 @@ use traits::Zero;
 use biguint::BigUint;
 
 struct MontyReducer<'a> {
-    p: &'a BigUint,
-    n: Vec<u32>,
+    n: &'a BigUint,
     n0inv: u32
 }
 
@@ -46,10 +45,9 @@ fn inv_mod_u32(num: u32) -> u32 {
 }
 
 impl<'a> MontyReducer<'a> {
-    fn new(p: &'a BigUint) -> Self {
-        let n : Vec<u32> = p.data.clone();
-        let n0inv = inv_mod_u32(n[0]);
-        MontyReducer { p: p, n: n, n0inv: n0inv }
+    fn new(n: &'a BigUint) -> Self {
+        let n0inv = inv_mod_u32(n.data[0]);
+        MontyReducer { n: n, n0inv: n0inv }
     }
 }
 
@@ -59,7 +57,7 @@ impl<'a> MontyReducer<'a> {
 // Brent & Zimmermann, Modern Computer Arithmetic, v0.5.9, Algorithm 2.6
 fn monty_redc(a: BigUint, mr: &MontyReducer) -> BigUint {
     let mut c = a.data;
-    let n = &mr.n;
+    let n = &mr.n.data;
     let n_size = n.len();
 
     // Allocate sufficient work space
@@ -84,10 +82,10 @@ fn monty_redc(a: BigUint, mr: &MontyReducer) -> BigUint {
     let ret = BigUint::new(c[n_size..].to_vec());
 
     // 5: if R >= β^n then return R-N else return R.
-    if &ret < mr.p {
+    if &ret < mr.n {
         ret
     } else {
-        ret - mr.p
+        ret - mr.n
     }
 }
 
@@ -106,15 +104,15 @@ pub fn monty_modpow(a: &BigUint, exp: &BigUint, modulus: &BigUint) -> BigUint{
     let mr = MontyReducer::new(modulus);
 
     // Calculate the Montgomery parameter
-    let mut v = vec![0; mr.p.data.len()];
+    let mut v = vec![0; modulus.data.len()];
     v.push(1);
     let r = BigUint::new(v);
 
     // Map the base to the Montgomery domain
-    let mut apri = a * &r % mr.p;
+    let mut apri = a * &r % modulus;
 
     // Binary exponentiation
-    let mut ans = &r % mr.p;
+    let mut ans = &r % modulus;
     let mut e = exp.clone();
     while !e.is_zero() {
         if e.is_odd() {
