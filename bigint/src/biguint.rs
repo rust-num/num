@@ -30,7 +30,7 @@ use self::algorithms::{mac_with_carry, mul3, scalar_mul, div_rem, div_rem_digit}
 use self::algorithms::{__add2, add2, sub2, sub2rev};
 use self::algorithms::{biguint_shl, biguint_shr};
 use self::algorithms::{cmp_slice, fls, ilog2};
-use self::monty::{MontyReducer, monty_modpow};
+use self::monty::monty_modpow;
 
 use UsizePromotion;
 
@@ -1625,8 +1625,7 @@ impl BigUint {
 
     /// Returns `(self ^ exponent) % modulus`.
     pub fn modpow(&self, exponent: &Self, modulus: &Self) -> Self {
-        let mr = MontyReducer::new(modulus);
-        monty_modpow(self, exponent, &mr)
+        monty_modpow(self, exponent, modulus)
     }
 }
 

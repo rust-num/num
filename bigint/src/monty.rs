@@ -4,7 +4,7 @@ use traits::{Zero, One};
 
 use biguint::BigUint;
 
-pub struct MontyReducer<'a> {
+struct MontyReducer<'a> {
     p: &'a BigUint,
     n: Vec<u32>,
     n0inv: u64
@@ -52,7 +52,7 @@ fn inv_mod_u32(num: u32) -> u64 {
 }
 
 impl<'a> MontyReducer<'a> {
-    pub fn new(p: &'a BigUint) -> Self {
+    fn new(p: &'a BigUint) -> Self {
         let n : Vec<u32> = p.data.clone();
         let n0inv = inv_mod_u32(n[0]);
         MontyReducer { p: p, n: n, n0inv: n0inv }
@@ -63,7 +63,7 @@ impl<'a> MontyReducer<'a> {
 //
 // Reference:
 // Brent & Zimmermann, Modern Computer Arithmetic, v0.5.9, Algorithm 2.6
-pub fn monty_redc(a: BigUint, mr: &MontyReducer) -> BigUint {
+fn monty_redc(a: BigUint, mr: &MontyReducer) -> BigUint {
     let mut c = a.data;
     let n = &mr.n;
     let n_size = n.len();
@@ -128,7 +128,9 @@ fn monty_sqr(a: BigUint, mr: &MontyReducer) -> BigUint {
     monty_redc(&a * &a, mr)
 }
 
-pub fn monty_modpow(a: &BigUint, exp: &BigUint, mr: &MontyReducer) -> BigUint{
+pub fn monty_modpow(a: &BigUint, exp: &BigUint, modulus: &BigUint) -> BigUint{
+    let mr = MontyReducer::new(modulus);
+
     // Calculate the Montgomery parameter
     let mut r : BigUint = One::one();
     while &r < mr.p {
@@ -144,12 +146,12 @@ pub fn monty_modpow(a: &BigUint, exp: &BigUint, mr: &MontyReducer) -> BigUint{
     let zero = Zero::zero();
     while e > zero {
         if e.is_odd() {
-            ans = monty_mult(ans, &apri, mr);
+            ans = monty_mult(ans, &apri, &mr);
         }
-        apri = monty_sqr(apri, mr);
+        apri = monty_sqr(apri, &mr);
         e = e >> 1;
     }
 
     // Map the result back to the residues domain
-    monty_redc(ans, mr)
+    monty_redc(ans, &mr)
 }
