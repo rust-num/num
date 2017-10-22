@@ -1541,6 +1541,8 @@ fn test_from_str_radix() {
     assert_eq!(zed, None);
     let blank = BigUint::from_str_radix("_", 2).ok();
     assert_eq!(blank, None);
+    let blank_one = BigUint::from_str_radix("_1", 2).ok();
+    assert_eq!(blank_one, None);
     let plus_one = BigUint::from_str_radix("+1", 10).ok();
     assert_eq!(plus_one, Some(BigUint::from_slice(&[1])));
     let plus_plus_one = BigUint::from_str_radix("++1", 10).ok();
@@ -1549,6 +1551,10 @@ fn test_from_str_radix() {
     assert_eq!(minus_one, None);
     let zero_plus_two = BigUint::from_str_radix("0+2", 10).ok();
     assert_eq!(zero_plus_two, None);
+    let three = BigUint::from_str_radix("1_1", 2).ok();
+    assert_eq!(three, Some(BigUint::from_slice(&[3])));
+    let ff = BigUint::from_str_radix("1111_1111", 2).ok();
+    assert_eq!(ff, Some(BigUint::from_slice(&[0xff])));
 }
 
 #[test]

@@ -236,6 +236,13 @@ impl Num for BigUint {
             return Err(e.into());
         }
 
+        if s.starts_with('_') {
+            // Must lead with a real digit!
+            // create ParseIntError::InvalidDigit
+            let e = u64::from_str_radix(s, radix).unwrap_err();
+            return Err(e.into());
+        }
+
         // First normalize all characters to plain digit values
         let mut v = Vec::with_capacity(s.len());
         for b in s.bytes() {
