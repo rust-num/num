@@ -1,5 +1,5 @@
 use integer::Integer;
-use traits::{Zero, One};
+use traits::Zero;
 
 use biguint::BigUint;
 
@@ -116,8 +116,7 @@ pub fn monty_modpow(a: &BigUint, exp: &BigUint, modulus: &BigUint) -> BigUint{
     // Binary exponentiation
     let mut ans = &r % mr.p;
     let mut e = exp.clone();
-    let zero = Zero::zero();
-    while e > zero {
+    while !e.is_zero() {
         if e.is_odd() {
             ans = monty_mult(ans, &apri, &mr);
         }
