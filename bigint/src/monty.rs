@@ -1,4 +1,3 @@
-use std::iter::repeat;
 use integer::Integer;
 use traits::{Zero, One};
 
@@ -62,11 +61,9 @@ fn monty_redc(a: BigUint, mr: &MontyReducer) -> BigUint {
     let mut c = a.data;
     let n = &mr.n;
     let n_size = n.len();
-    let old_size = c.len();
 
     // Allocate sufficient work space
-    c.reserve(2*n_size+2-old_size);
-    c.extend(repeat(0).take(2*n_size+2-old_size));
+    c.resize(2 * n_size + 2, 0);
 
     // β is the size of a word, in this case 32 bits. So "a mod β" is
     // equivalent to masking a to 32 bits.
