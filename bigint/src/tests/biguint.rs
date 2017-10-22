@@ -1092,10 +1092,10 @@ fn test_is_even() {
 #[test]
 fn test_modpow() {
     fn check(b: usize, e: usize, m: usize, r: usize) {
-        let big_b: BigUint = FromPrimitive::from_usize(b).unwrap();
-        let big_e: BigUint = FromPrimitive::from_usize(e).unwrap();
-        let big_m: BigUint = FromPrimitive::from_usize(m).unwrap();
-        let big_r: BigUint = FromPrimitive::from_usize(r).unwrap();
+        let big_b = BigUint::from(b);
+        let big_e = BigUint::from(e);
+        let big_m = BigUint::from(m);
+        let big_r = BigUint::from(r);
 
         assert_eq!(big_b.modpow(&big_e, &big_m), big_r);
     }
