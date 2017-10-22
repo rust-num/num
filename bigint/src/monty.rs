@@ -81,14 +81,13 @@ fn monty_redc(a: BigUint, mr: &MontyReducer) -> BigUint {
 
     // 4: R <- C * β^(-n)
     // This is an n-word bitshift, equivalent to skipping n words.
-    let r : Vec<u32> = c.iter().skip(n_size).cloned().collect();
-    let ret = BigUint::new(r);
+    let ret = BigUint::new(c[n_size..].to_vec());
 
     // 5: if R >= β^n then return R-N else return R.
     if &ret < mr.p {
         ret
     } else {
-        &ret-mr.p
+        ret - mr.p
     }
 }
 
