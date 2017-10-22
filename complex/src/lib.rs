@@ -132,8 +132,8 @@ impl<T: Clone + Float> Complex<T> {
     pub fn arg(&self) -> T {
         self.im.atan2(self.re)
     }
-    /// Convert to polar form (r, theta), such that `self = r * exp(i
-    /// * theta)`
+    /// Convert to polar form (r, theta), such that
+    /// `self = r * exp(i * theta)`
     #[inline]
     pub fn to_polar(&self) -> (T, T) {
         (self.norm(), self.arg())

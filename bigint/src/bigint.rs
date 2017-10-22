@@ -1366,7 +1366,7 @@ impl<R: Rng> RandBigInt for R {
 impl BigInt {
     /// Creates and initializes a BigInt.
     ///
-    /// The digits are in little-endian base 2^32.
+    /// The digits are in little-endian base 2<sup>32</sup>.
     #[inline]
     pub fn new(sign: Sign, digits: Vec<BigDigit>) -> BigInt {
         BigInt::from_biguint(sign, BigUint::new(digits))
@@ -1374,7 +1374,7 @@ impl BigInt {
 
     /// Creates and initializes a `BigInt`.
     ///
-    /// The digits are in little-endian base 2^32.
+    /// The digits are in little-endian base 2<sup>32</sup>.
     #[inline]
     pub fn from_biguint(mut sign: Sign, mut data: BigUint) -> BigInt {
         if sign == NoSign {
@@ -1444,7 +1444,7 @@ impl BigInt {
     /// Creates and initializes a `BigInt` from an array of bytes in
     /// two's complement binary representation.
     ///
-    /// The digits are in big-endian base 2^8.
+    /// The digits are in big-endian base 2<sup>8</sup>.
     #[inline]
     pub fn from_signed_bytes_be(digits: &[u8]) -> BigInt {
         let sign = match digits.first() {
@@ -1465,7 +1465,7 @@ impl BigInt {
 
     /// Creates and initializes a `BigInt` from an array of bytes in two's complement.
     ///
-    /// The digits are in little-endian base 2^8.
+    /// The digits are in little-endian base 2<sup>8</sup>.
     #[inline]
     pub fn from_signed_bytes_le(digits: &[u8]) -> BigInt {
         let sign = match digits.last() {
