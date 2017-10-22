@@ -67,17 +67,16 @@ fn monty_redc(a: BigUint, mr: &MontyReducer) -> BigUint {
 
     // β is the size of a word, in this case 32 bits. So "a mod β" is
     // equivalent to masking a to 32 bits.
-    let beta_mask = u32::max_value() as u64;
     // mu <- -N^(-1) mod β
-    let mu = (beta_mask-mr.n0inv as u64)+1;
+    let mu = 0u32.wrapping_sub(mr.n0inv);
 
     // 1: for i = 0 to (n-1)
     for i in 0..n_size {
         // 2: q_i <- mu*c_i mod β
-        let q_i = ((c[i] as u64) * mu) & beta_mask;
+        let q_i = c[i].wrapping_mul(mu);
 
         // 3: C <- C + q_i * N * β^i
-        super::algorithms::mac_digit(&mut c[i..], n, q_i as u32);
+        super::algorithms::mac_digit(&mut c[i..], n, q_i);
     }
 
     // 4: R <- C * β^(-n)
