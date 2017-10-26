@@ -4,9 +4,18 @@ use std::ops::Neg;
 
 use Complex;
 
-pub trait Scalar: Num + Copy + Neg<Output = Self> {
+pub trait Scalar: Num + Copy + Neg<Output = Self>
+where
+    Complex<Self::Real>: Scalar<
+        Real = Self::Real,
+        Complex = Complex<Self::Real>,
+    >,
+{
     /// Associated Real type
-    type Real: Scalar<Real = Self::Real>;
+    type Real: Scalar<Real = Self::Real, Complex = Complex<Self::Real>>;
+
+    /// Associated Complex type
+    type Complex: Scalar<Real = Self::Real, Complex = Complex<Self::Real>>;
 
     /// Take the square root of a number.
     fn sqrt(&self) -> Self;
@@ -86,6 +95,7 @@ pub trait Scalar: Num + Copy + Neg<Output = Self> {
 
 impl<T: Clone + Float + FromPrimitive> Scalar for Complex<T> {
     type Real = T;
+    type Complex = Self;
 
     fn sqrt(&self) -> Self {
         Complex::sqrt(self)
@@ -189,8 +199,9 @@ impl<T: Clone + Float + FromPrimitive> Scalar for Complex<T> {
     }
 }
 
-impl<T: Float> Scalar for T {
+impl<T: Clone + Float + FromPrimitive> Scalar for T {
     type Real = T;
+    type Complex = Complex<T>;
 
     fn sqrt(&self) -> Self {
         Float::sqrt(*self)
