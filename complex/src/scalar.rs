@@ -93,7 +93,7 @@ where
     fn is_normal(self) -> bool;
 }
 
-impl<T: Clone + Float + FromPrimitive> Scalar for Complex<T> {
+impl<T: Float + FromPrimitive> Scalar for Complex<T> {
     type Real = T;
     type Complex = Self;
 
@@ -199,7 +199,7 @@ impl<T: Clone + Float + FromPrimitive> Scalar for Complex<T> {
     }
 }
 
-impl<T: Clone + Float + FromPrimitive> Scalar for T {
+impl<T: Float + FromPrimitive> Scalar for T {
     type Real = T;
     type Complex = Complex<T>;
 
