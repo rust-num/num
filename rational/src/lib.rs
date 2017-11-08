@@ -774,7 +774,7 @@ fn approximate_float_unsigned<T, F>(val: F, max_error: F, max_iterations: usize)
     // Continued fractions algorithm
     // http://mathforum.org/dr.math/faq/faq.fractions.html#decfrac
 
-    if val < F::zero() {
+    if val < F::zero() || val.is_nan() {
         return None;
     }
 
