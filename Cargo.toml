@@ -8,7 +8,7 @@ categories = [ "algorithms", "data-structures", "science" ]
 license = "MIT/Apache-2.0"
 repository = "https://github.com/rust-num/num"
 name = "num"
-version = "0.1.40"
+version = "0.1.41"
 
 [badges]
 travis-ci = { repository = "rust-num/num" }
@@ -25,12 +25,12 @@ name = "shootout-pidigits"
 [dependencies.num-bigint]
 optional = true
 path = "bigint"
-version = "0.1.40"
+version = "0.1.41"
 
 [dependencies.num-complex]
 optional = true
 path = "complex"
-version = "0.1.39"
+version = "0.1.41"
 
 [dependencies.num-integer]
 path = "./integer"
@@ -44,11 +44,11 @@ version = "0.1.34"
 [dependencies.num-rational]
 optional = true
 path = "rational"
-version = "0.1.39"
+version = "0.1.40"
 
 [dependencies.num-traits]
 path = "./traits"
-version = "0.1.40"
+version = "0.1.41"
 
 [dev-dependencies]
 
