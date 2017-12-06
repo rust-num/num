@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 use std::default::Default;
-use std::iter::repeat;
+use std::iter::{Product, Sum, repeat};
 use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Rem, Shl, Shr, Sub,
                AddAssign, BitAndAssign, BitOrAssign, BitXorAssign, DivAssign,
                MulAssign, RemAssign, ShlAssign, ShrAssign, SubAssign};
@@ -910,6 +910,38 @@ impl CheckedDiv for BigUint {
             return None;
         }
         return Some(self.div(v));
+    }
+}
+
+impl Sum for BigUint {
+    fn sum<I>(iter: I) -> BigUint
+        where I: Iterator<Item = BigUint>
+    {
+        iter.fold(Zero::zero(), Add::add)
+    }
+}
+
+impl Product for BigUint {
+    fn product<I>(iter: I) -> BigUint
+        where I: Iterator<Item = BigUint>
+    {
+        iter.fold(One::one(), Mul::mul)
+    }
+}
+
+impl<'a> Sum<&'a BigUint> for BigUint {
+    fn sum<I>(iter: I) -> BigUint
+        where I: Iterator<Item = &'a BigUint>
+    {
+        iter.fold(Zero::zero(), Add::add)
+    }
+}
+
+impl<'a> Product<&'a BigUint> for BigUint {
+    fn product<I>(iter: I) -> BigUint
+        where I: Iterator<Item = &'a BigUint>
+    {
+        iter.fold(One::one(), Mul::mul)
     }
 }
 

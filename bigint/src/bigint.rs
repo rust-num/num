@@ -1,4 +1,5 @@
 use std::default::Default;
+use std::iter::{Product, Sum};
 use std::ops::{Add, Div, Mul, Neg, Rem, Shl, Shr, Sub, Not};
 use std::str::{self, FromStr};
 use std::fmt;
@@ -953,6 +954,38 @@ impl CheckedDiv for BigInt {
             return None;
         }
         return Some(self.div(v));
+    }
+}
+
+impl Sum for BigInt {
+    fn sum<I>(iter: I) -> BigInt
+        where I: Iterator<Item = BigInt>
+    {
+        iter.fold(Zero::zero(), Add::add)
+    }
+}
+
+impl Product for BigInt {
+    fn product<I>(iter: I) -> BigInt
+        where I: Iterator<Item = BigInt>
+    {
+        iter.fold(One::one(), Mul::mul)
+    }
+}
+
+impl<'a> Sum<&'a BigInt> for BigInt {
+    fn sum<I>(iter: I) -> BigInt
+        where I: Iterator<Item = &'a BigInt>
+    {
+        iter.fold(Zero::zero(), Add::add)
+    }
+}
+
+impl<'a> Product<&'a BigInt> for BigInt {
+    fn product<I>(iter: I) -> BigInt
+        where I: Iterator<Item = &'a BigInt>
+    {
+        iter.fold(One::one(), Mul::mul)
     }
 }
 
