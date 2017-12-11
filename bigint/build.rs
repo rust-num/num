@@ -1,10 +1,10 @@
 extern crate rustc_version;
 
-use rustc_version::{Version, version};
+use rustc_version::version_matches;
 
 
 fn main() {
-    if version().unwrap() >= Version::parse("1.12.0").unwrap() {
+    if version_matches(">=1.12.0") {
         println!("cargo:rustc-cfg=impl_sum_product_for_bigints");
     }
 }
