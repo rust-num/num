@@ -1192,3 +1192,28 @@ fn test_negative_rand_range() {
     // Switching u and l should fail:
     let _n: BigInt = rng.gen_bigint_range(&u, &l);
 }
+
+#[test]
+fn test_negative_shr() {
+    assert_eq!(BigInt::from(-1) >> 1, BigInt::from(-1));
+    assert_eq!(BigInt::from(-2) >> 1, BigInt::from(-1));
+    assert_eq!(BigInt::from(-3) >> 1, BigInt::from(-2));
+    assert_eq!(BigInt::from(-3) >> 2, BigInt::from(-1));
+}
+
+#[test]
+fn test_random_shr() {
+    use rand::Rng;
+    let mut rng = thread_rng();
+
+    for p in rng.gen_iter::<i64>().take(1000) {
+        let big = BigInt::from(p);
+        let bigger = &big << 1000;
+        assert_eq!(&bigger >> 1000, big);
+        for i in 0..64 {
+            let answer = BigInt::from(p >> i);
+            assert_eq!(&big >> i, answer);
+            assert_eq!(&bigger >> (1000 + i), answer);
+        }
+    }
+}
