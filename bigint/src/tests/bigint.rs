@@ -1057,6 +1057,7 @@ fn test_abs_sub() {
     assert_eq!(one.abs_sub(&-&one), two);
 }
 
+#[cfg(impl_sum_product_for_bigints)]
 #[test]
 fn test_iterator_sum() {
     let data: Vec<BigInt> = vec![
@@ -1082,6 +1083,7 @@ fn test_iterator_sum() {
     assert_eq!(data.into_iter().sum::<BigInt>(), expected);
 }
 
+#[cfg(impl_sum_product_for_bigints)]
 #[test]
 fn test_iterator_product() {
     let data: Vec<BigInt> = vec![

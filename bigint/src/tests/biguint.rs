@@ -1172,6 +1172,7 @@ fn test_modpow_big() {
     assert_eq!(even_modpow % m, r);
 }
 
+#[cfg(impl_sum_product_for_bigints)]
 #[test]
 fn test_iterator_sum() {
     let data: Vec<BigUint> = vec![
@@ -1197,6 +1198,7 @@ fn test_iterator_sum() {
     assert_eq!(data.into_iter().sum::<BigUint>(), expected);
 }
 
+#[cfg(impl_sum_product_for_bigints)]
 #[test]
 fn test_iterator_product() {
     let data: Vec<BigUint> = vec![

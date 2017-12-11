@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 use std::default::Default;
-use std::iter::{Product, Sum, repeat};
+use std::iter::repeat;
 use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Rem, Shl, Shr, Sub,
                AddAssign, BitAndAssign, BitOrAssign, BitXorAssign, DivAssign,
                MulAssign, RemAssign, ShlAssign, ShrAssign, SubAssign};
@@ -11,6 +11,9 @@ use std::cmp::Ordering::{self, Less, Greater, Equal};
 use std::{f32, f64};
 use std::{u8, u64};
 use std::ascii::AsciiExt;
+
+#[cfg(impl_sum_product_for_bigints)]
+use std::iter::{Product, Sum};
 
 #[cfg(feature = "serde")]
 use serde;
@@ -913,6 +916,7 @@ impl CheckedDiv for BigUint {
     }
 }
 
+#[cfg(impl_sum_product_for_bigints)]
 impl Sum for BigUint {
     fn sum<I>(iter: I) -> BigUint
         where I: Iterator<Item = BigUint>
@@ -921,6 +925,7 @@ impl Sum for BigUint {
     }
 }
 
+#[cfg(impl_sum_product_for_bigints)]
 impl Product for BigUint {
     fn product<I>(iter: I) -> BigUint
         where I: Iterator<Item = BigUint>
@@ -929,6 +934,7 @@ impl Product for BigUint {
     }
 }
 
+#[cfg(impl_sum_product_for_bigints)]
 impl<'a> Sum<&'a BigUint> for BigUint {
     fn sum<I>(iter: I) -> BigUint
         where I: Iterator<Item = &'a BigUint>
@@ -937,6 +943,7 @@ impl<'a> Sum<&'a BigUint> for BigUint {
     }
 }
 
+#[cfg(impl_sum_product_for_bigints)]
 impl<'a> Product<&'a BigUint> for BigUint {
     fn product<I>(iter: I) -> BigUint
         where I: Iterator<Item = &'a BigUint>

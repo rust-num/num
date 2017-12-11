@@ -1,11 +1,13 @@
 use std::default::Default;
-use std::iter::{Product, Sum};
 use std::ops::{Add, Div, Mul, Neg, Rem, Shl, Shr, Sub, Not};
 use std::str::{self, FromStr};
 use std::fmt;
 use std::cmp::Ordering::{self, Less, Greater, Equal};
 use std::{i64, u64};
 use std::ascii::AsciiExt;
+
+#[cfg(impl_sum_product_for_bigints)]
+use std::iter::{Product, Sum};
 
 #[cfg(feature = "serde")]
 use serde;
@@ -957,6 +959,7 @@ impl CheckedDiv for BigInt {
     }
 }
 
+#[cfg(impl_sum_product_for_bigints)]
 impl Sum for BigInt {
     fn sum<I>(iter: I) -> BigInt
         where I: Iterator<Item = BigInt>
@@ -965,6 +968,7 @@ impl Sum for BigInt {
     }
 }
 
+#[cfg(impl_sum_product_for_bigints)]
 impl Product for BigInt {
     fn product<I>(iter: I) -> BigInt
         where I: Iterator<Item = BigInt>
@@ -973,6 +977,7 @@ impl Product for BigInt {
     }
 }
 
+#[cfg(impl_sum_product_for_bigints)]
 impl<'a> Sum<&'a BigInt> for BigInt {
     fn sum<I>(iter: I) -> BigInt
         where I: Iterator<Item = &'a BigInt>
@@ -981,6 +986,7 @@ impl<'a> Sum<&'a BigInt> for BigInt {
     }
 }
 
+#[cfg(impl_sum_product_for_bigints)]
 impl<'a> Product<&'a BigInt> for BigInt {
     fn product<I>(iter: I) -> BigInt
         where I: Iterator<Item = &'a BigInt>
