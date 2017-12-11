@@ -10,6 +10,8 @@ name = "num-bigint"
 repository = "https://github.com/rust-num/num"
 version = "0.1.41"
 
+build = "build.rs"
+
 [dependencies]
 
 [dependencies.num-integer]
