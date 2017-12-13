@@ -42,5 +42,9 @@ version = "0.1.7"
 [dev-dependencies.rand]
 version = "0.3.14"
 
+# FIXME: same notes as for `rustc_version`
+[dev-dependencies.semver]
+version = "0.1.20"
+
 [features]
 default = ["rand", "rustc-serialize"]
