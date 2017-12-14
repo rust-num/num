@@ -955,7 +955,7 @@ impl Integer for BigUint {
     /// Calculates the Lowest Common Multiple (LCM) of the number and `other`.
     #[inline]
     fn lcm(&self, other: &BigUint) -> BigUint {
-        ((self * other) / self.gcd(other))
+        self / self.gcd(other) * other
     }
 
     /// Deprecated, use `is_multiple_of` instead.
