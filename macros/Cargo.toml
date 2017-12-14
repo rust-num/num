@@ -1,6 +1,6 @@
 [package]
 name = "num-macros"
-version = "0.1.39"
+version = "0.1.40"
 authors = ["The Rust Project Developers"]
 license = "MIT/Apache-2.0"
 homepage = "https://github.com/rust-num/num"
@@ -8,7 +8,7 @@ repository = "https://github.com/rust-num/num"
 documentation = "http://rust-num.github.io/num"
 keywords = ["mathematics", "numerics"]
 categories = [ "science" ]
-description = "Numeric syntax extensions"
+description = "deprecated -- use num-derive"
 
 [lib]
 name = "num_macros"
@@ -16,3 +16,6 @@ plugin = true
 
 [dev-dependencies]
 num = { path = "..", version = "0.1" }
+
+[badges]
+maintenance = { status = "deprecated" }
