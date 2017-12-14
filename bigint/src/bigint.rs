@@ -6,6 +6,9 @@ use std::cmp::Ordering::{self, Less, Greater, Equal};
 use std::{i64, u64};
 use std::ascii::AsciiExt;
 
+#[cfg(impl_sum_product_for_bigints)]
+use std::iter::{Product, Sum};
+
 #[cfg(feature = "serde")]
 use serde;
 
@@ -953,6 +956,42 @@ impl CheckedDiv for BigInt {
             return None;
         }
         return Some(self.div(v));
+    }
+}
+
+#[cfg(impl_sum_product_for_bigints)]
+impl Sum for BigInt {
+    fn sum<I>(iter: I) -> BigInt
+        where I: Iterator<Item = BigInt>
+    {
+        iter.fold(Zero::zero(), Add::add)
+    }
+}
+
+#[cfg(impl_sum_product_for_bigints)]
+impl Product for BigInt {
+    fn product<I>(iter: I) -> BigInt
+        where I: Iterator<Item = BigInt>
+    {
+        iter.fold(One::one(), Mul::mul)
+    }
+}
+
+#[cfg(impl_sum_product_for_bigints)]
+impl<'a> Sum<&'a BigInt> for BigInt {
+    fn sum<I>(iter: I) -> BigInt
+        where I: Iterator<Item = &'a BigInt>
+    {
+        iter.fold(Zero::zero(), Add::add)
+    }
+}
+
+#[cfg(impl_sum_product_for_bigints)]
+impl<'a> Product<&'a BigInt> for BigInt {
+    fn product<I>(iter: I) -> BigInt
+        where I: Iterator<Item = &'a BigInt>
+    {
+        iter.fold(One::one(), Mul::mul)
     }
 }
 

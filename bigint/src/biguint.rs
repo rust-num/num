@@ -12,6 +12,9 @@ use std::{f32, f64};
 use std::{u8, u64};
 use std::ascii::AsciiExt;
 
+#[cfg(impl_sum_product_for_bigints)]
+use std::iter::{Product, Sum};
+
 #[cfg(feature = "serde")]
 use serde;
 
@@ -910,6 +913,42 @@ impl CheckedDiv for BigUint {
             return None;
         }
         return Some(self.div(v));
+    }
+}
+
+#[cfg(impl_sum_product_for_bigints)]
+impl Sum for BigUint {
+    fn sum<I>(iter: I) -> BigUint
+        where I: Iterator<Item = BigUint>
+    {
+        iter.fold(Zero::zero(), Add::add)
+    }
+}
+
+#[cfg(impl_sum_product_for_bigints)]
+impl Product for BigUint {
+    fn product<I>(iter: I) -> BigUint
+        where I: Iterator<Item = BigUint>
+    {
+        iter.fold(One::one(), Mul::mul)
+    }
+}
+
+#[cfg(impl_sum_product_for_bigints)]
+impl<'a> Sum<&'a BigUint> for BigUint {
+    fn sum<I>(iter: I) -> BigUint
+        where I: Iterator<Item = &'a BigUint>
+    {
+        iter.fold(Zero::zero(), Add::add)
+    }
+}
+
+#[cfg(impl_sum_product_for_bigints)]
+impl<'a> Product<&'a BigUint> for BigUint {
+    fn product<I>(iter: I) -> BigUint
+        where I: Iterator<Item = &'a BigUint>
+    {
+        iter.fold(One::one(), Mul::mul)
     }
 }
 

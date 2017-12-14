@@ -78,6 +78,8 @@
 extern crate rand;
 #[cfg(feature = "rustc-serialize")]
 extern crate rustc_serialize;
+#[cfg(test)]
+extern crate semver;
 #[cfg(feature = "serde")]
 extern crate serde;
 
@@ -135,6 +137,33 @@ fn hash<T: hash::Hash>(x: &T) -> u64 {
     let mut hasher = <RandomState as BuildHasher>::Hasher::new();
     x.hash(&mut hasher);
     hasher.finish()
+}
+
+#[allow(dead_code)]
+mod build_info {
+    include!(concat!(env!("OUT_DIR"), "/build_info.rs"));
+}
+
+#[cfg(test)]
+mod check_rustc_features {
+    use semver::Version;
+
+    use build_info::RUSTC_VERSION;
+
+    #[test]
+    fn ensure_impl_sum_product_for_bigints_enabled() {
+        let current_version = Version::parse(RUSTC_VERSION).unwrap();
+        let min_version_to_have_feature_enabled = Version::parse("1.12.0").unwrap();
+
+        if current_version >= min_version_to_have_feature_enabled &&
+            cfg!(not(impl_sum_product_for_bigints))
+        {
+            panic!("cfg option `{}` not detected when compiling on rustc {} \
+                    (this option must be enabled for rustc {} onwards)",
+                    stringify!(impl_sum_product_for_bigints), current_version,
+                    min_version_to_have_feature_enabled);
+        }
+    }
 }
 
 #[macro_use]
