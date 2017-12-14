@@ -227,12 +227,23 @@ impl<'a> Shl<usize> for &'a BigInt {
     }
 }
 
+// Negative values need a rounding adjustment if there are any ones in the
+// bits that are getting shifted out.
+fn shr_round_down(i: &BigInt, rhs: usize) -> bool {
+    i.is_negative()
+        && biguint::trailing_zeros(&i.data)
+            .map(|n| n < rhs)
+            .unwrap_or(false)
+}
+
 impl Shr<usize> for BigInt {
     type Output = BigInt;
 
     #[inline]
     fn shr(self, rhs: usize) -> BigInt {
-        BigInt::from_biguint(self.sign, self.data >> rhs)
+        let round_down = shr_round_down(&self, rhs);
+        let data = self.data >> rhs;
+        BigInt::from_biguint(self.sign, if round_down { data + 1u8 } else { data })
     }
 }
 
@@ -241,7 +252,9 @@ impl<'a> Shr<usize> for &'a BigInt {
 
     #[inline]
     fn shr(self, rhs: usize) -> BigInt {
-        BigInt::from_biguint(self.sign, &self.data >> rhs)
+        let round_down = shr_round_down(&self, rhs);
+        let data = &self.data >> rhs;
+        BigInt::from_biguint(self.sign, if round_down { data + 1u8 } else { data })
     }
 }
 

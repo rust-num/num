@@ -1656,6 +1656,14 @@ impl BigUint {
     }
 }
 
+pub fn trailing_zeros(u: &BigUint) -> Option<usize> {
+    u.data
+        .iter()
+        .enumerate()
+        .find(|&(_, &digit)| digit != 0)
+        .map(|(i, digit)| i * big_digit::BITS + digit.trailing_zeros() as usize)
+}
+
 #[cfg(feature = "serde")]
 impl serde::Serialize for BigUint {
     fn serialize<S>(&self, serializer: &mut S) -> Result<(), S::Error>
