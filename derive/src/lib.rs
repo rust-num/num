@@ -18,6 +18,8 @@ extern crate proc_macro;
 use proc_macro::TokenStream;
 
 use syn::Body::Enum;
+use syn::ConstExpr::Lit;
+use syn::Lit::Int;
 use syn::VariantData::Unit;
 
 #[proc_macro_derive(FromPrimitive)]
@@ -42,8 +44,8 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
                     panic!("`FromPrimitive` can be applied only to unitary enums, {}::{} is either struct or tuple", name, ident)
                 },
             }
-            if let Some(val) = variant.discriminant {
-                idx = val.value;
+            if let Some(Lit(Int(value, _))) = variant.discriminant {
+                idx = value;
             }
             let tt = quote!(#idx => Some(#name::#ident));
             idx += 1;
@@ -91,8 +93,8 @@ pub fn to_primitive(input: TokenStream) -> TokenStream {
                     panic!("`ToPrimitive` can be applied only to unitary enums, {}::{} is either struct or tuple", name, ident)
                 },
             }
-            if let Some(val) = variant.discriminant {
-                idx = val.value;
+            if let Some(Lit(Int(value, _))) = variant.discriminant {
+                idx = value;
             }
             let tt = quote!(#name::#ident => #idx);
             idx += 1;
