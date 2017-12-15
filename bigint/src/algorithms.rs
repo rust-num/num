@@ -220,7 +220,7 @@ pub fn sub_sign(a: &[BigDigit], b: &[BigDigit]) -> (Sign, BigUint) {
 
 /// Three argument multiply accumulate:
 /// acc += b * c
-fn mac_digit(acc: &mut [BigDigit], b: &[BigDigit], c: BigDigit) {
+pub fn mac_digit(acc: &mut [BigDigit], b: &[BigDigit], c: BigDigit) {
     if c == 0 {
         return;
     }

@@ -21,6 +21,8 @@ use traits::{ToPrimitive, FromPrimitive, Float, Num, Unsigned, CheckedAdd, Check
 
 #[path = "algorithms.rs"]
 mod algorithms;
+#[path = "monty.rs"]
+mod monty;
 pub use self::algorithms::big_digit;
 pub use self::big_digit::{BigDigit, DoubleBigDigit, ZERO_BIG_DIGIT};
 
@@ -28,6 +30,7 @@ use self::algorithms::{mac_with_carry, mul3, scalar_mul, div_rem, div_rem_digit}
 use self::algorithms::{__add2, add2, sub2, sub2rev};
 use self::algorithms::{biguint_shl, biguint_shr};
 use self::algorithms::{cmp_slice, fls, ilog2};
+use self::monty::monty_modpow;
 
 use UsizePromotion;
 
@@ -232,6 +235,13 @@ impl Num for BigUint {
             return Err(e.into());
         }
 
+        if s.starts_with('_') {
+            // Must lead with a real digit!
+            // create ParseIntError::InvalidDigit
+            let e = u64::from_str_radix(s, radix).unwrap_err();
+            return Err(e.into());
+        }
+
         // First normalize all characters to plain digit values
         let mut v = Vec::with_capacity(s.len());
         for b in s.bytes() {
@@ -239,6 +249,7 @@ impl Num for BigUint {
                 b'0'...b'9' => b - b'0',
                 b'a'...b'z' => b - b'a' + 10,
                 b'A'...b'Z' => b - b'A' + 10,
+                b'_' => continue,
                 _ => u8::MAX,
             };
             if d < radix as u8 {
@@ -948,7 +959,7 @@ impl Integer for BigUint {
     /// Calculates the Lowest Common Multiple (LCM) of the number and `other`.
     #[inline]
     fn lcm(&self, other: &BigUint) -> BigUint {
-        ((self * other) / self.gcd(other))
+        self / self.gcd(other) * other
     }
 
     /// Deprecated, use `is_multiple_of` instead.
@@ -1329,7 +1340,7 @@ pub fn to_str_radix_reversed(u: &BigUint, radix: u32) -> Vec<u8> {
 impl BigUint {
     /// Creates and initializes a `BigUint`.
     ///
-    /// The digits are in little-endian base 2^32.
+    /// The digits are in little-endian base 2<sup>32</sup>.
     #[inline]
     pub fn new(digits: Vec<BigDigit>) -> BigUint {
         BigUint { data: digits }.normalized()
@@ -1337,7 +1348,7 @@ impl BigUint {
 
     /// Creates and initializes a `BigUint`.
     ///
-    /// The digits are in little-endian base 2^32.
+    /// The digits are in little-endian base 2<sup>32</sup>.
     #[inline]
     pub fn from_slice(slice: &[BigDigit]) -> BigUint {
         BigUint::new(slice.to_vec())
@@ -1345,7 +1356,7 @@ impl BigUint {
 
     /// Assign a value to a `BigUint`.
     ///
-    /// The digits are in little-endian base 2^32.
+    /// The digits are in little-endian base 2<sup>32</sup>.
     #[inline]
     pub fn assign_from_slice(&mut self, slice: &[BigDigit]) {
         self.data.resize(slice.len(), 0);
@@ -1614,6 +1625,38 @@ impl BigUint {
     fn normalized(mut self) -> BigUint {
         self.normalize();
         self
+    }
+
+    /// Returns `(self ^ exponent) % modulus`.
+    pub fn modpow(&self, exponent: &Self, modulus: &Self) -> Self {
+        assert!(!modulus.is_zero(), "divide by zero!");
+
+        // For an odd modulus, we can use Montgomery multiplication in base 2^32.
+        if modulus.is_odd() {
+            return monty_modpow(self, exponent, modulus);
+        }
+
+        // Otherwise do basically the same as `num::pow`, but with a modulus.
+        let one = BigUint::one();
+        if exponent.is_zero() { return one; }
+
+        let mut base = self % modulus;
+        let mut exp = exponent.clone();
+        while exp.is_even() {
+            base = &base * &base % modulus;
+            exp >>= 1;
+        }
+        if exp == one { return base }
+
+        let mut acc = base.clone();
+        while exp > one {
+            exp >>= 1;
+            base = &base * &base % modulus;
+            if exp.is_odd() {
+                acc = acc * &base % modulus;
+            }
+        }
+        acc
     }
 }
 

@@ -2,10 +2,15 @@
 
 set -ex
 
-echo Testing num on rustc ${TRAVIS_RUST_VERSION:=$1}
+echo Testing num on rustc ${TRAVIS_RUST_VERSION}
 
 # All of these packages should build and test everywhere.
 for package in bigint complex integer iter rational traits; do
+  if [ "$TRAVIS_RUST_VERSION" = 1.8.0 ]; then
+    # libc 0.2.34 started using #[deprecated]
+    cargo generate-lockfile --manifest-path $package/Cargo.toml
+    cargo update --manifest-path $package/Cargo.toml --package libc --precise 0.2.33 || :
+  fi
   cargo build --manifest-path $package/Cargo.toml
   cargo test --manifest-path $package/Cargo.toml
 done

@@ -1,9 +1,15 @@
 language: rust
 rust:
-  - 1.8.0
   - 1.15.0
   - beta
   - nightly
+matrix:
+  include:
+    - rust: 1.8.0
+      before_script:
+        # libc 0.2.34 started using #[deprecated]
+        - cargo generate-lockfile
+        - cargo update --package libc --precise 0.2.33
 sudo: false
 script:
   - cargo build --verbose
