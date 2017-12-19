@@ -1,6 +1,8 @@
 # num
 
-[![](https://travis-ci.org/rust-num/num.svg)](https://travis-ci.org/rust-num/num)
+[![crate](https://img.shields.io/crates/v/num.svg)](https://crates.io/crates/num)
+[![documentation](https://docs.rs/num/badge.svg)](https://docs.rs/num)
+[![Travis status](https://travis-ci.org/rust-num/num.svg?branch=master)](https://travis-ci.org/rust-num/num)
 
 A collection of numeric types and traits for Rust.
 
@@ -8,7 +10,30 @@ This includes new types for big integers, rationals, and complex numbers,
 new traits for generic programming on numeric properties like `Integer`,
 and generic range iterators.
 
-[Documentation](http://rust-num.github.io/num)
+`num` is a meta-crate, re-exporting items from these sub-crates:
+
+- [`num-bigint`](https://github.com/rust-num/num-bigint)
+  [![crate](https://img.shields.io/crates/v/num-bigint.svg)](https://crates.io/crates/num-bigint)
+
+- [`num-complex`](https://github.com/rust-num/num-complex)
+  [![crate](https://img.shields.io/crates/v/num-complex.svg)](https://crates.io/crates/num-complex)
+
+- [`num-integer`](https://github.com/rust-num/num-integer)
+  [![crate](https://img.shields.io/crates/v/num-integer.svg)](https://crates.io/crates/num-integer)
+
+- [`num-iter`](https://github.com/rust-num/num-iter)
+  [![crate](https://img.shields.io/crates/v/num-iter.svg)](https://crates.io/crates/num-iter)
+
+- [`num-rational`](https://github.com/rust-num/num-rational)
+  [![crate](https://img.shields.io/crates/v/num-rational.svg)](https://crates.io/crates/num-rational)
+
+- [`num-traits`](https://github.com/rust-num/num-traits)
+  [![crate](https://img.shields.io/crates/v/num-traits.svg)](https://crates.io/crates/num-traits)
+
+There is also a `proc-macro` crate for deriving some numeric traits:
+
+- [`num-derive`](https://github.com/rust-num/num-derive)
+  [![crate](https://img.shields.io/crates/v/num-derive.svg)](https://crates.io/crates/num-derive)
 
 ## Usage
 

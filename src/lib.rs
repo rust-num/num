@@ -52,10 +52,8 @@
 //! ```
 //!
 //! [newt]: https://en.wikipedia.org/wiki/Methods_of_computing_square_roots#Babylonian_method
-#![doc(html_logo_url = "https://rust-num.github.io/num/rust-logo-128x128-blk-v2.png",
-       html_favicon_url = "https://rust-num.github.io/num/favicon.ico",
-       html_root_url = "https://rust-num.github.io/num/",
-       html_playground_url = "http://play.integer32.com/")]
+
+#![doc(html_root_url = "https://docs.rs/num/0.1")]
 
 extern crate num_traits;
 extern crate num_integer;

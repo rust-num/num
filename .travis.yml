@@ -1,6 +1,6 @@
 language: rust
 rust:
-  - 1.15.0
+  - stable
   - beta
   - nightly
 matrix:
@@ -14,12 +14,6 @@ sudo: false
 script:
   - cargo build --verbose
   - ./ci/test_full.sh
-  - cargo doc
-after_success: |
-  [ $TRAVIS_BRANCH = master ] &&
-  [ $TRAVIS_PULL_REQUEST = false ] &&
-  [ $TRAVIS_RUST_VERSION = nightly ] &&
-  ssh-agent ./ci/deploy.sh
 notifications:
   email:
     on_success: never
