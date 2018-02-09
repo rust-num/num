@@ -52,6 +52,10 @@
 //! ```
 //!
 //! [newt]: https://en.wikipedia.org/wiki/Methods_of_computing_square_roots#Babylonian_method
+//!
+//! ## Compatibility
+//!
+//! The `num` crate is tested for rustc 1.8 and greater.
 
 #![doc(html_root_url = "https://docs.rs/num/0.1")]
 
