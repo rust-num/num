@@ -62,20 +62,20 @@
 extern crate num_traits;
 extern crate num_integer;
 extern crate num_iter;
-#[cfg(feature = "num-complex")]
+#[cfg(feature = "complex")]
 extern crate num_complex;
-#[cfg(feature = "num-bigint")]
+#[cfg(feature = "bigint")]
 extern crate num_bigint;
-#[cfg(feature = "num-rational")]
+#[cfg(feature = "rational")]
 extern crate num_rational;
 
-#[cfg(feature = "num-bigint")]
+#[cfg(feature = "bigint")]
 pub use num_bigint::{BigInt, BigUint};
-#[cfg(feature = "num-rational")]
+#[cfg(feature = "rational")]
 pub use num_rational::Rational;
-#[cfg(all(feature = "num-rational", feature="num-bigint"))]
+#[cfg(all(feature = "rational", feature="bigint"))]
 pub use num_rational::BigRational;
-#[cfg(feature = "num-complex")]
+#[cfg(feature = "complex")]
 pub use num_complex::Complex;
 pub use num_integer::Integer;
 pub use num_iter::{range, range_inclusive, range_step, range_step_inclusive};
@@ -85,12 +85,12 @@ pub use num_traits::{Num, Zero, One, Signed, Unsigned, Bounded,
                      PrimInt, Float, ToPrimitive, FromPrimitive, NumCast, cast,
                      pow, checked_pow, clamp};
 
-#[cfg(feature = "num-bigint")]
+#[cfg(feature = "bigint")]
 pub mod bigint {
     pub use num_bigint::*;
 }
 
-#[cfg(feature = "num-complex")]
+#[cfg(feature = "complex")]
 pub mod complex {
     pub use num_complex::*;
 }
@@ -107,7 +107,7 @@ pub mod traits {
     pub use num_traits::*;
 }
 
-#[cfg(feature = "num-rational")]
+#[cfg(feature = "rational")]
 pub mod rational {
     pub use num_rational::*;
 }

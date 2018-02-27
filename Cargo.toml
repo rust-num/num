@@ -8,7 +8,8 @@ categories = [ "algorithms", "data-structures", "science" ]
 license = "MIT/Apache-2.0"
 repository = "https://github.com/rust-num/num"
 name = "num"
-version = "0.1.42"
+version = "0.2.0-git"
+publish = false
 readme = "README.md"
 
 [badges]
@@ -18,11 +19,13 @@ travis-ci = { repository = "rust-num/num" }
 
 [dependencies.num-bigint]
 optional = true
-version = "0.1.42"
+version = "0.2.0-git"
+git = "https://github.com/rust-num/num-bigint"
 
 [dependencies.num-complex]
 optional = true
-version = "0.1.42"
+version = "0.2.0-git"
+git = "https://github.com/rust-num/num-complex"
 
 [dependencies.num-integer]
 version = "0.1.36"
@@ -32,7 +35,8 @@ version = "0.1.35"
 
 [dependencies.num-rational]
 optional = true
-version = "0.1.42"
+version = "0.2.0-git"
+git = "https://github.com/rust-num/num-rational"
 
 [dependencies.num-traits]
 version = "0.2.0"
@@ -43,15 +47,17 @@ version = "0.2.0"
 bigint = ["num-bigint"]
 complex = ["num-complex"]
 rational = ["num-rational"]
-default = ["bigint", "complex", "rational", "rustc-serialize"]
+default = ["bigint", "num-bigint/rand", "complex", "rational", "rustc-serialize"]
 
+rand = [
+  "num-bigint/rand",
+]
 serde = [
   "num-bigint/serde",
   "num-complex/serde",
   "num-rational/serde"
 ]
 rustc-serialize = [
-  "num-bigint/rustc-serialize",
   "num-complex/rustc-serialize",
   "num-rational/rustc-serialize"
 ]
