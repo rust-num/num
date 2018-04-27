@@ -47,7 +47,7 @@ version = "0.2.0"
 bigint = ["num-bigint"]
 complex = ["num-complex"]
 rational = ["num-rational"]
-default = ["bigint", "num-bigint/rand", "complex", "rational", "rustc-serialize"]
+default = ["bigint", "num-bigint/rand", "complex", "rational"]
 
 rand = [
   "num-bigint/rand",
@@ -56,8 +56,4 @@ serde = [
   "num-bigint/serde",
   "num-complex/serde",
   "num-rational/serde"
-]
-rustc-serialize = [
-  "num-complex/rustc-serialize",
-  "num-rational/rustc-serialize"
 ]
