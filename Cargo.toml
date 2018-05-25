@@ -19,13 +19,11 @@ travis-ci = { repository = "rust-num/num" }
 
 [dependencies.num-bigint]
 optional = true
-version = "0.2.0-git"
-git = "https://github.com/rust-num/num-bigint"
+version = "0.2.0"
 
 [dependencies.num-complex]
 optional = true
-version = "0.2.0-git"
-git = "https://github.com/rust-num/num-complex"
+version = "0.2.0"
 
 [dependencies.num-integer]
 version = "0.1.36"
@@ -51,6 +49,7 @@ default = ["bigint", "num-bigint/rand", "complex", "rational"]
 
 rand = [
   "num-bigint/rand",
+  "num-complex/rand",
 ]
 serde = [
   "num-bigint/serde",
