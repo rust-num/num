@@ -33,8 +33,7 @@ version = "0.1.35"
 
 [dependencies.num-rational]
 optional = true
-version = "0.2.0-git"
-git = "https://github.com/rust-num/num-rational"
+version = "0.2.0"
 
 [dependencies.num-traits]
 version = "0.2.0"
