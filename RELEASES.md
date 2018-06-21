@@ -1,4 +1,4 @@
-# Release 0.1.42
+# Release 0.1.42 (2018-02-08)
 
 - [All of the num sub-crates now have their own source repositories][num-356].
 - Updated num sub-crates to their latest versions.
