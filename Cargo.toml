@@ -12,46 +12,69 @@ version = "0.2.0-git"
 publish = false
 readme = "README.md"
 
+[package.metadata.docs.rs]
+features = ["std", "serde", "rand"]
+
 [badges]
 travis-ci = { repository = "rust-num/num" }
 
 [dependencies]
 
 [dependencies.num-bigint]
-optional = true
+optional = true # needs std
 version = "0.2.0"
+default-features = false
 
 [dependencies.num-complex]
-optional = true
 version = "0.2.0"
+default-features = false
 
 [dependencies.num-integer]
-version = "0.1.36"
+version = "0.1.39"
+default-features = false
 
 [dependencies.num-iter]
-version = "0.1.35"
+version = "0.1.37"
+default-features = false
 
 [dependencies.num-rational]
-optional = true
-version = "0.2.0"
+version = "0.2.1"
+default-features = false
 
 [dependencies.num-traits]
-version = "0.2.0"
+version = "0.2.5"
+default-features = false
 
 [dev-dependencies]
 
 [features]
-bigint = ["num-bigint"]
-complex = ["num-complex"]
-rational = ["num-rational"]
-default = ["bigint", "num-bigint/rand", "complex", "rational"]
+default = ["std"]
+
+std = [
+  "num-bigint/std",
+  "num-complex/std",
+  "num-integer/std",
+  "num-iter/std",
+  "num-rational/std", "num-rational/bigint",
+  "num-traits/std",
+]
+
+i128 = [
+  "num-bigint/i128",
+  "num-complex/i128",
+  "num-integer/i128",
+  "num-iter/i128",
+  "num-rational/i128",
+  "num-traits/i128",
+]
 
 rand = [
   "num-bigint/rand",
   "num-complex/rand",
 ]
+
 serde = [
   "num-bigint/serde",
   "num-complex/serde",
-  "num-rational/serde"
+  "num-rational/serde",
 ]
