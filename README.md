@@ -13,28 +13,18 @@ and generic range iterators.
 
 `num` is a meta-crate, re-exporting items from these sub-crates:
 
-- [`num-bigint`](https://github.com/rust-num/num-bigint)
-  [![crate](https://img.shields.io/crates/v/num-bigint.svg)](https://crates.io/crates/num-bigint)
+| Repository | Crate | Documentation |
+| ---------- | ----- | ------------- |
+| [`num-bigint`]   | [![crate][bigint-cb]][bigint-c]     | [![documentation][bigint-db]][bigint-d]
+| [`num-complex`]  | [![crate][complex-cb]][complex-c]   | [![documentation][complex-db]][complex-d]
+| [`num-integer`]  | [![crate][integer-cb]][integer-c]   | [![documentation][integer-db]][integer-d]
+| [`num-iter`]     | [![crate][iter-cb]][iter-c]         | [![documentation][iter-db]][iter-d]
+| [`num-rational`] | [![crate][rational-cb]][rational-c] | [![documentation][rational-db]][rational-d]
+| [`num-traits`]   | [![crate][traits-cb]][traits-c]     | [![documentation][traits-db]][traits-d]
+| ([`num-derive`]) | [![crate][derive-cb]][derive-c]     | [![documentation][derive-db]][derive-d]
 
-- [`num-complex`](https://github.com/rust-num/num-complex)
-  [![crate](https://img.shields.io/crates/v/num-complex.svg)](https://crates.io/crates/num-complex)
-
-- [`num-integer`](https://github.com/rust-num/num-integer)
-  [![crate](https://img.shields.io/crates/v/num-integer.svg)](https://crates.io/crates/num-integer)
-
-- [`num-iter`](https://github.com/rust-num/num-iter)
-  [![crate](https://img.shields.io/crates/v/num-iter.svg)](https://crates.io/crates/num-iter)
-
-- [`num-rational`](https://github.com/rust-num/num-rational)
-  [![crate](https://img.shields.io/crates/v/num-rational.svg)](https://crates.io/crates/num-rational)
-
-- [`num-traits`](https://github.com/rust-num/num-traits)
-  [![crate](https://img.shields.io/crates/v/num-traits.svg)](https://crates.io/crates/num-traits)
-
-There is also a `proc-macro` crate for deriving some numeric traits:
-
-- [`num-derive`](https://github.com/rust-num/num-derive)
-  [![crate](https://img.shields.io/crates/v/num-derive.svg)](https://crates.io/crates/num-derive)
+Note: `num-derive` is listed here for reference, but it's not directly included
+in `num`.  This is a `proc-macro` crate for deriving some of `num`'s traits.
 
 ## Usage
 
@@ -89,3 +79,46 @@ The `num` crate as a whole is tested for rustc 1.15 and greater.
 
 The `num-traits`, `num-integer`, and `num-iter` crates are individually tested
 for rustc 1.8 and greater, if you require such older compatibility.
+
+
+[`num-bigint`]: https://github.com/rust-num/num-bigint
+[bigint-c]: https://crates.io/crates/num-bigint
+[bigint-cb]: https://img.shields.io/crates/v/num-bigint.svg
+[bigint-d]: https://docs.rs/num-bigint/
+[bigint-db]: https://docs.rs/num-bigint/badge.svg
+
+[`num-complex`]: https://github.com/rust-num/num-complex
+[complex-c]: https://crates.io/crates/num-complex
+[complex-cb]: https://img.shields.io/crates/v/num-complex.svg
+[complex-d]: https://docs.rs/num-complex/
+[complex-db]: https://docs.rs/num-complex/badge.svg
+
+[`num-derive`]: https://github.com/rust-num/num-derive
+[derive-c]: https://crates.io/crates/num-derive
+[derive-cb]: https://img.shields.io/crates/v/num-derive.svg
+[derive-d]: https://docs.rs/num-derive/
+[derive-db]: https://docs.rs/num-derive/badge.svg
+
+[`num-integer`]: https://github.com/rust-num/num-integer
+[integer-c]: https://crates.io/crates/num-integer
+[integer-cb]: https://img.shields.io/crates/v/num-integer.svg
+[integer-d]: https://docs.rs/num-integer/
+[integer-db]: https://docs.rs/num-integer/badge.svg
+
+[`num-iter`]: https://github.com/rust-num/num-iter
+[iter-c]: https://crates.io/crates/num-iter
+[iter-cb]: https://img.shields.io/crates/v/num-iter.svg
+[iter-d]: https://docs.rs/num-iter/
+[iter-db]: https://docs.rs/num-iter/badge.svg
+
+[`num-rational`]: https://github.com/rust-num/num-rational
+[rational-c]: https://crates.io/crates/num-rational
+[rational-cb]: https://img.shields.io/crates/v/num-rational.svg
+[rational-d]: https://docs.rs/num-rational/
+[rational-db]: https://docs.rs/num-rational/badge.svg
+
+[`num-traits`]: https://github.com/rust-num/num-traits
+[traits-c]: https://crates.io/crates/num-traits
+[traits-cb]: https://img.shields.io/crates/v/num-traits.svg
+[traits-d]: https://docs.rs/num-traits/
+[traits-db]: https://docs.rs/num-traits/badge.svg
