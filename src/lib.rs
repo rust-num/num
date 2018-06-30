@@ -21,7 +21,7 @@
 //!
 //! ```
 //! extern crate num;
-//! # #[cfg(all(feature = "bigint", feature="rational"))]
+//! # #[cfg(feature = "std")]
 //! # mod test {
 //!
 //! use num::FromPrimitive;
@@ -41,7 +41,7 @@
 //!     approx
 //! }
 //! # }
-//! # #[cfg(not(all(feature = "bigint", feature="rational")))]
+//! # #[cfg(not(feature = "std"))]
 //! # mod test { pub fn approx_sqrt(n: u64, _: usize) -> u64 { n } }
 //! # use test::approx_sqrt;
 //!
@@ -55,42 +55,45 @@
 //!
 //! ## Compatibility
 //!
-//! The `num` crate is tested for rustc 1.8 and greater.
+//! The `num` crate is tested for rustc 1.15 and greater.
 
-#![doc(html_root_url = "https://docs.rs/num/0.1")]
+#![doc(html_root_url = "https://docs.rs/num/0.2")]
+#![no_std]
 
-extern crate num_traits;
+#[cfg(feature = "std")]
+extern crate num_bigint;
+extern crate num_complex;
 extern crate num_integer;
 extern crate num_iter;
-#[cfg(feature = "num-complex")]
-extern crate num_complex;
-#[cfg(feature = "num-bigint")]
-extern crate num_bigint;
-#[cfg(feature = "num-rational")]
 extern crate num_rational;
+extern crate num_traits;
 
-#[cfg(feature = "num-bigint")]
+#[cfg(feature = "std")]
 pub use num_bigint::{BigInt, BigUint};
-#[cfg(feature = "num-rational")]
-pub use num_rational::Rational;
-#[cfg(all(feature = "num-rational", feature="num-bigint"))]
-pub use num_rational::BigRational;
-#[cfg(feature = "num-complex")]
+
 pub use num_complex::Complex;
+
+pub use num_rational::Rational;
+#[cfg(feature = "std")]
+pub use num_rational::BigRational;
+
 pub use num_integer::Integer;
+
 pub use num_iter::{range, range_inclusive, range_step, range_step_inclusive};
+
 pub use num_traits::{Num, Zero, One, Signed, Unsigned, Bounded,
                      one, zero, abs, abs_sub, signum,
                      Saturating, CheckedAdd, CheckedSub, CheckedMul, CheckedDiv,
-                     PrimInt, Float, ToPrimitive, FromPrimitive, NumCast, cast,
+                     PrimInt, ToPrimitive, FromPrimitive, NumCast, cast,
                      pow, checked_pow, clamp};
+#[cfg(feature = "std")]
+pub use num_traits::Float;
 
-#[cfg(feature = "num-bigint")]
+#[cfg(feature = "std")]
 pub mod bigint {
     pub use num_bigint::*;
 }
 
-#[cfg(feature = "num-complex")]
 pub mod complex {
     pub use num_complex::*;
 }
@@ -107,7 +110,6 @@ pub mod traits {
     pub use num_traits::*;
 }
 
-#[cfg(feature = "num-rational")]
 pub mod rational {
     pub use num_rational::*;
 }

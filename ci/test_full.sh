@@ -4,6 +4,14 @@ set -ex
 
 echo Testing num on rustc ${TRAVIS_RUST_VERSION}
 
+FEATURES="serde"
+if [[ "$TRAVIS_RUST_VERSION" =~ ^(nightly|beta|stable|1.26.0|1.22.0)$ ]]; then
+  FEATURES="$FEATURES rand"
+fi
+if [[ "$TRAVIS_RUST_VERSION" =~ ^(nightly|beta|stable|1.26.0)$ ]]; then
+  FEATURES="$FEATURES i128"
+fi
+
 # num should build and test everywhere.
 cargo build --verbose
 cargo test --verbose
@@ -13,11 +21,12 @@ cargo build --no-default-features
 cargo test --no-default-features
 
 # Each isolated feature should also work everywhere.
-for feature in bigint complex rational rustc-serialize serde; do
-  cargo build --verbose --no-default-features --features="$feature"
-  cargo test --verbose --no-default-features --features="$feature"
+# (but still with "std", else bigint breaks)
+for feature in $FEATURES; do
+  cargo build --verbose --no-default-features --features="std $feature"
+  cargo test --verbose --no-default-features --features="std $feature"
 done
 
-# Downgrade serde and build test the 0.7.0 channel as well
-cargo update -p serde --precise 0.7.0
-cargo build --verbose --features "serde"
+# test all supported features together
+cargo build --features="std $FEATURES"
+cargo test --features="std $FEATURES"
