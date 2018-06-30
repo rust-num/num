@@ -1,4 +1,4 @@
-# Release 0.2.0 (pending)
+# Release 0.2.0 (2018-06-29)
 
 All items exported from `num-integer`, `num-iter`, and `num-traits` are still
 semver-compatible with those exported by `num` 0.1.  If you have these as public
