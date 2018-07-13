@@ -73,21 +73,21 @@ pub use num_bigint::{BigInt, BigUint};
 
 pub use num_complex::Complex;
 
-pub use num_rational::Rational;
 #[cfg(feature = "std")]
 pub use num_rational::BigRational;
+pub use num_rational::Rational;
 
 pub use num_integer::Integer;
 
 pub use num_iter::{range, range_inclusive, range_step, range_step_inclusive};
 
-pub use num_traits::{Num, Zero, One, Signed, Unsigned, Bounded,
-                     one, zero, abs, abs_sub, signum,
-                     Saturating, CheckedAdd, CheckedSub, CheckedMul, CheckedDiv,
-                     PrimInt, ToPrimitive, FromPrimitive, NumCast, cast,
-                     pow, checked_pow, clamp};
 #[cfg(feature = "std")]
 pub use num_traits::Float;
+pub use num_traits::{
+    abs, abs_sub, cast, checked_pow, clamp, one, pow, signum, zero, Bounded, CheckedAdd,
+    CheckedDiv, CheckedMul, CheckedSub, FromPrimitive, Num, NumCast, One, PrimInt, Saturating,
+    Signed, ToPrimitive, Unsigned, Zero,
+};
 
 #[cfg(feature = "std")]
 pub mod bigint {
