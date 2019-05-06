@@ -10,6 +10,7 @@ repository = "https://github.com/rust-num/num"
 name = "num"
 version = "0.2.0"
 readme = "README.md"
+exclude = ["/ci/*", "/.travis.yml", "/bors.toml"]
 
 [package.metadata.docs.rs]
 features = ["std", "serde", "rand"]
