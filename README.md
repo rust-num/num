@@ -7,7 +7,7 @@
 
 A collection of numeric types and traits for Rust.
 
-This includes new types for big integers, rationals, and complex numbers,
+This includes new types for big integers, rationals (aka fractions), and complex numbers,
 new traits for generic programming on numeric properties like `Integer`,
 and generic range iterators.
 
