@@ -1,3 +1,9 @@
+# Release 0.2.1 (2019-01-09)
+
+- Updated all sub-crates to their latest versions.
+
+**Contributors**: @cuviper, @ignatenkobrain, @jimbo1qaz
+
 # Release 0.2.0 (2018-06-29)
 
 All items exported from `num-integer`, `num-iter`, and `num-traits` are still
