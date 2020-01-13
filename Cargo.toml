@@ -8,9 +8,10 @@ categories = [ "algorithms", "data-structures", "science", "no-std" ]
 license = "MIT/Apache-2.0"
 repository = "https://github.com/rust-num/num"
 name = "num"
-version = "0.2.1"
+version = "0.3.0-pre"
 readme = "README.md"
 exclude = ["/ci/*", "/.travis.yml", "/bors.toml"]
+publish = false
 
 [package.metadata.docs.rs]
 features = ["std", "serde", "rand"]
@@ -22,11 +23,13 @@ travis-ci = { repository = "rust-num/num" }
 
 [dependencies.num-bigint]
 optional = true # needs std
-version = "0.2.5"
+version = "0.3.0-pre"
+git = "https://github.com/rust-num/num-bigint"
 default-features = false
 
 [dependencies.num-complex]
-version = "0.2.4"
+version = "0.3.0-pre"
+git = "https://github.com/rust-num/num-complex"
 default-features = false
 
 [dependencies.num-integer]
@@ -38,7 +41,8 @@ version = "0.1.40"
 default-features = false
 
 [dependencies.num-rational]
-version = "0.2.3"
+version = "0.3.0-pre"
+git = "https://github.com/rust-num/num-rational"
 default-features = false
 
 [dependencies.num-traits]
