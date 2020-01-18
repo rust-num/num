@@ -22,7 +22,7 @@ travis-ci = { repository = "rust-num/num" }
 [dependencies]
 
 [dependencies.num-bigint]
-optional = true # needs std
+optional = true # needs std until Rust 1.36
 version = "0.3.0-pre"
 git = "https://github.com/rust-num/num-bigint"
 default-features = false
@@ -35,10 +35,12 @@ default-features = false
 [dependencies.num-integer]
 version = "0.1.42"
 default-features = false
+features = ["i128"]
 
 [dependencies.num-iter]
 version = "0.1.40"
 default-features = false
+features = ["i128"]
 
 [dependencies.num-rational]
 version = "0.3.0-pre"
@@ -48,6 +50,7 @@ default-features = false
 [dependencies.num-traits]
 version = "0.2.11"
 default-features = false
+features = ["i128"]
 
 [dev-dependencies]
 
@@ -61,15 +64,6 @@ std = [
   "num-iter/std",
   "num-rational/std", "num-rational/bigint",
   "num-traits/std",
-]
-
-i128 = [
-  "num-bigint/i128",
-  "num-complex/i128",
-  "num-integer/i128",
-  "num-iter/i128",
-  "num-rational/i128",
-  "num-traits/i128",
 ]
 
 rand = [
