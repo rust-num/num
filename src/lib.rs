@@ -60,7 +60,7 @@
 #![doc(html_root_url = "https://docs.rs/num/0.2")]
 #![no_std]
 
-#[cfg(feature = "std")]
+#[cfg(feature = "bigint")]
 extern crate num_bigint;
 extern crate num_complex;
 extern crate num_integer;
@@ -68,12 +68,12 @@ extern crate num_iter;
 extern crate num_rational;
 extern crate num_traits;
 
-#[cfg(feature = "std")]
+#[cfg(feature = "bigint")]
 pub use num_bigint::{BigInt, BigUint};
 
 pub use num_complex::Complex;
 
-#[cfg(feature = "std")]
+#[cfg(feature = "bigint")]
 pub use num_rational::BigRational;
 pub use num_rational::Rational;
 
@@ -89,7 +89,7 @@ pub use num_traits::{
     Signed, ToPrimitive, Unsigned, Zero,
 };
 
-#[cfg(feature = "std")]
+#[cfg(feature = "bigint")]
 pub mod bigint {
     pub use num_bigint::*;
 }

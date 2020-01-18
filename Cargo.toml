@@ -58,13 +58,15 @@ features = ["i128"]
 default = ["std"]
 
 std = [
-  "num-bigint/std",
+  "num-bigint/std", "bigint",
   "num-complex/std",
   "num-integer/std",
   "num-iter/std",
-  "num-rational/std", "num-rational/bigint",
+  "num-rational/std", "num-rational/bigint-std",
   "num-traits/std",
 ]
+
+bigint = ["num-bigint", "num-rational/bigint"]
 
 rand = [
   "num-bigint/rand",
