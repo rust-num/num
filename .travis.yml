@@ -19,7 +19,7 @@ matrix:
       before_script:
         - rustup target add $TARGET
       script:
-        - cargo build --verbose --target $TARGET --no-default-features --features "alloc serde rand"
+        - cargo build --verbose --target $TARGET --no-default-features --features "alloc libm serde rand"
     # try a target that doesn't have std at all, nor alloc
     - name: "no_std"
       rust: 1.31.0
@@ -27,7 +27,7 @@ matrix:
       before_script:
         - rustup target add $TARGET
       script:
-        - cargo build --verbose --target $TARGET --no-default-features
+        - cargo build --verbose --target $TARGET --no-default-features --features libm
     - name: "rustfmt"
       rust: 1.31.0
       before_script:

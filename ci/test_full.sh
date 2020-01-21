@@ -5,14 +5,16 @@ set -ex
 echo Testing num on rustc ${TRAVIS_RUST_VERSION}
 
 case "$TRAVIS_RUST_VERSION" in
-  1.31.*) STD_FEATURES="serde" ;;
-  *) STD_FEATURES="serde rand" ;;
+  1.31.*) STD_FEATURES="libm serde" ;;
+  *) STD_FEATURES="libm serde rand" ;;
 esac
 
 case "$TRAVIS_RUST_VERSION" in
   1.3[1-5].*) ;;
-  *) ALLOC_FEATURES="serde rand" ;;
+  *) ALLOC_FEATURES="libm serde rand" ;;
 esac
+
+NO_STD_FEATURES="libm"
 
 # num should build and test everywhere.
 cargo build --verbose
@@ -47,4 +49,16 @@ if test -n "${ALLOC_FEATURES:+true}"; then
   # test all supported features together
   cargo build --no-default-features --features="alloc $ALLOC_FEATURES"
   cargo test --no-default-features --features="alloc $ALLOC_FEATURES"
+fi
+
+if test -n "${NO_STD_FEATURES:+true}"; then
+  # Each isolated feature should also work everywhere.
+  for feature in $NO_STD_FEATURES; do
+    cargo build --verbose --no-default-features --features="$feature"
+    cargo test --verbose --no-default-features --features="$feature"
+  done
+
+  # test all supported features together
+  cargo build --no-default-features --features="$NO_STD_FEATURES"
+  cargo test --no-default-features --features="$NO_STD_FEATURES"
 fi

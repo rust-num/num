@@ -69,6 +69,11 @@ std = [
 
 alloc = ["num-bigint", "num-rational/bigint"]
 
+libm = [
+  "num-complex/libm",
+  "num-traits/libm",
+]
+
 rand = [
   "num-bigint/rand",
   "num-complex/rand",
