@@ -72,7 +72,7 @@ pub use num_integer::Integer;
 
 pub use num_iter::{range, range_inclusive, range_step, range_step_inclusive};
 
-#[cfg(feature = "std")]
+#[cfg(any(feature = "libm", feature = "std"))]
 pub use num_traits::Float;
 pub use num_traits::{
     abs, abs_sub, cast, checked_pow, clamp, one, pow, signum, zero, Bounded, CheckedAdd,

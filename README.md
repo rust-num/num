@@ -50,6 +50,9 @@ The `num-bigint` crate requires the `std` feature, or the `alloc` feature may
 be used instead with Rust 1.36 and later. Other sub-crates may also have
 limited functionality when used without `std`.
 
+The `libm` feature uses pure-Rust floating point implementations in `no_std`
+builds, enabling the `Float` trait and related `Complex` methods.
+
 The `rand` feature enables randomization traits in `num-bigint` and
 `num-complex`.
 
