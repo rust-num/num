@@ -2,7 +2,7 @@
 
 [![crate](https://img.shields.io/crates/v/num.svg)](https://crates.io/crates/num)
 [![documentation](https://docs.rs/num/badge.svg)](https://docs.rs/num)
-![minimum rustc 1.15](https://img.shields.io/badge/rustc-1.15+-red.svg)
+![minimum rustc 1.31](https://img.shields.io/badge/rustc-1.31+-red.svg)
 [![Travis status](https://travis-ci.org/rust-num/num.svg?branch=master)](https://travis-ci.org/rust-num/num)
 
 A collection of numeric types and traits for Rust.
@@ -32,13 +32,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-num = "0.2"
-```
-
-and this to your crate root:
-
-```rust
-extern crate num;
+num = "0.3"
 ```
 
 ## Features
@@ -48,16 +42,13 @@ the default `std` feature. Use this in `Cargo.toml`:
 
 ```toml
 [dependencies.num]
-version = "0.2"
+version = "0.3"
 default-features = false
 ```
 
-The `num-bigint` crate is only available when `std` is enabled, and the other
-sub-crates may have limited functionality when used without `std`.
-
-Implementations for `i128` and `u128` are only available with Rust 1.26 and
-later.  The build script automatically detects this, but you can make it
-mandatory by enabling the `i128` crate feature.
+The `num-bigint` crate requires the `std` feature, or the `alloc` feature may
+be used instead with Rust 1.36 and later. Other sub-crates may also have
+limited functionality when used without `std`.
 
 The `rand` feature enables randomization traits in `num-bigint` and
 `num-complex`.
@@ -75,7 +66,7 @@ Release notes are available in [RELEASES.md](RELEASES.md).
 
 ## Compatibility
 
-The `num` crate as a whole is tested for rustc 1.15 and greater.
+The `num` crate as a whole is tested for rustc 1.31 and greater.
 
 The `num-traits`, `num-integer`, and `num-iter` crates are individually tested
 for rustc 1.8 and greater, if you require such older compatibility.

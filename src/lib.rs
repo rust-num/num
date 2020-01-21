@@ -20,8 +20,7 @@
 //! approximate a square root to arbitrary precision:
 //!
 //! ```
-//! extern crate num;
-//! # #[cfg(feature = "std")]
+//! # #[cfg(any(feature = "alloc", feature = "std"))]
 //! # mod test {
 //!
 //! use num::FromPrimitive;
@@ -41,9 +40,9 @@
 //!     approx
 //! }
 //! # }
-//! # #[cfg(not(feature = "std"))]
+//! # #[cfg(not(any(feature = "alloc", feature = "std")))]
 //! # mod test { pub fn approx_sqrt(n: u64, _: usize) -> u64 { n } }
-//! # use test::approx_sqrt;
+//! # use crate::test::approx_sqrt;
 //!
 //! fn main() {
 //!     println!("{}", approx_sqrt(10, 4)); // prints 4057691201/1283082416
@@ -55,25 +54,17 @@
 //!
 //! ## Compatibility
 //!
-//! The `num` crate is tested for rustc 1.15 and greater.
+//! The `num` crate is tested for rustc 1.31 and greater.
 
-#![doc(html_root_url = "https://docs.rs/num/0.2")]
+#![doc(html_root_url = "https://docs.rs/num/0.3")]
 #![no_std]
 
-#[cfg(feature = "std")]
-extern crate num_bigint;
-extern crate num_complex;
-extern crate num_integer;
-extern crate num_iter;
-extern crate num_rational;
-extern crate num_traits;
-
-#[cfg(feature = "std")]
+#[cfg(any(feature = "alloc", feature = "std"))]
 pub use num_bigint::{BigInt, BigUint};
 
 pub use num_complex::Complex;
 
-#[cfg(feature = "std")]
+#[cfg(any(feature = "alloc", feature = "std"))]
 pub use num_rational::BigRational;
 pub use num_rational::Rational;
 
@@ -89,7 +80,7 @@ pub use num_traits::{
     Signed, ToPrimitive, Unsigned, Zero,
 };
 
-#[cfg(feature = "std")]
+#[cfg(any(feature = "alloc", feature = "std"))]
 pub mod bigint {
     pub use num_bigint::*;
 }
