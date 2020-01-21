@@ -42,7 +42,7 @@
 //! # }
 //! # #[cfg(not(any(feature = "alloc", feature = "std")))]
 //! # mod test { pub fn approx_sqrt(n: u64, _: usize) -> u64 { n } }
-//! # use test::approx_sqrt;
+//! # use crate::test::approx_sqrt;
 //!
 //! fn main() {
 //!     println!("{}", approx_sqrt(10, 4)); // prints 4057691201/1283082416
