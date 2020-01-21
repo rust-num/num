@@ -59,7 +59,7 @@ features = ["i128"]
 default = ["std"]
 
 std = [
-  "num-bigint/std", "bigint",
+  "num-bigint/std",
   "num-complex/std",
   "num-integer/std",
   "num-iter/std",
@@ -67,7 +67,7 @@ std = [
   "num-traits/std",
 ]
 
-bigint = ["num-bigint", "num-rational/bigint"]
+alloc = ["num-bigint", "num-rational/bigint"]
 
 rand = [
   "num-bigint/rand",

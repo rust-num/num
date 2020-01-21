@@ -20,8 +20,7 @@
 //! approximate a square root to arbitrary precision:
 //!
 //! ```
-//! extern crate num;
-//! # #[cfg(feature = "std")]
+//! # #[cfg(any(feature = "alloc", feature = "std"))]
 //! # mod test {
 //!
 //! use num::FromPrimitive;
@@ -41,7 +40,7 @@
 //!     approx
 //! }
 //! # }
-//! # #[cfg(not(feature = "std"))]
+//! # #[cfg(not(any(feature = "alloc", feature = "std")))]
 //! # mod test { pub fn approx_sqrt(n: u64, _: usize) -> u64 { n } }
 //! # use test::approx_sqrt;
 //!
@@ -60,12 +59,12 @@
 #![doc(html_root_url = "https://docs.rs/num/0.2")]
 #![no_std]
 
-#[cfg(feature = "bigint")]
+#[cfg(any(feature = "alloc", feature = "std"))]
 pub use num_bigint::{BigInt, BigUint};
 
 pub use num_complex::Complex;
 
-#[cfg(feature = "bigint")]
+#[cfg(any(feature = "alloc", feature = "std"))]
 pub use num_rational::BigRational;
 pub use num_rational::Rational;
 
@@ -81,7 +80,7 @@ pub use num_traits::{
     Signed, ToPrimitive, Unsigned, Zero,
 };
 
-#[cfg(feature = "bigint")]
+#[cfg(any(feature = "alloc", feature = "std"))]
 pub mod bigint {
     pub use num_bigint::*;
 }
