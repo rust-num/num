@@ -12,6 +12,7 @@ version = "0.3.0-pre"
 readme = "README.md"
 exclude = ["/ci/*", "/.travis.yml", "/bors.toml"]
 publish = false
+edition = "2018"
 
 [package.metadata.docs.rs]
 features = ["std", "serde", "rand"]

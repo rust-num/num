@@ -61,14 +61,6 @@
 #![no_std]
 
 #[cfg(feature = "bigint")]
-extern crate num_bigint;
-extern crate num_complex;
-extern crate num_integer;
-extern crate num_iter;
-extern crate num_rational;
-extern crate num_traits;
-
-#[cfg(feature = "bigint")]
 pub use num_bigint::{BigInt, BigUint};
 
 pub use num_complex::Complex;
