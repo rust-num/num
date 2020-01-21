@@ -1,10 +1,9 @@
 language: rust
 sudo: false
 rust:
-  - 1.15.0
-  - 1.22.0 # rand
-  - 1.26.0 # has_i128
   - 1.31.0 # 2018!
+  - 1.32.0 # rand
+  - 1.36.0 # alloc
   - stable
   - beta
   - nightly

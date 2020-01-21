@@ -54,9 +54,9 @@
 //!
 //! ## Compatibility
 //!
-//! The `num` crate is tested for rustc 1.15 and greater.
+//! The `num` crate is tested for rustc 1.31 and greater.
 
-#![doc(html_root_url = "https://docs.rs/num/0.2")]
+#![doc(html_root_url = "https://docs.rs/num/0.3")]
 #![no_std]
 
 #[cfg(any(feature = "alloc", feature = "std"))]
