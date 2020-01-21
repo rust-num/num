@@ -12,9 +12,17 @@ script:
   - ./ci/test_full.sh
 matrix:
   include:
-    # try a target that doesn't have std at all
-    - name: "no_std"
+    # try a target that doesn't have std at all, but does have alloc
+    - name: "alloc"
       rust: stable
+      env: TARGET=thumbv6m-none-eabi
+      before_script:
+        - rustup target add $TARGET
+      script:
+        - cargo build --verbose --target $TARGET --no-default-features --features "alloc serde rand"
+    # try a target that doesn't have std at all, nor alloc
+    - name: "no_std"
+      rust: 1.31.0
       env: TARGET=thumbv6m-none-eabi
       before_script:
         - rustup target add $TARGET
