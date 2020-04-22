@@ -2,8 +2,8 @@
 
 [![crate](https://img.shields.io/crates/v/num.svg)](https://crates.io/crates/num)
 [![documentation](https://docs.rs/num/badge.svg)](https://docs.rs/num)
-![minimum rustc 1.31](https://img.shields.io/badge/rustc-1.31+-red.svg)
-[![Travis status](https://travis-ci.org/rust-num/num.svg?branch=master)](https://travis-ci.org/rust-num/num)
+[![minimum rustc 1.31](https://img.shields.io/badge/rustc-1.31+-red.svg)](https://rust-lang.github.io/rfcs/2495-min-rust-version.html)
+[![build status](https://github.com/rust-num/num/workflows/master/badge.svg)](https://github.com/rust-num/num/actions)
 
 A collection of numeric types and traits for Rust.
 

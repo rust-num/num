@@ -1,0 +1,46 @@
+name: PR
+on:
+  pull_request:
+
+jobs:
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rust: [1.31.0, stable]
+    steps:
+      - name: Rust install
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.rust }}
+          profile: minimal
+          override: true
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+      - name: Test
+        run: ./ci/test_full.sh
+
+  fmt:
+    name: Format
+    runs-on: ubuntu-latest
+    steps:
+      - name: Rust install
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: 1.42.0
+          profile: minimal
+          override: true
+          components: rustfmt
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Check formatting
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check

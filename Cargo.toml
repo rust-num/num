@@ -10,7 +10,7 @@ repository = "https://github.com/rust-num/num"
 name = "num"
 version = "0.3.0-pre"
 readme = "README.md"
-exclude = ["/ci/*", "/.travis.yml", "/bors.toml"]
+exclude = ["/bors.toml", "/ci/*", "/.github/*"]
 publish = false
 edition = "2018"
 
