@@ -1,3 +1,27 @@
+# Release 0.3.0 (2020-06-13)
+
+All items exported from `num-integer`, `num-iter`, and `num-traits` are still
+semver-compatible with those exported by `num` 0.1 and 0.2.  If you have these
+as public dependencies in your own crates, it is not a breaking change to move
+to `num` 0.3.  However, this is not true of `num-bigint`, `num-complex`, or
+`num-rational`, as those exported items are distinct in this release.
+
+### Enhancements
+
+- Updates to `num-integer`, `num-iter`, and `num-traits` are still compatible
+  with `num` 0.1 and 0.2.
+- The "alloc" feature enables `bigint` without `std` on Rust 1.36+.
+- The "libm" feature enables `Float` without `std` in `traits` and `complex`.
+- Please see the release notes of the individual sub-crates for details.
+
+### Breaking Changes
+
+- `num` now requires rustc 1.31 or greater.
+  - The "i128" opt-in feature was removed, now always available.
+- `rand` support has been updated to 0.7, requiring Rust 1.32.
+
+**Contributors**: @cuviper
+
 # Release 0.2.1 (2019-01-09)
 
 - Updated all sub-crates to their latest versions.
