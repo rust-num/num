@@ -1,3 +1,8 @@
+# Release 0.3.1 (2020-11-03)
+
+- Updated all sub-crates to their latest versions.
+- Clarify the license specification as "MIT OR Apache-2.0".
+
 # Release 0.3.0 (2020-06-13)
 
 All items exported from `num-integer`, `num-iter`, and `num-traits` are still

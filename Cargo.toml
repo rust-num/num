@@ -5,10 +5,10 @@ documentation = "https://docs.rs/num"
 homepage = "https://github.com/rust-num/num"
 keywords = ["mathematics", "numerics", "bignum"]
 categories = [ "algorithms", "data-structures", "science", "no-std" ]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/rust-num/num"
 name = "num"
-version = "0.3.0"
+version = "0.3.1"
 readme = "README.md"
 exclude = ["/bors.toml", "/ci/*", "/.github/*"]
 edition = "2018"
@@ -23,29 +23,29 @@ travis-ci = { repository = "rust-num/num" }
 
 [dependencies.num-bigint]
 optional = true # needs std until Rust 1.36
-version = "0.3.0"
+version = "0.3.1"
 default-features = false
 
 [dependencies.num-complex]
-version = "0.3.0"
+version = "0.3.1"
 default-features = false
 
 [dependencies.num-integer]
-version = "0.1.43"
+version = "0.1.44"
 default-features = false
 features = ["i128"]
 
 [dependencies.num-iter]
-version = "0.1.41"
+version = "0.1.42"
 default-features = false
 features = ["i128"]
 
 [dependencies.num-rational]
-version = "0.3.0"
+version = "0.3.1"
 default-features = false
 
 [dependencies.num-traits]
-version = "0.2.12"
+version = "0.2.14"
 default-features = false
 features = ["i128"]
 
