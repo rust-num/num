@@ -1,3 +1,12 @@
+# Release 0.4.0 (2021-03-05)
+
+- Updated `num-bigint`, `num-complex`, and `num-rational` to 0.4.0.
+  - Updated to `rand` 0.8 in `num-bigint` and `num-complex`.
+  - `Rational` is deprecated in favor of explicit `Rational32` or `Rational64`.
+- As with prior release bumps, all items exported from `num-integer`,
+  `num-iter`, and `num-traits` are still semver-compatible with those exported
+  by earlier version of `num`.
+
 # Release 0.3.1 (2020-11-03)
 
 - Updated all sub-crates to their latest versions.
