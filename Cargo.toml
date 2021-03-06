@@ -8,7 +8,7 @@ categories = [ "algorithms", "data-structures", "science", "no-std" ]
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/rust-num/num"
 name = "num"
-version = "0.3.1"
+version = "0.4.0"
 readme = "README.md"
 exclude = ["/bors.toml", "/ci/*", "/.github/*"]
 edition = "2018"
@@ -23,11 +23,11 @@ travis-ci = { repository = "rust-num/num" }
 
 [dependencies.num-bigint]
 optional = true # needs std until Rust 1.36
-version = "0.3.1"
+version = "0.4.0"
 default-features = false
 
 [dependencies.num-complex]
-version = "0.3.1"
+version = "0.4.0"
 default-features = false
 
 [dependencies.num-integer]
@@ -41,7 +41,7 @@ default-features = false
 features = ["i128"]
 
 [dependencies.num-rational]
-version = "0.3.1"
+version = "0.4.0"
 default-features = false
 
 [dependencies.num-traits]

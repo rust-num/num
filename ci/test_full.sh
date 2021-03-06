@@ -29,7 +29,7 @@ fi
 
 STD_FEATURES=(libm serde)
 NO_STD_FEATURES=(libm)
-check_version 1.32 && STD_FEATURES+=(rand)
+check_version 1.36 && STD_FEATURES+=(rand)
 check_version 1.36 && ALLOC_FEATURES=(libm serde rand)
 echo "Testing supported features: ${STD_FEATURES[*]}"
 echo " no_std supported features: ${NO_STD_FEATURES[*]}"

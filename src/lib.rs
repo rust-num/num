@@ -56,7 +56,7 @@
 //!
 //! The `num` crate is tested for rustc 1.31 and greater.
 
-#![doc(html_root_url = "https://docs.rs/num/0.3")]
+#![doc(html_root_url = "https://docs.rs/num/0.4")]
 #![no_std]
 
 #[cfg(any(feature = "alloc", feature = "std"))]
@@ -66,7 +66,9 @@ pub use num_complex::Complex;
 
 #[cfg(any(feature = "alloc", feature = "std"))]
 pub use num_rational::BigRational;
+#[allow(deprecated)]
 pub use num_rational::Rational;
+pub use num_rational::{Rational32, Rational64};
 
 pub use num_integer::Integer;
 

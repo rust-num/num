@@ -14,8 +14,7 @@ jobs:
       matrix:
         rust: [
           1.31.0, # 2018!
-          1.32.0, # rand
-          1.36.0, # alloc
+          1.36.0, # alloc, rand
           stable,
           beta,
           nightly
