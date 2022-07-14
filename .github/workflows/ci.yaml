@@ -20,54 +20,41 @@ jobs:
           nightly
         ]
     steps:
-      - name: Rust install
-        uses: dtolnay/rust-toolchain@master
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.rust }}
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Build
-        run: cargo build
-      - name: Test
-        run: ./ci/test_full.sh
+      - run: cargo build
+      - run: ./ci/test_full.sh
 
   # try a target that doesn't have std at all, but does have alloc
   no_std_stable:
     name: No Std (stable)
     runs-on: ubuntu-latest
     steps:
-      - name: Rust install
-        uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
         with:
           target: thumbv6m-none-eabi
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Build
-        run: cargo build --target thumbv6m-none-eabi --no-default-features --features "alloc libm serde rand"
+      - run: cargo build --target thumbv6m-none-eabi --no-default-features --features "alloc libm serde rand"
 
   # try a target that doesn't have std at all, nor alloc
   no_std_131:
     name: No Std (1.31.0)
     runs-on: ubuntu-latest
     steps:
-      - name: Rust install
-        uses: dtolnay/rust-toolchain@1.31.0
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@1.31.0
         with:
           target: thumbv6m-none-eabi
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Build
-        run: cargo build --target thumbv6m-none-eabi --no-default-features --features "libm"
+      - run: cargo build --target thumbv6m-none-eabi --no-default-features --features "libm"
 
   fmt:
     name: Format
     runs-on: ubuntu-latest
     steps:
-      - name: Rust install
-        uses: dtolnay/rust-toolchain@1.62.0
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@1.62.0
         with:
           components: rustfmt
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Check formatting
-        run: cargo fmt --all --check
+      - run: cargo fmt --all --check
