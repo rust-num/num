@@ -18,9 +18,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Build
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
+        run: cargo build
       - name: Test
         run: ./ci/test_full.sh
 
@@ -35,7 +33,4 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Check formatting
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all --check
+        run: cargo fmt --all --check
