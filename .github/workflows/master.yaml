@@ -15,17 +15,9 @@ jobs:
       matrix:
         rust: [1.31.0, stable]
     steps:
-      - name: Rust install
-        uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.rust }}
-          profile: minimal
-          override: true
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Build
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-      - name: Test
-        run: ./ci/test_full.sh
+      - run: cargo build
+      - run: ./ci/test_full.sh
