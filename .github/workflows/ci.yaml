@@ -21,11 +21,9 @@ jobs:
         ]
     steps:
       - name: Rust install
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.rust }}
-          profile: minimal
-          override: true
       - name: Checkout
         uses: actions/checkout@v3
       - name: Build
@@ -41,11 +39,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Rust install
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: stable
-          profile: minimal
-          override: true
           target: thumbv6m-none-eabi
       - name: Checkout
         uses: actions/checkout@v3
@@ -61,11 +56,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Rust install
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@1.31.0
         with:
-          toolchain: 1.31.0
-          profile: minimal
-          override: true
           target: thumbv6m-none-eabi
       - name: Checkout
         uses: actions/checkout@v3
@@ -80,11 +72,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Rust install
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@1.62.0
         with:
-          toolchain: 1.42.0
-          profile: minimal
-          override: true
           components: rustfmt
       - name: Checkout
         uses: actions/checkout@v3
@@ -92,4 +81,4 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: fmt
-          args: --all -- --check
+          args: --all --check
