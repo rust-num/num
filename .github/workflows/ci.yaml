@@ -47,6 +47,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@1.31.0
         with:
           target: thumbv6m-none-eabi
+      - run: cargo generate-lockfile && cargo update -p libm --precise 0.2.5
       - run: cargo build --target thumbv6m-none-eabi --no-default-features --features "libm"
 
   fmt:

@@ -37,6 +37,11 @@ if [ -n "${ALLOC_FEATURES[*]}" ]; then
   echo "  alloc supported features: ${ALLOC_FEATURES[*]}"
 fi
 
+cargo generate-lockfile
+
+# libm 0.2.6 started using {float}::EPSILON
+check_version 1.43 || cargo update -p libm --precise 0.2.5
+
 set -x
 
 # test the default with std
