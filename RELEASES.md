@@ -1,3 +1,7 @@
+# Release 0.4.1 (2023-07-11)
+
+- Updated all sub-crates to their latest versions.
+
 # Release 0.4.0 (2021-03-05)
 
 - Updated `num-bigint`, `num-complex`, and `num-rational` to 0.4.0.
