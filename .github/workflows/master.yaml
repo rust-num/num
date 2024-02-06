@@ -16,6 +16,11 @@ jobs:
         rust: [1.31.0, stable]
     steps:
       - uses: actions/checkout@v3
+      - uses: actions/cache@v4
+        if: startsWith(matrix.rust, '1')
+        with:
+          path: ~/.cargo/registry/index
+          key: cargo-${{ matrix.rust }}-git-index
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.rust }}

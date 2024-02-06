@@ -17,6 +17,11 @@ jobs:
         ]
     steps:
       - uses: actions/checkout@v3
+      - uses: actions/cache@v4
+        if: startsWith(matrix.rust, '1')
+        with:
+          path: ~/.cargo/registry/index
+          key: cargo-${{ matrix.rust }}-git-index
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.rust }}
@@ -40,6 +45,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry/index
+          key: cargo-1.31.0-git-index
       - uses: dtolnay/rust-toolchain@1.31.0
         with:
           target: thumbv6m-none-eabi
