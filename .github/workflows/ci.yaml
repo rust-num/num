@@ -16,7 +16,7 @@ jobs:
           nightly
         ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/cache@v4
         if: startsWith(matrix.rust, '1')
         with:
@@ -33,7 +33,7 @@ jobs:
     name: No Std (stable)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
           target: thumbv6m-none-eabi
@@ -44,7 +44,7 @@ jobs:
     name: No Std (1.31.0)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/cache@v4
         with:
           path: ~/.cargo/registry/index
@@ -59,7 +59,7 @@ jobs:
     name: Format
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@1.62.0
         with:
           components: rustfmt
