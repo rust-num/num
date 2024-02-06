@@ -1,9 +1,5 @@
 name: CI
-on:
-  push:
-    branches:
-      - staging
-      - trying
+on: merge_group
 
 jobs:
 
@@ -20,7 +16,12 @@ jobs:
           nightly
         ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        if: startsWith(matrix.rust, '1')
+        with:
+          path: ~/.cargo/registry/index
+          key: cargo-${{ matrix.rust }}-git-index
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.rust }}
@@ -32,7 +33,7 @@ jobs:
     name: No Std (stable)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
           target: thumbv6m-none-eabi
@@ -43,7 +44,11 @@ jobs:
     name: No Std (1.31.0)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry/index
+          key: cargo-1.31.0-git-index
       - uses: dtolnay/rust-toolchain@1.31.0
         with:
           target: thumbv6m-none-eabi
@@ -54,8 +59,23 @@ jobs:
     name: Format
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@1.62.0
         with:
           components: rustfmt
       - run: cargo fmt --all --check
+
+  # One job that "summarizes" the success state of this pipeline. This can then be added to branch
+  # protection, rather than having to add each job separately.
+  success:
+    name: Success
+    runs-on: ubuntu-latest
+    needs: [test, no_std_131, no_std_stable, fmt]
+    # Github branch protection is exceedingly silly and treats "jobs skipped because a dependency
+    # failed" as success. So we have to do some contortions to ensure the job fails if any of its
+    # dependencies fails.
+    if: always() # make sure this is never "skipped"
+    steps:
+      # Manually check the status of all dependencies. `if: failure()` does not work.
+      - name: check if any dependency failed
+        run: jq --exit-status 'all(.result == "success")' <<< '${{ toJson(needs) }}'
