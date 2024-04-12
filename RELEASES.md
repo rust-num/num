@@ -1,3 +1,7 @@
+# Release 0.4.2 (2024-04-12)
+
+- Updated all sub-crates to their latest versions.
+
 # Release 0.4.1 (2023-07-11)
 
 - Updated all sub-crates to their latest versions.
