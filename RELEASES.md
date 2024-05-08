@@ -1,3 +1,8 @@
+# Release 0.4.3 (2024-05-08)
+
+- Upgrade to 2021 edition, **MSRV 1.60**.
+- Updated all sub-crates to their latest versions.
+
 # Release 0.4.2 (2024-04-12)
 
 - Updated all sub-crates to their latest versions.

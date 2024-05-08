@@ -54,7 +54,7 @@
 //!
 //! ## Compatibility
 //!
-//! The `num` crate is tested for rustc 1.31 and greater.
+//! The `num` crate is tested for rustc 1.60 and greater.
 
 #![doc(html_root_url = "https://docs.rs/num/0.4")]
 #![no_std]

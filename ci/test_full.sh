@@ -3,7 +3,7 @@
 set -e
 
 CRATE=num
-MSRV=1.31
+MSRV=1.60
 
 get_rust_version() {
   local array=($(rustc --version));
@@ -27,20 +27,14 @@ if ! check_version $MSRV ; then
   exit 1
 fi
 
-STD_FEATURES=(libm serde)
+STD_FEATURES=(libm serde rand)
+ALLOC_FEATURES=(libm serde rand)
 NO_STD_FEATURES=(libm)
-check_version 1.36 && STD_FEATURES+=(rand)
-check_version 1.36 && ALLOC_FEATURES=(libm serde rand)
 echo "Testing supported features: ${STD_FEATURES[*]}"
+echo "  alloc supported features: ${ALLOC_FEATURES[*]}"
 echo " no_std supported features: ${NO_STD_FEATURES[*]}"
-if [ -n "${ALLOC_FEATURES[*]}" ]; then
-  echo "  alloc supported features: ${ALLOC_FEATURES[*]}"
-fi
 
 cargo generate-lockfile
-
-# libm 0.2.6 started using {float}::EPSILON
-check_version 1.43 || cargo update -p libm --precise 0.2.5
 
 set -x
 
@@ -74,18 +68,16 @@ cargo build --no-default-features --features="${NO_STD_FEATURES[*]}"
 cargo test --no-default-features --features="${NO_STD_FEATURES[*]}"
 
 
-if [ -n "${ALLOC_FEATURES[*]}" ]; then
-  # test minimal with alloc
-  cargo build --no-default-features --features="alloc"
-  cargo test --no-default-features --features="alloc"
+# test minimal with alloc
+cargo build --no-default-features --features="alloc"
+cargo test --no-default-features --features="alloc"
 
-  # test each isolated feature with alloc
-  for feature in ${ALLOC_FEATURES[*]}; do
-    cargo build --no-default-features --features="alloc $feature"
-    cargo test --no-default-features --features="alloc $feature"
-  done
+# test each isolated feature with alloc
+for feature in ${ALLOC_FEATURES[*]}; do
+  cargo build --no-default-features --features="alloc $feature"
+  cargo test --no-default-features --features="alloc $feature"
+done
 
-  # test all supported features with alloc
-  cargo build --no-default-features --features="alloc ${ALLOC_FEATURES[*]}"
-  cargo test --no-default-features --features="alloc ${ALLOC_FEATURES[*]}"
-fi
+# test all supported features with alloc
+cargo build --no-default-features --features="alloc ${ALLOC_FEATURES[*]}"
+cargo test --no-default-features --features="alloc ${ALLOC_FEATURES[*]}"

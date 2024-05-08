@@ -8,26 +8,24 @@ categories = [ "algorithms", "data-structures", "science", "no-std" ]
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/rust-num/num"
 name = "num"
-version = "0.4.2"
+version = "0.4.3"
 readme = "README.md"
 exclude = ["/ci/*", "/.github/*"]
-edition = "2018"
+edition = "2021"
+rust-version = "1.60"
 
 [package.metadata.docs.rs]
 features = ["std", "serde", "rand"]
 
-[badges]
-travis-ci = { repository = "rust-num/num" }
-
 [dependencies]
 
 [dependencies.num-bigint]
-optional = true # needs std until Rust 1.36
-version = "0.4.4"
+optional = true
+version = "0.4.5"
 default-features = false
 
 [dependencies.num-complex]
-version = "0.4.5"
+version = "0.4.6"
 default-features = false
 
 [dependencies.num-integer]
@@ -36,16 +34,16 @@ default-features = false
 features = ["i128"]
 
 [dependencies.num-iter]
-version = "0.1.44"
+version = "0.1.45"
 default-features = false
 features = ["i128"]
 
 [dependencies.num-rational]
-version = "0.4.1"
+version = "0.4.2"
 default-features = false
 
 [dependencies.num-traits]
-version = "0.2.18"
+version = "0.2.19"
 default-features = false
 features = ["i128"]
 
@@ -54,8 +52,10 @@ features = ["i128"]
 [features]
 default = ["std"]
 
+num-bigint = ["dep:num-bigint"]
+
 std = [
-  "num-bigint/std",
+  "dep:num-bigint", "num-bigint/std",
   "num-complex/std",
   "num-integer/std",
   "num-iter/std",
@@ -63,7 +63,7 @@ std = [
   "num-traits/std",
 ]
 
-alloc = ["num-bigint", "num-rational/num-bigint"]
+alloc = ["dep:num-bigint", "num-rational/num-bigint"]
 
 libm = [
   "num-complex/libm",
