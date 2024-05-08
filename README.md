@@ -2,7 +2,7 @@
 
 [![crate](https://img.shields.io/crates/v/num.svg)](https://crates.io/crates/num)
 [![documentation](https://docs.rs/num/badge.svg)](https://docs.rs/num)
-[![minimum rustc 1.31](https://img.shields.io/badge/rustc-1.31+-red.svg)](https://rust-lang.github.io/rfcs/2495-min-rust-version.html)
+[![minimum rustc 1.60](https://img.shields.io/badge/rustc-1.60+-red.svg)](https://rust-lang.github.io/rfcs/2495-min-rust-version.html)
 [![build status](https://github.com/rust-num/num/workflows/master/badge.svg)](https://github.com/rust-num/num/actions)
 
 A collection of numeric types and traits for Rust.
@@ -69,7 +69,7 @@ Release notes are available in [RELEASES.md](RELEASES.md).
 
 ## Compatibility
 
-The `num` crate as a whole is tested for rustc 1.31 and greater.
+The `num` crate as a whole is tested for rustc 1.60 and greater.
 
 The `num-traits`, `num-integer`, and `num-iter` crates are individually tested
 for rustc 1.8 and greater, if you require such older compatibility.

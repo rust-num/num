@@ -12,6 +12,7 @@ version = "0.4.2"
 readme = "README.md"
 exclude = ["/ci/*", "/.github/*"]
 edition = "2018"
+rust-version = "1.60"
 
 [package.metadata.docs.rs]
 features = ["std", "serde", "rand"]
@@ -54,8 +55,10 @@ features = ["i128"]
 [features]
 default = ["std"]
 
+num-bigint = ["dep:num-bigint"]
+
 std = [
-  "num-bigint/std",
+  "dep:num-bigint", "num-bigint/std",
   "num-complex/std",
   "num-integer/std",
   "num-iter/std",
@@ -63,7 +66,7 @@ std = [
   "num-traits/std",
 ]
 
-alloc = ["num-bigint", "num-rational/num-bigint"]
+alloc = ["dep:num-bigint", "num-rational/num-bigint"]
 
 libm = [
   "num-complex/libm",
