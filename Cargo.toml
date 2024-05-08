@@ -17,9 +17,6 @@ rust-version = "1.60"
 [package.metadata.docs.rs]
 features = ["std", "serde", "rand"]
 
-[badges]
-travis-ci = { repository = "rust-num/num" }
-
 [dependencies]
 
 [dependencies.num-bigint]
