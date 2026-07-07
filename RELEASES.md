@@ -66,12 +66,12 @@ dependencies in your own crates, it is not a breaking change to move to `num`
 A few common changes are listed below, but most of the development happens in
 the individual sub-crates.  Please consult their release notes for more details
 about recent changes:
-[`num-bigint`](https://github.com/rust-num/num-bigint/blob/master/RELEASES.md),
-[`num-complex`](https://github.com/rust-num/num-complex/blob/master/RELEASES.md),
-[`num-integer`](https://github.com/rust-num/num-integer/blob/master/RELEASES.md),
-[`num-iter`](https://github.com/rust-num/num-iter/blob/master/RELEASES.md),
-[`num-rational`](https://github.com/rust-num/num-rational/blob/master/RELEASES.md),
-and [`num-traits`](https://github.com/rust-num/num-traits/blob/master/RELEASES.md).
+[`num-bigint`](https://github.com/rust-num/num-bigint/blob/HEAD/RELEASES.md),
+[`num-complex`](https://github.com/rust-num/num-complex/blob/HEAD/RELEASES.md),
+[`num-integer`](https://github.com/rust-num/num-integer/blob/HEAD/RELEASES.md),
+[`num-iter`](https://github.com/rust-num/num-iter/blob/HEAD/RELEASES.md),
+[`num-rational`](https://github.com/rust-num/num-rational/blob/HEAD/RELEASES.md),
+and [`num-traits`](https://github.com/rust-num/num-traits/blob/HEAD/RELEASES.md).
 
 ### Enhancements
 
