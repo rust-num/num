@@ -71,12 +71,12 @@ libm = [
 ]
 
 rand = [
-  "num-bigint/rand",
+  "num-bigint?/rand",
   "num-complex/rand",
 ]
 
 serde = [
-  "num-bigint/serde",
+  "num-bigint?/serde",
   "num-complex/serde",
   "num-rational/serde",
 ]
