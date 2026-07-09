@@ -52,6 +52,8 @@ features = ["i128"]
 [features]
 default = ["std"]
 
+bytemuck = ["num-complex/bytemuck"]
+
 num-bigint = ["dep:num-bigint"]
 
 std = [
